@@ -106,6 +106,7 @@ async function main() {
   const users = [
     { email: 'admin@ecocoop.local', password: 'admin123', profileType: ProfileType.ADMIN },
     { email: 'gestor@ecocoop.local', password: 'gestor123', profileType: ProfileType.MANAGER },
+    { email: 'comprador@ecocoop.local', password: 'comprador123', profileType: ProfileType.BUYER },
   ];
 
   for (const u of users) {
