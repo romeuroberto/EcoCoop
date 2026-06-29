@@ -1,0 +1,1 @@
+/speckit.checklist Validar se a especificação cobre todo o fluxo do material: coleta, entrada, estoque bruto, triagem, estoque pronto, venda, financeiro, rateio e relatórios. Validar se há critérios de aceite claros para permissões, estoque, financeiro, rateio, portal do comprador e documentos.

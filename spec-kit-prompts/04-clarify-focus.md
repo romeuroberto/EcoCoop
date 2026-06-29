@@ -1,0 +1,1 @@
+/speckit.clarify Foque em ambiguidades de estoque flexível, regras de rateio configuráveis, permissões dos cooperados, escopo do portal do comprador, fluxo de caixa completo, mapas de rotas, documentos emitidos e critérios de auditoria.
