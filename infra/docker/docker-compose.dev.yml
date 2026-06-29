@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecocoop-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ecocoop
+      POSTGRES_PASSWORD: ecocoop
+      POSTGRES_DB: ecocoop
+    ports:
+      - '${POSTGRES_EXTERNAL_PORT:-5433}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ecocoop -d ecocoop']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ../../apps/backend
+      dockerfile: ../../infra/docker/Dockerfile.backend
+    container_name: ecocoop-backend-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '${API_PORT:-3000}:${API_PORT:-3000}'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../../apps/backend/src:/app/src:ro
+
+  frontend:
+    build:
+      context: ../../apps/frontend
+      dockerfile: ../../infra/docker/Dockerfile.frontend
+    container_name: ecocoop-frontend-dev
+    restart: unless-stopped
+    ports:
+      - '5173:5173'
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

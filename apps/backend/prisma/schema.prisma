@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Phase 1 enums
+enum ProfileType {
+  ADMIN
+  MANAGER
+  SORTER
+  DRIVER
+  MEMBER
+  BUYER
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATE_CHANGE
+}
+
+// Used by CooperativeSettings; CostCenter entity added in Phase 5
+enum ProfitSharingBase {
+  NET_RESULT
+  GROSS_REVENUE
+  MANUAL
+}
+
+// Singleton — one record per instance
+model Cooperative {
+  id        String               @id @default(uuid())
+  name      String
+  cnpj      String               @unique
+  address   String?
+  phone     String?
+  email     String?
+  logoUrl   String?
+  createdAt DateTime             @default(now())
+  settings  CooperativeSettings?
+}
+
+model CooperativeSettings {
+  id                           String            @id @default(uuid())
+  cooperativeId                String            @unique
+  cooperative                  Cooperative       @relation(fields: [cooperativeId], references: [id])
+  attendanceEnabled            Boolean           @default(false)
+  rejectAlertDaysWithoutStatus Int               @default(30)
+  defaultProfitSharingBase     ProfitSharingBase @default(NET_RESULT)
+  updatedAt                    DateTime          @updatedAt
+  // vehicleCostCenterId omitted — FK to CostCenter is Phase 5
+}
+
+model Profile {
+  id          String              @id @default(uuid())
+  name        String
+  type        ProfileType
+  isCustom    Boolean             @default(false)
+  createdAt   DateTime            @default(now())
+  users       User[]
+  permissions ProfilePermission[]
+}
+
+model ProfilePermission {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  module    String
+  action    String
+
+  @@unique([profileId, module, action])
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  profileId    String
+  profile      Profile    @relation(fields: [profileId], references: [id])
+  isActive     Boolean    @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  // memberId omitted — FK to Member (Phase 2+)
+  // buyerId omitted — FK to Buyer (Phase 4)
+  auditLogs    AuditLog[]
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  entityType    String
+  entityId      String
+  action        AuditAction
+  previousState Json?
+  newState      Json?
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime    @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}

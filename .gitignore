@@ -1,9 +1,40 @@
-
 # Claude / agent local files
 .claude/
-On branch main
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	specs/001-ecocoop-mvp/plan.md
 
-nothing added to commit but untracked files present (use "git add" to track)
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.turbo/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Prisma
+apps/backend/prisma/migrations/*.sql
+
+# Logs
+*.log
+logs/
