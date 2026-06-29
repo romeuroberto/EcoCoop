@@ -49,13 +49,15 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 **⚠️ CRITICAL**: Nenhuma implementação de módulo pode começar antes desta fase estar completa.
 
 - [ ] T007 Configure Prisma 5 in `apps/backend/`: `npx prisma init`, set `provider = "postgresql"`, configure `DATABASE_URL` via `apps/backend/.env`, add `prisma` and `@prisma/client` as deps, add `prisma:migrate`, `prisma:generate` and `prisma:seed` scripts to `apps/backend/package.json`
-- [ ] T008 Define Prisma schema v1 with Phase 1 entities in `apps/backend/prisma/schema.prisma`: models `Cooperative`, `CooperativeSettings`, `User`, `Profile`, `ProfilePermission`, `AuditLog` with all fields, enums (`ProfileType: ADMIN MANAGER SORTER DRIVER MEMBER BUYER`, `AuditAction: CREATE UPDATE DELETE STATE_CHANGE`), relations, and unique constraints exactly as specified in `data-model.md`
+- [ ] T008 Define Prisma schema v1 with Phase 1 entities in `apps/backend/prisma/schema.prisma`: models `Cooperative`, `CooperativeSettings`, `User`, `Profile`, `ProfilePermission`, `AuditLog`; enums `ProfileType: ADMIN MANAGER SORTER DRIVER MEMBER BUYER`, `AuditAction: CREATE UPDATE DELETE STATE_CHANGE`; **Phase 1 schema exclusions (MUST apply explicitly)**: (a) `User` — omit `memberId` and `buyerId` fields; FK relations to `Member` and `Buyer` are Phase 2+ entities; profile-based redirect uses `Profile.type` only; (b) `CooperativeSettings` — omit `vehicleCostCenterId` field; FK to `CostCenter` is Phase 5; add via migration when financial module is implemented; (c) do NOT define `Member`, `Buyer`, or `CostCenter` models in this migration — their absence is intentional
 - [ ] T009 Run first Prisma migration and generate Prisma client: `npx prisma migrate dev --name init` producing `apps/backend/prisma/migrations/`, verify generated client compiles with `npx prisma generate`
-- [ ] T010 Bootstrap NestJS AppModule in `apps/backend/src/app.module.ts`: import `ConfigModule.forRoot({ isGlobal: true })`, create `apps/backend/src/common/prisma.service.ts` (extends PrismaClient, implements OnModuleInit/OnModuleDestroy), create `apps/backend/src/common/filters/global-exception.filter.ts` (formats errors to contracts/rest-api.md error format), register filter globally
-- [ ] T011 Define shared ProfileType enum and Phase 1 auth DTOs in `packages/shared/src/types/index.ts`: export `ProfileType`, `LoginResponseDto` (`{ accessToken, profile: ProfileType, redirectTo: string }`), `CurrentUserDto` — reference these in both backend and frontend
+- [ ] T010 Bootstrap NestJS AppModule in `apps/backend/src/app.module.ts`: (1) create `apps/backend/src/config/env.validation.ts` with class-validator schema validating `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `BCRYPT_ROUNDS`, `API_PORT`, `CORS_ORIGIN` — application MUST fail on startup with a clear error message if any variable is missing or invalid; (2) import `ConfigModule.forRoot({ isGlobal: true, validate: validateEnv })` to enable fail-fast validation before any module initializes; (3) create `apps/backend/src/common/prisma.service.ts` (extends PrismaClient, implements OnModuleInit/OnModuleDestroy); (4) create `apps/backend/src/common/filters/global-exception.filter.ts` (formats errors per contracts/rest-api.md with `statusCode`, `error`, `message`, `code` fields), register filter globally
+- [ ] T011 Define shared ProfileType enum and Phase 1 auth DTOs in `packages/shared/src/types/index.ts`: export `ProfileType`, `LoginResponseDto` (`{ accessToken, profile: ProfileType, redirectTo: string }`), `CurrentUserDto` — **Phase 1 shape**: `{ id: string, email: string, profileId: string, profileType: ProfileType, permissions: Array<{ module: string, action: string }> }` — note: `buyerId` is intentionally absent in Phase 1; it will be added in Phase 4 (buyer portal); reference these types in both backend and frontend
 - [ ] T012 [P] Configure frontend API layer in `apps/frontend/src/`: create `services/api.client.ts` (Axios instance with baseURL `/api/v1`, request interceptor attaches Bearer token, response interceptor refreshes token on 401); create `main.tsx` wrapping App with `QueryClientProvider`; configure `vite.config.ts` proxy (`/api` → `http://localhost:3000`)
 
-**Checkpoint**: `npm run --workspace=apps/backend start:dev` inicia NestJS sem erros. `npm run --workspace=apps/frontend dev` inicia Vite. Prisma conecta ao banco.
+- [ ] T041 Configure `apps/backend/src/main.ts` bootstrap: (1) enable CORS via `app.enableCors({ origin: configService.get('CORS_ORIGIN'), credentials: true })` — allows the frontend Vite dev server (`:5173`) to call the API without browser CORS errors; (2) register `app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))` — enforces DTO validation on all incoming requests using class-validator decorators; (3) listen on `configService.get<number>('API_PORT') ?? 3000`; verify by confirming frontend can call `GET /api/v1` without CORS error in browser DevTools
+
+**Checkpoint**: `npm run --workspace=apps/backend start:dev` inicia NestJS sem erros. `npm run --workspace=apps/frontend dev` inicia Vite. Prisma conecta ao banco. Frontend consegue chamar `GET /api/v1` sem erro CORS no browser.
 
 ---
 
@@ -78,16 +80,16 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 
 ### Cooperative Module
 
-- [ ] T015 [P] [US1] Create `CooperativeModule` with `CooperativeService` in `apps/backend/src/modules/cooperative/`: service methods `setup(dto)` (singleton, errors if already created), `findOne()`, `update(dto)`, `getSettings()`, `updateSettings(dto)`; register module in AppModule
-- [ ] T016 [US1] Implement `CooperativeController` in `apps/backend/src/modules/cooperative/cooperative.controller.ts`: routes GET `/cooperative` (requires ADMIN or MANAGER), PUT `/cooperative` (requires ADMIN), GET `/cooperative/settings` (requires ADMIN or MANAGER), PUT `/cooperative/settings` (requires ADMIN); add @Roles() decorators; this controller serves as the first example of the RBAC pattern
+- [ ] T015 [P] [US1] Create `CooperativeModule` with `CooperativeService` in `apps/backend/src/modules/cooperative/`: service methods `findOne()`, `update(dto)` (upsert on the singleton record created by seed — covers both first-run configuration when admin fills initial institutional data and subsequent updates; no separate `setup()` method exists), `getSettings()`, `updateSettings(dto)`; register module in AppModule
+- [ ] T016 [US1] Implement `CooperativeController` in `apps/backend/src/modules/cooperative/cooperative.controller.ts`: routes GET `/cooperative` (@RequirePermission('COOPERATIVE','READ')), PUT `/cooperative` (@RequirePermission('COOPERATIVE','MANAGE') — **upsert/first-run**: seed creates an unconfigured Cooperative record; admin fills institutional data via this endpoint on first login and uses it for subsequent updates; there is no public `POST /cooperative/setup` endpoint in Phase 1), GET `/cooperative/settings` (@RequirePermission('COOPERATIVE','READ')), PUT `/cooperative/settings` (@RequirePermission('COOPERATIVE','MANAGE')); add `@AuditEntity('cooperative')` and `@UseInterceptors(AuditInterceptor)` decorators (see T029, T030); this controller is the first example of the RBAC + Audit pattern
 
 ---
 
 ### Auth Module
 
-- [ ] T017 [US1] Create `AuthModule` in `apps/backend/src/modules/auth/auth.module.ts`: import `JwtModule.register({ secret: configService.get('JWT_SECRET'), signOptions: { expiresIn: '15m' } })`, `PassportModule`, register `JwtStrategy`; add `JWT_SECRET` and `JWT_REFRESH_SECRET` to env validation
-- [ ] T018 [US1] Implement `AuthService` in `apps/backend/src/modules/auth/auth.service.ts`: `login(email, password)` — fetch user by email, `bcrypt.compare(password, user.passwordHash)`, throw 401 if wrong/inactive, build JWT payload `{ sub: userId, profileType, buyerId? }`, issue accessToken (15min) + refreshToken (7 days signed with JWT_REFRESH_SECRET), return `LoginResponseDto` with `redirectTo` based on profileType (BUYER → "/portal", others → "/dashboard")
-- [ ] T019 [US1] Implement `JwtStrategy` in `apps/backend/src/modules/auth/strategies/jwt.strategy.ts`: extends `PassportStrategy(Strategy)`, extracts Bearer token from header, validates payload `{ sub, profileType }`, returns `CurrentUserDto` (id, profileType, buyerId); implement `RefreshTokenStrategy` in same directory for httpOnly cookie validation
+- [ ] T017 [US1] Create `AuthModule` in `apps/backend/src/modules/auth/auth.module.ts`: import `JwtModule.registerAsync({ useFactory: (config: ConfigService) => ({ secret: config.get('JWT_ACCESS_SECRET'), signOptions: { expiresIn: '15m' } }), inject: [ConfigService] })`, `PassportModule`, register `JwtStrategy`; env variables `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` are validated at startup by T010 — do not re-validate here
+- [ ] T018 [US1] Implement `AuthService` in `apps/backend/src/modules/auth/auth.service.ts`: `login(email, password)` — fetch user by email, `bcrypt.compare(password, user.passwordHash)`, throw 401 with code `ACCOUNT_DISABLED` if user is inactive, throw 401 with code `INVALID_CREDENTIALS` if password wrong, build JWT payload `{ sub: userId, profileType }` (no buyerId — Phase 1 User has no FK to Buyer), issue accessToken (15min signed with `JWT_ACCESS_SECRET`) + refreshToken (7 days signed with `JWT_REFRESH_SECRET`), return `LoginResponseDto` with `redirectTo` based on profileType (BUYER → "/portal", others → "/dashboard")
+- [ ] T019 [US1] Implement `JwtStrategy` in `apps/backend/src/modules/auth/strategies/jwt.strategy.ts`: extends `PassportStrategy(Strategy)`, extracts Bearer token from header, validates payload `{ sub, profileType }`, returns `CurrentUserDto` — **Phase 1 shape**: `{ id: string, email: string, profileId: string, profileType: ProfileType, permissions: Array<{ module: string, action: string }> }` (note: `buyerId` is intentionally absent in Phase 1; it will be added in Phase 4 when the buyer portal module is implemented); implement `RefreshTokenStrategy` in same directory for httpOnly cookie validation
 - [ ] T020 [US1] Implement `AuthController` in `apps/backend/src/modules/auth/auth.controller.ts`: `POST /auth/login` (@Public(), calls AuthService.login, sets refreshToken as httpOnly Secure cookie with SameSite=Strict), `POST /auth/refresh` (@Public(), reads cookie, validates refresh JWT, issues new accessToken), `POST /auth/logout` (@Public(), clears cookie), `GET /auth/me` (returns CurrentUser from @CurrentUser() decorator)
 - [ ] T021 [US1] Create NestJS decorators in `apps/backend/src/common/decorators/`: `@Public()` (sets metadata IS_PUBLIC_KEY=true, used by JwtAuthGuard to skip), `@CurrentUser()` (parameter decorator extracting `request.user`), `@RequirePermission(module, action)` (sets metadata for RolesGuard)
 - [ ] T022 [US1] Implement `JwtAuthGuard` in `apps/backend/src/common/guards/jwt-auth.guard.ts`: extends `AuthGuard('jwt')`, overrides `canActivate` to skip if IS_PUBLIC_KEY metadata is true; this is registered as global APP_GUARD in app.module.ts
@@ -105,27 +107,27 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 
 ### Users Module
 
-- [ ] T027 [P] [US1] Create `UserModule` with `UserService` in `apps/backend/src/modules/users/`: methods `create(dto)` (hash password with `bcrypt.hash(password, 10)`, create User), `findAll()`, `findOne(id)`, `update(id, dto)`, `setActive(id, isActive)` (soft activate/deactivate — never delete); register in AppModule
+- [ ] T027 [P] [US1] Create `UserModule` with `UserService` in `apps/backend/src/modules/users/`: methods `create(dto)` (hash password with `bcrypt.hash(password, configService.get<number>('BCRYPT_ROUNDS') ?? 10)`, create User), `findAll()`, `findOne(id)`, `update(id, dto)`, `setActive(id, isActive)` (soft activate/deactivate — never delete); register in AppModule
 - [ ] T028 [US1] Implement `UserController` in `apps/backend/src/modules/users/user.controller.ts`: `GET /users` (@RequirePermission('USERS','READ')), `POST /users` (@RequirePermission('USERS','CREATE'), validate email unique, profileId exists), `GET /users/:id` (@RequirePermission('USERS','READ')), `PATCH /users/:id` (@RequirePermission('USERS','UPDATE')), `PATCH /users/:id/activate` (@RequirePermission('USERS','MANAGE')); never expose `passwordHash` in responses
 
 ---
 
 ### Audit Interceptor
 
-- [ ] T029 [US1] Implement `AuditInterceptor` in `apps/backend/src/common/interceptors/audit.interceptor.ts`: `NestInterceptor`, runs on POST/PUT/PATCH/DELETE, records `AuditLog { entityType (from controller metadata), action (POST→CREATE, PATCH→UPDATE, DELETE→DELETE), userId from JWT, ipAddress from request, newState from response body, createdAt }`; add `@SetMetadata('auditEntity', entityName)` decorator to facilitate entity name tagging in controllers
-- [ ] T030 [US1] Register `AuditInterceptor` as a scoped interceptor on CooperativeController, UserController, and ProfileController in `apps/backend/src/app.module.ts` (or directly on each controller class with `@UseInterceptors(AuditInterceptor)`) — global registration via `APP_INTERCEPTOR` is acceptable if performance is not a concern for Phase 1
+- [ ] T029 [US1] Implement `AuditInterceptor` in `apps/backend/src/common/interceptors/audit.interceptor.ts`: `NestInterceptor` that runs on POST/PUT/PATCH/DELETE; for each mutating request record `AuditLog` with: `entityType` (from `@AuditEntity()` decorator on controller), `entityId` (from route param `:id` or response body `.id`), `action` (POST→CREATE, PUT/PATCH→UPDATE, DELETE→DELETE), `previousState` (for UPDATE and DELETE: fetch entity from DB **before** the mutation executes and store as JSON — MUST be `null` for CREATE), `newState` (response body serialized as JSON after mutation — MUST be `null` for DELETE), `userId` (from `request.user.id` via JWT), `ipAddress` (from `request.ip`), `userAgent` (from `request.headers['user-agent']`), `createdAt` (immutable, set at insert time); add `@AuditEntity(entityName: string)` decorator in `apps/backend/src/common/decorators/audit-entity.decorator.ts` to tag entity name on each audited controller
+- [ ] T030 [US1] Register `AuditInterceptor` using `@UseInterceptors(AuditInterceptor)` directly on `CooperativeController`, `UserController`, and `ProfileController` class declarations — do **NOT** use global `APP_INTERCEPTOR`, which would also audit public endpoints (`/auth/login`, `/auth/refresh`) where `request.user` is `undefined`, generating `AuditLog` rows with `userId = null`
 
 ---
 
 ### Seed
 
-- [ ] T031 [US1] Create Prisma seed script in `apps/backend/prisma/seeds/seed.ts`: create Cooperative placeholder (name: "EcoCoop", cnpj: required), create 6 default Profiles with standard permissions matrix (ADMIN: all modules MANAGE; MANAGER: STOCK+SORTING+SALES+USERS READ/CREATE/UPDATE; SORTER: STOCK+SORTING READ/CREATE; DRIVER: ROUTES READ/UPDATE; MEMBER: self-read only; BUYER: PORTAL READ), create default admin user (`admin@ecocoop.local` / `admin123`) and gestor user (`gestor@ecocoop.local` / `gestor123`); configure `prisma.seed` in `apps/backend/package.json`
+- [ ] T031 [US1] Create Prisma seed script in `apps/backend/prisma/seeds/seed.ts`: (1) create Cooperative placeholder (name: "EcoCoop", cnpj: "00.000.000/0001-00"); (2) create 6 default Profiles with **Phase 1 permissions matrix** — permitted modules are `COOPERATIVE`, `USERS`, `PROFILES`, `PERMISSIONS`, `AUDIT`, `DASHBOARD` only — do NOT create permissions for STOCK, SORTING, ROUTES, SALES, FINANCE, RATEIO, EPI, ATTENDANCE, REPORTS, or MATERIALS: `ADMIN` → all 6 modules with action `MANAGE`; `MANAGER` → `COOPERATIVE:READ`, `USERS:READ`, `DASHBOARD:READ`; `SORTER` → `DASHBOARD:READ`; `DRIVER` → `DASHBOARD:READ`; `MEMBER` → `DASHBOARD:READ`; `BUYER` → `DASHBOARD:READ` (portal redirect is driven by `profileType`, not by permission entries); (3) create default users with **bcrypt-hashed passwords** (use `bcrypt.hash(password, 10)` — never store plain text): admin `admin@ecocoop.local` / `admin123`, gestor `gestor@ecocoop.local` / `gestor123`; (4) configure `prisma.seed` in `apps/backend/package.json`
 
 ---
 
 ### Frontend
 
-- [ ] T032 [P] [US1] Implement Zustand auth store in `apps/frontend/src/store/auth.store.ts`: state `{ user: CurrentUserDto | null, accessToken: string | null }`, actions `login(credentials)` (calls POST /auth/login, stores accessToken in memory, NOT localStorage), `logout()` (calls POST /auth/logout, clears state), `refresh()` (calls POST /auth/refresh, updates accessToken); configure Axios interceptor to call `refresh()` on 401 before retrying once
+- [ ] T032 [P] [US1] Implement Zustand auth store in `apps/frontend/src/store/auth.store.ts`: state `{ user: CurrentUserDto | null, accessToken: string | null, isInitializing: boolean }`, actions: `login(credentials)` (calls POST /auth/login, stores accessToken in memory, NOT localStorage), `logout()` (calls POST /auth/logout, clears state), `refresh()` (calls POST /auth/refresh, updates accessToken — returns `true` on success, `false` on 401), `initializeSession()` (called once at app bootstrap: sets `isInitializing = true`, calls `refresh()`, if 200 → calls GET /auth/me and stores user in state; if 401 → clears user; always sets `isInitializing = false` when done); configure Axios interceptor to call `refresh()` on 401 before retrying once; in `apps/frontend/src/App.tsx` call `authStore.initializeSession()` on mount via `useEffect([])` and while `isInitializing === true` render a loading spinner instead of the router — prevents flash-to-/login on page reload
 - [ ] T033 [P] [US1] Create `LoginPage` in `apps/frontend/src/pages/auth/LoginPage.tsx`: form with email + password fields using `react-hook-form` + `zod` schema validation, calls `authStore.login()`, on success redirects to `loginResponse.redirectTo` using `useNavigate`; show error message on 401; styled with Tailwind (mobile-responsive centered card)
 - [ ] T034 [US1] Create `AdminLayout` in `apps/frontend/src/layouts/AdminLayout.tsx`: sidebar with navigation links (Dashboard, Cooperativa, Usuários, Perfis), top bar with logged user name and logout button, `<Outlet/>` for child routes; sidebar links render only if user profile has access (read from auth store)
 - [ ] T035 [US1] Implement `ProtectedRoute` component in `apps/frontend/src/router/ProtectedRoute.tsx`: reads auth store, if no user redirects to `/login`; if profileType === 'BUYER' redirects to `/portal`; otherwise renders `<Outlet/>`; also export `BuyerRoute` that requires profileType === 'BUYER'
@@ -141,7 +143,7 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 **Purpose**: Validação end-to-end do Fluxo 1 do quickstart, tipagem estrita e configurações de produção do ambiente dev.
 
 - [ ] T038 Execute quickstart.md Fluxo 1 validation end-to-end: run `docker compose -f infra/docker/docker-compose.dev.yml up -d`, `npm run --workspace=apps/backend prisma:migrate`, `npm run --workspace=apps/backend prisma:seed`, verify admin login, create SORTER user, verify SORTER gets 403 on protected routes, verify BUYER login returns `redirectTo: "/portal"`
-- [ ] T039 [P] Configure environment validation with class-validator in `apps/backend/src/config/env.validation.ts`: validate `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `PORT`; fail fast on startup if variables missing; create `apps/backend/.env.example` with all required keys
+- [ ] T039 [P] Create environment example files for developer onboarding: `apps/backend/.env.example` and `infra/docker/.env.example`, both documenting all required variables with descriptions: `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `BCRYPT_ROUNDS` (default: 10), `API_PORT` (default: 3000), `CORS_ORIGIN` (default: http://localhost:5173); environment validation logic is implemented in T010 (Phase 2) — this task only creates reference files, not code
 - [ ] T040 [P] Add Docker Compose health checks and startup order: postgres healthcheck `pg_isready`, backend `depends_on: { postgres: { condition: service_healthy } }`; verify `npm run test --workspace=apps/backend` runs auth and permissions integration tests from T013/T014
 
 ---
@@ -151,7 +153,7 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 ### Phase Dependencies
 
 - **Setup (Phase 1, T001–T006)**: Sem dependências — pode começar imediatamente
-- **Foundational (Phase 2, T007–T012)**: Depende da conclusão do Setup — BLOQUEIA todas as tasks de US1
+- **Foundational (Phase 2, T007–T012, T041)**: Depende da conclusão do Setup — BLOQUEIA todas as tasks de US1
 - **User Story 1 (Phase 3, T013–T037)**: Depende da conclusão da Foundational
   - Tests (T013, T014): escrever primeiro, devem **falhar** antes da implementação
   - Implementação: seguir sub-grupos internos abaixo
@@ -169,7 +171,7 @@ Fases 2–9 do MVP completo estão documentadas no plan.md mas NÃO estão cober
 ### Parallel Opportunities
 
 - **Setup**: T003, T004, T006 podem rodar em paralelo com T002
-- **Foundational**: T012 pode rodar em paralelo com T007–T011
+- **Foundational**: T012 pode rodar em paralelo com T007–T011; T041 depende de T010 (precisa de `CORS_ORIGIN` do ConfigModule) mas pode ser feito em paralelo com T011 e T012
 - **US1 Tests**: T013 e T014 podem ser escritos em paralelo
 - **Cooperative + Profile + Users modules**: T015 e T025 e T027 podem começar em paralelo após T024
 - **Frontend T032 e T033** podem ser implementados em paralelo
@@ -199,7 +201,7 @@ Task T033: "LoginPage in apps/frontend/src/pages/auth/LoginPage.tsx"
 
 ### MVP (Fase 1 completa em ~3–4 semanas)
 
-1. **Semana 1**: Setup (T001–T006) + Foundational (T007–T012)
+1. **Semana 1**: Setup (T001–T006) + Foundational (T007–T012, T041)
 2. **Semana 2**: Auth module completo (T013–T024) — testes escritos primeiro
 3. **Semana 3**: Cooperative + Users + Profiles + Audit + Seed (T015–T031)
 4. **Semana 4**: Frontend completo (T032–T037) + Polish (T038–T040)
@@ -221,6 +223,9 @@ Task T033: "LoginPage in apps/frontend/src/pages/auth/LoginPage.tsx"
 - Testes T013 e T014 DEVEM ser escritos antes da implementação e confirmados como falhando
 - Refresh token usa httpOnly cookie (SameSite=Strict, Secure) — nunca armazenar no localStorage
 - Sem Redis na Fase 1: revogação de refresh token por logout deleta o cookie (sem blacklist)
+- Env vars usam `JWT_ACCESS_SECRET` (não `JWT_SECRET`) — validadas no bootstrap por T010 antes de qualquer módulo
+- CORS configurado em T041 com `CORS_ORIGIN` do ambiente; ValidationPipe global também em T041
+- Seed (T031) cria permissões apenas para módulos da Fase 1: COOPERATIVE, USERS, PROFILES, PERMISSIONS, AUDIT, DASHBOARD
 - O `packages/shared` deve ser referenciado nos workspaces com `"@ecocoop/shared": "*"` no package.json de cada app
 - Frontend guarda accessToken apenas em memória (Zustand store) — sem localStorage para mitigar XSS
 - `/portal` é um placeholder na Fase 1 — rota existe e redireciona BUYER, mas conteúdo é mínimo

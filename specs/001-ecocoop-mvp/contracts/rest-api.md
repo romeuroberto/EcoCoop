@@ -35,9 +35,9 @@
 | Method | Path | Description | Profile |
 |--------|------|-------------|---------|
 | GET | `/cooperative` | Dados da cooperativa | ADMIN, MANAGER |
-| PUT | `/cooperative` | Atualiza dados + configurações | ADMIN |
+| PUT | `/cooperative` | Atualiza dados institucionais — também funciona como **configuração inicial (upsert)**: o seed cria um registro em estado não configurado e o ADMIN preenche via este endpoint no primeiro login; não existe `POST /cooperative/setup` na Fase 1 | ADMIN |
 | GET | `/cooperative/settings` | Configurações operacionais | ADMIN, MANAGER |
-| PUT | `/cooperative/settings` | Atualiza configurações | ADMIN |
+| PUT | `/cooperative/settings` | Atualiza configurações operacionais | ADMIN |
 
 ---
 
@@ -275,10 +275,16 @@ Todas as rotas abaixo exigem perfil `BUYER`.
 ```
 
 **Standard error codes**:
+
+_Fase 1 — Fundação (auth e autorização):_
+- `ACCOUNT_DISABLED` — usuário existe mas está desativado (`isActive = false`); retornado por `POST /auth/login` e `POST /auth/refresh` com HTTP 401
+- `INVALID_CREDENTIALS` — email ou senha incorretos; retornado por `POST /auth/login` com HTTP 401 (mesmo código para ambos os casos — não revelar qual campo falhou)
+- `UNAUTHORIZED_PROFILE` — perfil sem permissão para a operação solicitada; retornado por qualquer endpoint protegido com HTTP 403
+
+_Fases 2–9 (módulos operacionais):_
 - `STOCK_INSUFFICIENT` — saldo disponível menor que solicitado
 - `SORTING_UNBALANCED` — soma de saídas ≠ quantidade reservada
 - `PERIOD_ALREADY_CLOSED` — tentativa de alterar período de rateio fechado
 - `RULE_PERCENTAGES_INVALID` — critérios de rateio não somam 100%
 - `MATERIAL_HAS_DEPENDENCIES` — exclusão bloqueada por movimentações existentes
 - `DUPLICATE_SORTING_LOCK` — material já reservado em sessão aberta
-- `UNAUTHORIZED_PROFILE` — perfil sem permissão para a operação
