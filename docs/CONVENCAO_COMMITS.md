@@ -5,6 +5,56 @@ Este projeto usa uma convenção baseada em **Conventional Commits**, adaptada a
 
 O objetivo é manter o histórico do Git claro, rastreável e útil para auditoria do desenvolvimento.
 
+
+## Idioma padrão dos commits
+
+A documentação do EcoCoop deve ser escrita em **português**.
+
+As mensagens de commit, porém, devem ser escritas em **inglês**, seguindo o padrão Conventional Commits.
+
+Formato obrigatório:
+
+```text
+type(scope): description in English
+```
+
+Regras:
+
+* O `type` deve seguir Conventional Commits: `docs`, `feat`, `fix`, `test`, `build`, `chore`, `refactor`, `ci`, `style`, `perf`, `revert`.
+* O `scope` deve ser escrito em inglês, em minúsculas, sem acentos e separado por hífen quando necessário.
+* A descrição do commit deve ser sempre em inglês.
+* Não misturar português e inglês na mensagem do commit.
+* A descrição deve ser curta, objetiva e escrita no presente.
+* Não usar ponto final no fim da mensagem.
+
+Exemplos corretos:
+
+```text
+docs(spec): define initial MVP scope
+docs(plan): add MVP technical planning
+docs(tasks): define foundation phase tasks
+docs(spec): add foundation phase analysis
+docs(commits): define commit convention
+build(infra): configure initial monorepo
+build(database): configure Prisma and PostgreSQL
+feat(auth): implement JWT login
+feat(rbac): add backend permission guards
+feat(users): add user CRUD
+test(auth): cover login and refresh token
+fix(rbac): block buyer access to admin routes
+```
+
+Exemplos incorretos:
+
+```text
+docs(plano): adiciona planejamento técnico
+feat(autenticacao): implementa login com JWT
+fix(users): corrige validação de e-mail
+update
+ajustes
+wip
+```
+
 ---
 
 ## Formato padrão
