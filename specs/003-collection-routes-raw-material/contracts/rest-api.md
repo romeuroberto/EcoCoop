@@ -527,7 +527,8 @@ Lista entradas de material bruto de uma rota.
       "notes": null,
       "user": { "id": "uuid", "name": "João Silva" },
       "createdAt": "2026-06-30T15:00:00Z",
-      "stockEventId": "uuid"
+      "stockEventId": "uuid",
+      "isReversed": false
     }
   ],
   "total": 3,
@@ -602,6 +603,7 @@ Retorna entrada de material bruto pelo ID, incluindo stock event associado.
   "notes": null,
   "user": { "id": "uuid", "name": "João Silva" },
   "createdAt": "2026-06-30T15:00:00Z",
+  "isReversed": false,
   "stockEvent": {
     "id": "uuid",
     "type": "ENTRADA_BRUTO",
@@ -621,6 +623,8 @@ Cria evento de estorno (`ESTORNO_BRUTO`) para corrigir uma entrada de material b
 
 **Permissão**: `RAW_MATERIAL_ENTRIES:MANAGE` (apenas ADMIN e MANAGER)
 
+**Auditoria**: registrada como UPDATE (`@AuditAsUpdate()`). `previousState` = `RawMaterialEntry` antes do estorno; `newState` = `RawMaterialEntry` com `isReversed: true`. Assim `previousState` e `newState` são do mesmo tipo, satisfazendo SC-007.
+
 **Request body**:
 ```json
 {
@@ -632,18 +636,24 @@ Cria evento de estorno (`ESTORNO_BRUTO`) para corrigir uma entrada de material b
 |---|---|---|
 | `justification` | string | sim |
 
-**Response 201**:
+**Response 201** — retorna o `RawMaterialEntry` atualizado (não o stock event bruto):
 ```json
 {
   "id": "uuid",
-  "type": "ESTORNO_BRUTO",
-  "subcategoryId": "uuid",
-  "unitId": "uuid",
-  "quantity": "-150.500",
-  "referencedEventId": "uuid",
-  "justification": "Quantidade digitada errada — era 50 kg, não 150 kg",
-  "userId": "uuid",
-  "createdAt": "2026-06-30T16:00:00Z"
+  "routeId": "uuid",
+  "subcategory": { "id": "uuid", "name": "PET", "category": { "id": "uuid", "name": "Plástico" } },
+  "quantity": "150.500",
+  "unit": { "id": "uuid", "name": "Quilograma", "symbol": "kg" },
+  "notes": null,
+  "user": { "id": "uuid", "name": "João Silva" },
+  "createdAt": "2026-06-30T15:00:00Z",
+  "isReversed": true,
+  "stockEvent": {
+    "id": "uuid",
+    "type": "ENTRADA_BRUTO",
+    "quantity": "150.500",
+    "createdAt": "2026-06-30T15:00:00Z"
+  }
 }
 ```
 

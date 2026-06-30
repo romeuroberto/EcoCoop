@@ -139,6 +139,7 @@ model RawMaterialStockEvent {
   @@index([subcategoryId, unitId])
   @@index([type])
   @@index([rawMaterialEntryId])
+  @@unique([referencedEventId])
 }
 ```
 
@@ -212,6 +213,7 @@ HAVING SUM(quantity) >= 0
 - `rawMaterialEntryId` NOT NULL para `ENTRADA_BRUTO`, NULL para `ESTORNO_BRUTO`
 - `referencedEventId` NOT NULL para `ESTORNO_BRUTO`, NULL para `ENTRADA_BRUTO`
 - `justification` NOT NULL para `ESTORNO_BRUTO`
+- `@@unique([referencedEventId])` garante no banco que cada evento pode ter no máximo um estorno — PostgreSQL trata NULLs como distintos em UNIQUE, portanto eventos `ENTRADA_BRUTO` (com `referencedEventId = NULL`) não colidem entre si; apenas os `ESTORNO_BRUTO` são únicos por `referencedEventId`
 - Nenhum campo é atualizável após criação — sem UPDATE/DELETE routes no repositório
 - Antes de criar `ESTORNO_BRUTO`: verificar que saldo resultante ≥ 0 (dentro de transação)
 
