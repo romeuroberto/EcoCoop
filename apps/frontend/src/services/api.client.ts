@@ -1,29 +1,54 @@
 import axios from 'axios';
 
+declare global {
+  interface Window {
+    __ecocoop_access_token: string | null;
+  }
+}
+window.__ecocoop_access_token = null;
+
+// Separate instance for auth endpoints — never goes through the refresh interceptor.
+export const authApi = axios.create({
+  baseURL: '/api/v1',
+  withCredentials: true,
+});
+
 export const api = axios.create({
   baseURL: '/api/v1',
   withCredentials: true,
 });
 
-let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+import type { InternalAxiosRequestConfig } from 'axios';
 
-const onRefreshed = (token: string) => {
-  refreshSubscribers.forEach((cb) => cb(token));
+const injectToken = (config: InternalAxiosRequestConfig) => {
+  const token = window.__ecocoop_access_token;
+  if (token) config.headers['Authorization'] = `Bearer ${token}`;
+  return config;
+};
+
+api.interceptors.request.use(injectToken);
+authApi.interceptors.request.use(injectToken);
+
+// Endpoints that must never trigger a refresh retry.
+const AUTH_PATHS = ['/auth/refresh', '/auth/login', '/auth/logout'];
+const isAuthPath = (url?: string) => AUTH_PATHS.some((p) => url?.includes(p));
+
+let isRefreshing = false;
+type Subscriber = { resolve: (token: string) => void; reject: (err: unknown) => void };
+let refreshSubscribers: Subscriber[] = [];
+
+const drainSubscribers = (token: string) => {
+  refreshSubscribers.forEach(({ resolve }) => resolve(token));
   refreshSubscribers = [];
 };
 
-api.interceptors.request.use((config) => {
-  const token = window.__ecocoop_access_token;
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
-  }
-  return config;
-});
+const rejectSubscribers = (err: unknown) => {
+  refreshSubscribers.forEach(({ reject }) => reject(err));
+  refreshSubscribers = [];
+};
 
 const show403Banner = () => {
-  const existing = document.getElementById('__ecocoop_403_banner');
-  if (existing) return;
+  if (document.getElementById('__ecocoop_403_banner')) return;
   const banner = document.createElement('div');
   banner.id = '__ecocoop_403_banner';
   banner.style.cssText =
@@ -42,40 +67,42 @@ api.interceptors.response.use(
     }
 
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
 
-      if (isRefreshing) {
-        return new Promise((resolve) => {
-          refreshSubscribers.push((token) => {
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
-            resolve(api(originalRequest));
-          });
-        });
-      }
-
-      isRefreshing = true;
-      try {
-        const res = await api.post<{ accessToken: string }>('/auth/refresh');
-        const newToken = res.data.accessToken;
-        window.__ecocoop_access_token = newToken;
-        onRefreshed(newToken);
-        originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
-        return api(originalRequest);
-      } catch {
-        window.__ecocoop_access_token = null;
-        window.location.href = '/login';
-      } finally {
-        isRefreshing = false;
-      }
+    // Never retry auth endpoints, already-retried requests, or non-401 errors.
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      isAuthPath(originalRequest.url)
+    ) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    originalRequest._retry = true;
+
+    // Queue behind an in-flight refresh.
+    if (isRefreshing) {
+      return new Promise<string>((resolve, reject) => {
+        refreshSubscribers.push({ resolve, reject });
+      }).then((token) => {
+        originalRequest.headers['Authorization'] = `Bearer ${token}`;
+        return api(originalRequest);
+      });
+    }
+
+    isRefreshing = true;
+    try {
+      const res = await authApi.post<{ accessToken: string }>('/auth/refresh');
+      const newToken = res.data.accessToken;
+      window.__ecocoop_access_token = newToken;
+      drainSubscribers(newToken);
+      originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+      return api(originalRequest);
+    } catch (err) {
+      window.__ecocoop_access_token = null;
+      rejectSubscribers(err);
+      return Promise.reject(err);
+    } finally {
+      isRefreshing = false;
+    }
   },
 );
-
-declare global {
-  interface Window {
-    __ecocoop_access_token: string | null;
-  }
-}
-window.__ecocoop_access_token = null;

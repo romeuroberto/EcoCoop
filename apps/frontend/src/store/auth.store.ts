@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { api } from '../services/api.client';
+import { api, authApi } from '../services/api.client';
 import { CurrentUserDto, LoginResponseDto } from '@ecocoop/shared';
 
 interface LoginCredentials {
@@ -23,12 +23,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isInitializing: true,
 
   login: async (credentials) => {
-    const res = await api.post<LoginResponseDto>('/auth/login', credentials);
+    const res = await authApi.post<LoginResponseDto>('/auth/login', credentials);
     const { accessToken, profile, redirectTo } = res.data;
     window.__ecocoop_access_token = accessToken;
     set({ accessToken });
 
-    // Load full user data
     const meRes = await api.get<CurrentUserDto>('/auth/me');
     set({ user: meRes.data });
 
@@ -37,16 +36,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      await authApi.post('/auth/logout');
     } finally {
       window.__ecocoop_access_token = null;
       set({ user: null, accessToken: null });
     }
   },
 
+  // Uses authApi directly — never triggers the refresh interceptor loop.
   refresh: async () => {
     try {
-      const res = await api.post<{ accessToken: string }>('/auth/refresh');
+      const res = await authApi.post<{ accessToken: string }>('/auth/refresh');
       const token = res.data.accessToken;
       window.__ecocoop_access_token = token;
       set({ accessToken: token });
@@ -60,17 +60,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initializeSession: async () => {
     set({ isInitializing: true });
-    const refreshed = await get().refresh();
-    if (refreshed) {
-      try {
+    try {
+      const refreshed = await get().refresh();
+      if (refreshed) {
         const meRes = await api.get<CurrentUserDto>('/auth/me');
         set({ user: meRes.data });
-      } catch {
+      } else {
         set({ user: null });
       }
-    } else {
+    } catch {
       set({ user: null });
+    } finally {
+      // Always unblock the app — never leaves the spinner stuck.
+      set({ isInitializing: false });
     }
-    set({ isInitializing: false });
   },
 }));

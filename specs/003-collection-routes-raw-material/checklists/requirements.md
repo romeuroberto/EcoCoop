@@ -31,7 +31,9 @@
 
 ## Notes
 
-- Spec validated on 2026-06-30. All items pass. Ready for `/speckit-clarify` or `/speckit-plan`.
+- Spec validated on 2026-06-30 (initial). Re-validated on 2026-06-30 after clarification session (5/5 questions). All 16 items pass.
+- Clarification session resolveu: modelo de estorno (`ESTORNO_BRUTO`), obrigatoriedade de `routeId` (NOT NULL), edição parcial em `EM_ANDAMENTO`, geocoding + coordenadas manuais (`locationPending`), permissões de DRIVER em rotas `CONCLUÍDAS`.
 - FR-040 mentions Leaflet/OpenStreetMap as "implementação inicial" — this is an assumption documented in Assumptions, not a requirement that locks the implementation.
 - SC-003 (sugestão de sequência em < 3 segundos para até 20 pontos) é verificável por teste de integração com dados de fixture.
 - A entidade `SaldoBruto` foi explicitamente marcada como projeção (não persistida) para reforçar o Princípio IV da Constituição.
+- `EventoEstoqueBruto` agora tem dois tipos na Fase 3: `ENTRADA_BRUTO` (positivo) e `ESTORNO_BRUTO` (negativo, referência obrigatória + justificativa).
