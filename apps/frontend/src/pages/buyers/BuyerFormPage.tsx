@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { CreateBuyerBody, DocumentType } from '../../services/buyers.service';
 import { buyersService } from '../../services/buyers.service';
+import { maskCpfCnpj, maskPhoneBr, maskCep, normalizeCpfCnpj, normalizePhone, normalizeCep } from '../../utils/masks';
 
 export function BuyerFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,15 +38,15 @@ export function BuyerFormPage() {
       setForm({
         legalName: existing.legalName,
         documentType: existing.documentType,
-        documentNumber: existing.documentNumber,
-        phone: existing.phone ?? '',
+        documentNumber: maskCpfCnpj(existing.documentNumber, existing.documentType),
+        phone: maskPhoneBr(existing.phone ?? ''),
         email: existing.email ?? '',
         addressStreet: existing.addressStreet ?? '',
         addressNumber: existing.addressNumber ?? '',
         addressComplement: existing.addressComplement ?? '',
         addressCity: existing.addressCity ?? '',
         addressState: existing.addressState ?? '',
-        addressZip: existing.addressZip ?? '',
+        addressZip: maskCep(existing.addressZip ?? ''),
         notes: existing.notes ?? '',
       });
     }
@@ -67,14 +68,25 @@ export function BuyerFormPage() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  const setMasked = (field: keyof CreateBuyerBody, mask: (v: string) => string) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((f) => ({ ...f, [field]: mask(e.target.value) }));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const body = { ...form };
-    const optionalFields: (keyof CreateBuyerBody)[] = ['phone', 'email', 'addressStreet', 'addressNumber', 'addressComplement', 'addressCity', 'addressState', 'addressZip', 'notes'];
+    const body = {
+      ...form,
+      documentNumber: normalizeCpfCnpj(form.documentNumber),
+      phone: form.phone ? normalizePhone(form.phone) : undefined,
+      addressZip: form.addressZip ? normalizeCep(form.addressZip) : undefined,
+    };
+    const optionalFields: (keyof CreateBuyerBody)[] = ['email', 'addressStreet', 'addressNumber', 'addressComplement', 'addressCity', 'addressState', 'notes'];
     for (const f of optionalFields) {
       if (!body[f]) delete body[f];
     }
+    if (!body.phone) delete body.phone;
+    if (!body.addressZip) delete body.addressZip;
     mut.mutate(body);
   };
 
@@ -117,8 +129,10 @@ export function BuyerFormPage() {
             <input
               className="border rounded-lg px-3 py-2 text-sm w-full"
               value={form.documentNumber}
-              onChange={set('documentNumber')}
+              onChange={(e) => setForm((f) => ({ ...f, documentNumber: maskCpfCnpj(e.target.value, f.documentType) }))}
               placeholder={docPlaceholder}
+              maxLength={form.documentType === 'CPF' ? 14 : 18}
+              inputMode="numeric"
               required
             />
           </div>
@@ -127,7 +141,14 @@ export function BuyerFormPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-            <input className="border rounded-lg px-3 py-2 text-sm w-full" value={form.phone} onChange={set('phone')} />
+            <input
+              className="border rounded-lg px-3 py-2 text-sm w-full"
+              value={form.phone}
+              onChange={setMasked('phone', maskPhoneBr)}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              inputMode="tel"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
@@ -164,7 +185,14 @@ export function BuyerFormPage() {
             </div>
             <div className="w-1/3">
               <label className="block text-xs text-gray-600 mb-1">CEP</label>
-              <input className="border rounded-lg px-3 py-2 text-sm w-full" value={form.addressZip} onChange={set('addressZip')} placeholder="00000-000" />
+              <input
+                className="border rounded-lg px-3 py-2 text-sm w-full"
+                value={form.addressZip}
+                onChange={setMasked('addressZip', maskCep)}
+                placeholder="00000-000"
+                maxLength={9}
+                inputMode="numeric"
+              />
             </div>
           </div>
         </fieldset>

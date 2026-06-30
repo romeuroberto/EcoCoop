@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { CreateMemberBody } from '../../services/members.service';
 import { membersService } from '../../services/members.service';
 import { memberRolesService, type MemberRole } from '../../services/memberRoles.service';
+import { maskCpf, maskPhoneBr, normalizeCpfCnpj, normalizePhone } from '../../utils/masks';
 
 export function MemberFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,8 +38,8 @@ export function MemberFormPage() {
     if (existing) {
       setForm({
         name: existing.name,
-        cpf: existing.cpf,
-        phone: existing.phone,
+        cpf: maskCpf(existing.cpf),
+        phone: maskPhoneBr(existing.phone),
         email: existing.email ?? '',
         admittedAt: existing.admittedAt.slice(0, 10),
         roleId: existing.role.id,
@@ -62,10 +63,18 @@ export function MemberFormPage() {
   const set = (field: keyof CreateMemberBody) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  const setMasked = (field: keyof CreateMemberBody, mask: (v: string) => string) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm((f) => ({ ...f, [field]: mask(e.target.value) }));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const body = { ...form };
+    const body = {
+      ...form,
+      cpf: normalizeCpfCnpj(form.cpf),
+      phone: normalizePhone(form.phone),
+    };
     if (!body.email) delete body.email;
     if (!body.notes) delete body.notes;
     mut.mutate(body);
@@ -88,11 +97,27 @@ export function MemberFormPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">CPF *</label>
-            <input className="border rounded-lg px-3 py-2 text-sm w-full" value={form.cpf} onChange={set('cpf')} placeholder="000.000.000-00" required />
+            <input
+              className="border rounded-lg px-3 py-2 text-sm w-full"
+              value={form.cpf}
+              onChange={setMasked('cpf', maskCpf)}
+              placeholder="000.000.000-00"
+              maxLength={14}
+              inputMode="numeric"
+              required
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Telefone *</label>
-            <input className="border rounded-lg px-3 py-2 text-sm w-full" value={form.phone} onChange={set('phone')} required />
+            <input
+              className="border rounded-lg px-3 py-2 text-sm w-full"
+              value={form.phone}
+              onChange={setMasked('phone', maskPhoneBr)}
+              placeholder="(00) 00000-0000"
+              maxLength={15}
+              inputMode="tel"
+              required
+            />
           </div>
         </div>
 

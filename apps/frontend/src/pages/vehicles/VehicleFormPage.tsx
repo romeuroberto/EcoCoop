@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { CreateVehicleBody, VehicleType } from '../../services/vehicles.service';
 import { vehiclesService } from '../../services/vehicles.service';
 import { unitsService, type UnitOfMeasure } from '../../services/units.service';
+import { maskVehiclePlate, normalizeVehiclePlate } from '../../utils/masks';
 
 const vehicleTypes: { value: VehicleType; label: string }[] = [
   { value: 'TRUCK', label: 'Caminhão' },
@@ -44,7 +45,7 @@ export function VehicleFormPage() {
   useEffect(() => {
     if (existing) {
       setForm({
-        plate: existing.plate,
+        plate: maskVehiclePlate(existing.plate),
         type: existing.type,
         model: existing.model,
         capacityValue: existing.capacityValue ?? undefined,
@@ -78,7 +79,7 @@ export function VehicleFormPage() {
     e.preventDefault();
     setError(null);
     const body: CreateVehicleBody & { isActive?: boolean } = {
-      plate: form.plate,
+      plate: normalizeVehiclePlate(form.plate),
       type: form.type,
       model: form.model,
     };
@@ -105,10 +106,11 @@ export function VehicleFormPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Placa *</label>
             <input
-              className="border rounded-lg px-3 py-2 text-sm w-full uppercase"
+              className="border rounded-lg px-3 py-2 text-sm w-full"
               value={form.plate}
-              onChange={set('plate')}
+              onChange={(e) => setForm((f) => ({ ...f, plate: maskVehiclePlate(e.target.value) }))}
               placeholder="AAA-0000"
+              maxLength={8}
               required
             />
           </div>
