@@ -97,6 +97,8 @@ Atualiza nome ou status de uma função.
 
 | Query | Tipo | Default | Descrição |
 |---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
 | `status` | `active` \| `inactive` \| `all` | `active` | Filtro de status |
 | `search` | string | — | Busca por nome, CPF, telefone ou e-mail |
 
@@ -104,19 +106,24 @@ Atualiza nome ou status de uma função.
 
 **Response 200**:
 ```json
-[
-  {
-    "id": "uuid",
-    "name": "João Silva",
-    "cpf": "123.456.789-09",
-    "phone": "(11) 91234-5678",
-    "email": null,
-    "admittedAt": "2024-01-15",
-    "role": { "id": "uuid", "name": "Triador" },
-    "isActive": true,
-    "userId": null
-  }
-]
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "João Silva",
+      "cpf": "123.456.789-09",
+      "phone": "(11) 91234-5678",
+      "email": null,
+      "admittedAt": "2024-01-15",
+      "role": { "id": "uuid", "name": "Triador" },
+      "isActive": true,
+      "userId": null
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
 ```
 
 ---
@@ -194,11 +201,30 @@ Para desvincular: `{ "userId": null }`
 
 | Query | Tipo | Default | Descrição |
 |---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
 | `status` | `active` \| `inactive` \| `all` | `active` | |
 | `search` | string | — | Busca por nome |
 | `includeSubcategories` | boolean | `false` | Inclui subcategorias aninhadas |
 
 **Permissão**: `MATERIALS:READ`
+
+**Response 200**:
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Plástico",
+      "description": "Materiais plásticos recicláveis",
+      "isActive": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
 
 ---
 
@@ -228,11 +254,34 @@ Para desvincular: `{ "userId": null }`
 
 | Query | Tipo | Default | Descrição |
 |---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
 | `categoryId` | uuid | — | Filtra por categoria |
 | `status` | `active` \| `inactive` \| `all` | `active` | |
 | `search` | string | — | Busca por nome |
 
 **Permissão**: `MATERIALS:READ`
+
+**Response 200**:
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "categoryId": "uuid",
+      "name": "PET",
+      "defaultUnit": { "id": "uuid", "name": "Quilograma", "symbol": "kg" },
+      "isSellable": true,
+      "acceptsStock": true,
+      "notes": null,
+      "isActive": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
 
 ---
 
@@ -268,26 +317,33 @@ Para desvincular: `{ "userId": null }`
 
 ### GET /api/v1/units
 
-| Query | Default | Descrição |
-|---|---|---|
-| `status` | `active` | `active` \| `inactive` \| `all` |
-| `search` | — | Busca por nome, símbolo |
+| Query | Tipo | Default | Descrição |
+|---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
+| `status` | `active` \| `inactive` \| `all` | `active` | |
+| `search` | string | — | Busca por nome, símbolo |
 
 **Permissão**: `UNITS:READ`
 
 **Response 200**:
 ```json
-[
-  {
-    "id": "uuid", "name": "Quilograma", "symbol": "kg",
-    "baseUnit": null, "conversionFactor": null, "isActive": true
-  },
-  {
-    "id": "uuid", "name": "Tonelada", "symbol": "t",
-    "baseUnit": { "id": "uuid", "name": "Quilograma", "symbol": "kg" },
-    "conversionFactor": 1000, "isActive": true
-  }
-]
+{
+  "data": [
+    {
+      "id": "uuid", "name": "Quilograma", "symbol": "kg",
+      "baseUnit": null, "conversionFactor": null, "isActive": true
+    },
+    {
+      "id": "uuid", "name": "Tonelada", "symbol": "t",
+      "baseUnit": { "id": "uuid", "name": "Quilograma", "symbol": "kg" },
+      "conversionFactor": 1000, "isActive": true
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "limit": 20
+}
 ```
 
 ---
