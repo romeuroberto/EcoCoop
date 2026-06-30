@@ -149,19 +149,19 @@
 
 ### Backend — Buyers
 
-- [ ] T037 [P] [US4] Create apps/backend/src/modules/buyers/dto/create-buyer.dto.ts (legalName, documentType: DocumentType enum, documentNumber: string with @IsCPF() or @IsCNPJ() conditional on documentType, phone?, email?, addressStreet?, addressNumber?, addressComplement?, addressCity?, addressState?, addressZip?, notes?) and apps/backend/src/modules/buyers/dto/update-buyer.dto.ts (all optional) and apps/backend/src/modules/buyers/dto/link-user.dto.ts (userId: string | null)
-- [ ] T038 [P] [US4] Create apps/backend/src/modules/buyers/buyers.service.ts: list with page/limit/search (legalName, documentNumber, phone, email)/status; create enforces documentNumber uniqueness across all buyers (409 BUYER_DOCUMENT_CONFLICT) and validates document format matches documentType; linkUser validates user exists, has BUYER profile (422 USER_NOT_BUYER_PROFILE if profile is not BUYER), is not already linked to another Buyer (409 USER_ALREADY_LINKED), and is not already linked to a Member (409 USER_ALREADY_LINKED_TO_MEMBER)
-- [ ] T039 [US4] Create apps/backend/src/modules/buyers/buyers.controller.ts with @AuditEntity('buyer'), @UseInterceptors(AuditInterceptor), RBAC BUYERS; add PATCH /:id/link-user route; create buyers.module.ts and add BuyersModule to apps/backend/src/app.module.ts
+- [X] T037 [P] [US4] Create apps/backend/src/modules/buyers/dto/create-buyer.dto.ts (legalName, documentType: DocumentType enum, documentNumber: string with @IsCPF() or @IsCNPJ() conditional on documentType, phone?, email?, addressStreet?, addressNumber?, addressComplement?, addressCity?, addressState?, addressZip?, notes?) and apps/backend/src/modules/buyers/dto/update-buyer.dto.ts (all optional) and apps/backend/src/modules/buyers/dto/link-user.dto.ts (userId: string | null)
+- [X] T038 [P] [US4] Create apps/backend/src/modules/buyers/buyers.service.ts: list with page/limit/search (legalName, documentNumber, phone, email)/status; create enforces documentNumber uniqueness across all buyers (409 BUYER_DOCUMENT_CONFLICT) and validates document format matches documentType; linkUser validates user exists, has BUYER profile (422 USER_NOT_BUYER_PROFILE if profile is not BUYER), is not already linked to another Buyer (409 USER_ALREADY_LINKED), and is not already linked to a Member (409 USER_ALREADY_LINKED_TO_MEMBER)
+- [X] T039 [US4] Create apps/backend/src/modules/buyers/buyers.controller.ts with @AuditEntity('buyer'), @UseInterceptors(AuditInterceptor), RBAC BUYERS; add PATCH /:id/link-user route; create buyers.module.ts and add BuyersModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US4
 
-- [ ] T040 [P] [US4] Create apps/backend/test/integration/buyers.spec.ts: duplicate documentNumber returns 409; invalid CNPJ check digit returns 400; invalid CPF check digit returns 400; link-user with non-BUYER profile returns 422 USER_NOT_BUYER_PROFILE; link-user already linked to another Buyer returns 409 USER_ALREADY_LINKED; link-user already linked to a Member returns 409 USER_ALREADY_LINKED_TO_MEMBER; user without BUYERS permission returns 403; MANAGER creates buyer (201); inactivation removes from ?status=active list; previousState non-null on PATCH
+- [X] T040 [P] [US4] Create apps/backend/test/integration/buyers.spec.ts: duplicate documentNumber returns 409; invalid CNPJ check digit returns 400; invalid CPF check digit returns 400; link-user with non-BUYER profile returns 422 USER_NOT_BUYER_PROFILE; link-user already linked to another Buyer returns 409 USER_ALREADY_LINKED; link-user already linked to a Member returns 409 USER_ALREADY_LINKED_TO_MEMBER; user without BUYERS permission returns 403; MANAGER creates buyer (201); inactivation removes from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US4
 
-- [ ] T041 [P] [US4] Create apps/frontend/src/services/buyers.service.ts (list, getById, create, update, linkUser)
-- [ ] T042 [P] [US4] Create apps/frontend/src/pages/buyers/BuyerListPage.tsx (paginated, search, status filter) and apps/frontend/src/pages/buyers/BuyerFormPage.tsx (documentType radio CPF/CNPJ with conditional mask on documentNumber field, address fields in collapsible section, link-user modal showing user search by email)
-- [ ] T043 [US4] Register route /buyers in apps/frontend/src/router/index.tsx; add sidebar entry with BUYERS permission visibility
+- [X] T041 [P] [US4] Create apps/frontend/src/services/buyers.service.ts (list, getById, create, update, linkUser)
+- [X] T042 [P] [US4] Create apps/frontend/src/pages/buyers/BuyerListPage.tsx (paginated, search, status filter) and apps/frontend/src/pages/buyers/BuyerFormPage.tsx (documentType radio CPF/CNPJ with conditional mask on documentNumber field, address fields in collapsible section, link-user modal showing user search by email)
+- [X] T043 [US4] Register route /buyers in apps/frontend/src/router/index.tsx; add sidebar entry with BUYERS permission visibility
 
 **Checkpoint**: Ciclo completo (criar comprador com CNPJ → vincular usuário BUYER → inativar → verificar ocultação) funciona end-to-end.
 
@@ -177,19 +177,19 @@
 
 ### Backend — Vehicles
 
-- [ ] T044 [P] [US5] Create apps/backend/src/modules/vehicles/dto/create-vehicle.dto.ts (plate: string @Matches(/^[A-Z]{3}-[0-9]{4}$|^[A-Z]{3}-[0-9][A-Z][0-9]{2}$/), type: VehicleType enum, model: string, capacityValue?: number, capacityUnitId?: UUID, capacityNotes?: string, notes?) and apps/backend/src/modules/vehicles/dto/update-vehicle.dto.ts; cross-field: capacityValue and capacityUnitId both present or both absent
-- [ ] T045 [P] [US5] Create apps/backend/src/modules/vehicles/vehicles.service.ts: list with page/limit/search (plate, model, type)/status; findOne (throws 404 VEHICLE_NOT_FOUND if absent); create enforces plate uniqueness (409 VEHICLE_PLATE_CONFLICT), capacity pair validation (400 CAPACITY_UNIT_REQUIRED_WITH_VALUE), active unit check on capacityUnitId (400 UNIT_INACTIVE); patch same validations (existing vehicles preserve FK if unit later inactivated)
-- [ ] T046 [US5] Create apps/backend/src/modules/vehicles/vehicles.controller.ts with @AuditEntity('vehicle'), @UseInterceptors(AuditInterceptor), RBAC VEHICLES; expose GET /:id (VEHICLES:READ) calling findOne with 404 on miss; create vehicles.module.ts and add VehiclesModule to apps/backend/src/app.module.ts
+- [X] T044 [P] [US5] Create apps/backend/src/modules/vehicles/dto/create-vehicle.dto.ts (plate: string @Matches(/^[A-Z]{3}-[0-9]{4}$|^[A-Z]{3}-[0-9][A-Z][0-9]{2}$/), type: VehicleType enum, model: string, capacityValue?: number, capacityUnitId?: UUID, capacityNotes?: string, notes?) and apps/backend/src/modules/vehicles/dto/update-vehicle.dto.ts; cross-field: capacityValue and capacityUnitId both present or both absent
+- [X] T045 [P] [US5] Create apps/backend/src/modules/vehicles/vehicles.service.ts: list with page/limit/search (plate, model, type)/status; findOne (throws 404 VEHICLE_NOT_FOUND if absent); create enforces plate uniqueness (409 VEHICLE_PLATE_CONFLICT), capacity pair validation (400 CAPACITY_UNIT_REQUIRED_WITH_VALUE), active unit check on capacityUnitId (400 UNIT_INACTIVE); patch same validations (existing vehicles preserve FK if unit later inactivated)
+- [X] T046 [US5] Create apps/backend/src/modules/vehicles/vehicles.controller.ts with @AuditEntity('vehicle'), @UseInterceptors(AuditInterceptor), RBAC VEHICLES; expose GET /:id (VEHICLES:READ) calling findOne with 404 on miss; create vehicles.module.ts and add VehiclesModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US5
 
-- [ ] T047 [P] [US5] Create apps/backend/test/integration/vehicles.spec.ts: duplicate plate returns 409; capacityValue without capacityUnitId returns 400; inactive unit as capacityUnitId on new vehicle returns 400; MANAGER creates vehicle (201); user without permission returns 403; inactivated vehicle hidden from ?status=active list; previousState non-null on PATCH
+- [X] T047 [P] [US5] Create apps/backend/test/integration/vehicles.spec.ts: duplicate plate returns 409; capacityValue without capacityUnitId returns 400; inactive unit as capacityUnitId on new vehicle returns 400; MANAGER creates vehicle (201); user without permission returns 403; inactivated vehicle hidden from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US5
 
-- [ ] T048 [P] [US5] Create apps/frontend/src/services/vehicles.service.ts (list, getById, create, update)
-- [ ] T049 [P] [US5] Create apps/frontend/src/pages/vehicles/VehicleListPage.tsx (paginated, search by plate/model/type, status filter, show capacity column as "9000 kg" when set) and apps/frontend/src/pages/vehicles/VehicleFormPage.tsx (vehicle type enum select, optional capacity section with value input + unit dropdown populated from units API ?status=active)
-- [ ] T050 [US5] Register route /vehicles in apps/frontend/src/router/index.tsx; add sidebar entry with VEHICLES permission visibility
+- [X] T048 [P] [US5] Create apps/frontend/src/services/vehicles.service.ts (list, getById, create, update)
+- [X] T049 [P] [US5] Create apps/frontend/src/pages/vehicles/VehicleListPage.tsx (paginated, search by plate/model/type, status filter, show capacity column as "9000 kg" when set) and apps/frontend/src/pages/vehicles/VehicleFormPage.tsx (vehicle type enum select, optional capacity section with value input + unit dropdown populated from units API ?status=active)
+- [X] T050 [US5] Register route /vehicles in apps/frontend/src/router/index.tsx; add sidebar entry with VEHICLES permission visibility
 
 **Checkpoint**: Veículo com e sem capacidade pode ser criado. Seletor de unidade usa lista ativa da Fase 5 (US3).
 

@@ -50,6 +50,22 @@ const UnitFormPage = lazy(() =>
   import('../pages/units/UnitFormPage').then((m) => ({ default: m.UnitFormPage })),
 );
 
+// US4 — Buyers
+const BuyerListPage = lazy(() =>
+  import('../pages/buyers/BuyerListPage').then((m) => ({ default: m.BuyerListPage })),
+);
+const BuyerFormPage = lazy(() =>
+  import('../pages/buyers/BuyerFormPage').then((m) => ({ default: m.BuyerFormPage })),
+);
+
+// US5 — Vehicles
+const VehicleListPage = lazy(() =>
+  import('../pages/vehicles/VehicleListPage').then((m) => ({ default: m.VehicleListPage })),
+);
+const VehicleFormPage = lazy(() =>
+  import('../pages/vehicles/VehicleFormPage').then((m) => ({ default: m.VehicleFormPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -97,6 +113,14 @@ export const router = createBrowserRouter([
           // US3 — Units of Measure
           { path: 'units', element: S(UnitListPage) },
           { path: 'units/:id', element: S(UnitFormPage) },
+
+          // US4 — Buyers
+          { path: 'buyers', element: S(BuyerListPage) },
+          { path: 'buyers/:id', element: S(BuyerFormPage) },
+
+          // US5 — Vehicles
+          { path: 'vehicles', element: S(VehicleListPage) },
+          { path: 'vehicles/:id', element: S(VehicleFormPage) },
         ],
       },
     ],

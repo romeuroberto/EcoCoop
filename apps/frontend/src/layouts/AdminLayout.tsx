@@ -11,6 +11,8 @@ const navLinks = [
   { to: '/material-categories', label: 'Categorias', module: 'MATERIALS' },
   { to: '/material-subcategories', label: 'Subcategorias', module: 'MATERIALS' },
   { to: '/units', label: 'Unidades', module: 'UNITS' },
+  { to: '/buyers', label: 'Compradores', module: 'BUYERS' },
+  { to: '/vehicles', label: 'Veículos', module: 'VEHICLES' },
 ];
 
 export function AdminLayout() {

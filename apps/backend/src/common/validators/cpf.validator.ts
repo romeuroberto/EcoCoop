@@ -1,6 +1,6 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
 
-function validateCPF(value: unknown): boolean {
+export function validateCPF(value: unknown): boolean {
   if (typeof value !== 'string') return false;
   const digits = value.replace(/\D/g, '');
   if (digits.length !== 11) return false;

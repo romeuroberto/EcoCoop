@@ -6,6 +6,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
+import { BuyersModule } from './modules/buyers/buyers.module';
 import { CooperativeModule } from './modules/cooperative/cooperative.module';
 import { MaterialCategoriesModule } from './modules/material-categories/material-categories.module';
 import { MaterialSubcategoriesModule } from './modules/material-subcategories/material-subcategories.module';
@@ -14,6 +15,7 @@ import { MembersModule } from './modules/members/members.module';
 import { ProfilesModule } from './modules/profiles/profiles.module';
 import { UnitsModule } from './modules/units/units.module';
 import { UsersModule } from './modules/users/users.module';
+import { VehiclesModule } from './modules/vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { UsersModule } from './modules/users/users.module';
     MaterialCategoriesModule,
     MaterialSubcategoriesModule,
     UnitsModule,
+    BuyersModule,
+    VehiclesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
