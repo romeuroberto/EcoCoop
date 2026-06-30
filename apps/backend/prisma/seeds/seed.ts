@@ -70,6 +70,7 @@ const PROFILES: ProfileSeed[] = [
       { module: 'DASHBOARD', action: 'READ' },
       { module: 'COLLECTION_ROUTES', action: 'READ' },
       { module: 'COLLECTION_ROUTES', action: 'EXECUTE' },
+      { module: 'RAW_MATERIAL_ENTRIES', action: 'CREATE' },
     ],
   },
   {

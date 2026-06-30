@@ -20,6 +20,7 @@ import { EpiTypesModule } from './modules/epi-types/epi-types.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CollectionPointsModule } from './modules/collection-points/collection-points.module';
 import { CollectionRoutesModule } from './modules/collection-routes/collection-routes.module';
+import { RawMaterialEntriesModule } from './modules/raw-material-entries/raw-material-entries.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CollectionRoutesModule } from './modules/collection-routes/collection-r
     CostCentersModule,
     CollectionPointsModule,
     CollectionRoutesModule,
+    RawMaterialEntriesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
