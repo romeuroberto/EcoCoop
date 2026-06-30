@@ -41,7 +41,11 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm bg-white rounded-xl shadow-md p-8">
-        <h1 className="text-2xl font-bold text-center text-brand-700 mb-2">EcoCoop</h1>
+        <img
+          src="/brand/logo-stacked-color.png"
+          alt="EcoCoop"
+          className="mx-auto mb-3 h-28 w-auto object-contain"
+        />
         <p className="text-center text-sm text-gray-500 mb-6">Gestão de cooperativas de reciclagem</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

@@ -15,6 +15,7 @@ const navLinks = [
   { to: '/vehicles', label: 'Veículos', module: 'VEHICLES' },
   { to: '/epi-types', label: 'Tipos de EPI', module: 'EPI_TYPES' },
   { to: '/cost-centers', label: 'Centros de Custo', module: 'COST_CENTERS' },
+  { to: '/collection-points', label: 'Pontos de Coleta', module: 'COLLECTION_POINTS' },
 ];
 
 export function AdminLayout() {
@@ -35,7 +36,11 @@ export function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md flex flex-col">
         <div className="p-6 border-b">
-          <h1 className="text-xl font-bold text-brand-600">EcoCoop</h1>
+          <img
+            src="/brand/logo-horizontal-color.png"
+            alt="EcoCoop"
+            className="h-10 w-auto object-contain"
+          />
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navLinks.map((link) =>
