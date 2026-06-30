@@ -36,11 +36,11 @@ export function AdminLayout() {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md flex flex-col">
-        <div className="p-6 border-b">
+        <div className="px-6 py-4 border-b">
           <img
             src="/brand/logo-horizontal-color.png"
             alt="EcoCoop"
-            className="h-10 w-auto object-contain"
+            className="h-16 w-auto max-w-full object-contain"
           />
         </div>
         <nav className="flex-1 p-4 space-y-1">
