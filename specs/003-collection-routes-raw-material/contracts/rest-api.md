@@ -279,7 +279,9 @@ Cria nova rota de coleta com status `PLANEJADA`.
 **Errors**:
 - `404 VEHICLE_NOT_FOUND` ou `404 USER_NOT_FOUND` (driverId inválido)
 - `422 DRIVER_PROFILE_REQUIRED` — usuário informado não tem perfil DRIVER
+- `422 DRIVER_INACTIVE` — motorista inativo
 - `422 VEHICLE_INACTIVE` — veículo inativo
+- `422 COLLECTION_POINT_INACTIVE` — um dos `pointIds` informados está inativo
 - `422 COLLECTION_ROUTE_REQUIRES_VEHICLE_AND_DRIVER`
 
 ---
@@ -305,6 +307,7 @@ Atualiza campos de planejamento de uma rota `PLANEJADA`.
 - `404 COLLECTION_ROUTE_NOT_FOUND`
 - `409 ROUTE_NOT_EDITABLE` — rota não está em status `PLANEJADA`
 - `422 VEHICLE_INACTIVE` ou `422 DRIVER_PROFILE_REQUIRED`
+- `422 DRIVER_INACTIVE` — motorista inativo
 
 ---
 
@@ -328,6 +331,7 @@ Adiciona um ponto de coleta à rota. Só permitido para rotas `PLANEJADA`.
 - `404 COLLECTION_ROUTE_NOT_FOUND` / `404 COLLECTION_POINT_NOT_FOUND`
 - `409 ROUTE_NOT_EDITABLE` — rota não em `PLANEJADA`
 - `409 POINT_ALREADY_IN_ROUTE`
+- `422 COLLECTION_POINT_INACTIVE` — ponto de coleta inativo
 
 ---
 
@@ -684,9 +688,11 @@ Consulta saldo bruto atual por subcategoria e unidade de medida.
 |---|---|---|
 | `COLLECTION_POINT_NOT_FOUND` | 404 | Ponto de coleta não encontrado |
 | `COLLECTION_POINT_ADDRESS_REQUIRED` | 422 | Endereço obrigatório |
+| `COLLECTION_POINT_INACTIVE` | 422 | Ponto de coleta inativo |
 | `COLLECTION_ROUTE_NOT_FOUND` | 404 | Rota não encontrada |
 | `COLLECTION_ROUTE_REQUIRES_VEHICLE_AND_DRIVER` | 422 | Veículo e motorista obrigatórios |
 | `DRIVER_PROFILE_REQUIRED` | 422 | Usuário não tem perfil DRIVER |
+| `DRIVER_INACTIVE` | 422 | Motorista inativo |
 | `VEHICLE_INACTIVE` | 422 | Veículo inativo |
 | `ROUTE_NOT_EDITABLE` | 409 | Rota não pode ser editada no estado atual |
 | `INVALID_ROUTE_TRANSITION` | 409 | Transição de estado inválida |
