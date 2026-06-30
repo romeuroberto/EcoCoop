@@ -204,12 +204,12 @@
 ### Backend — EPI Types
 
 - [ ] T051 [P] [US6] Create apps/backend/src/modules/epi-types/dto/create-epi-type.dto.ts (name: string, defaultValidityDays?: number @Min(1)) and apps/backend/src/modules/epi-types/dto/update-epi-type.dto.ts (name?, defaultValidityDays?, isActive?)
-- [ ] T052 [P] [US6] Create apps/backend/src/modules/epi-types/epi-types.service.ts: list with page/limit/search (name)/status; create enforces name uniqueness (409 EPI_TYPE_NAME_CONFLICT); patch same
-- [ ] T053 [US6] Create apps/backend/src/modules/epi-types/epi-types.controller.ts with @AuditEntity('epiType'), @UseInterceptors(AuditInterceptor), RBAC EPI_TYPES; create epi-types.module.ts and add EpiTypesModule to apps/backend/src/app.module.ts
+- [ ] T052 [P] [US6] Create apps/backend/src/modules/epi-types/epi-types.service.ts: list with page/limit/search (name)/status; findOne (throws 404 EPI_TYPE_NOT_FOUND if absent); create enforces name uniqueness (409 EPI_TYPE_NAME_CONFLICT); patch same
+- [ ] T053 [US6] Create apps/backend/src/modules/epi-types/epi-types.controller.ts with @AuditEntity('epiType'), @UseInterceptors(AuditInterceptor), RBAC EPI_TYPES; expose GET /:id (EPI_TYPES:READ) calling findOne with 404 on miss; create epi-types.module.ts and add EpiTypesModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US6
 
-- [ ] T054 [P] [US6] Create apps/backend/test/integration/epi-types.spec.ts: duplicate name returns 409; defaultValidityDays of 0 returns 400; MANAGER create returns 403; ADMIN create returns 201; inactivated type absent from ?status=active list; previousState non-null on PATCH
+- [ ] T054 [P] [US6] Create apps/backend/test/integration/epi-types.spec.ts: duplicate name returns 409; defaultValidityDays of 0 returns 400; MANAGER GET /epi-types returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /epi-types/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /epi-types/:id returns 200; GET /epi-types/:id with unknown id returns 404 EPI_TYPE_NOT_FOUND; inactivated type absent from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US6
 
@@ -230,12 +230,12 @@
 ### Backend — Cost Centers
 
 - [ ] T058 [P] [US7] Create apps/backend/src/modules/cost-centers/dto/create-cost-center.dto.ts (name: string, code?: string, description?: string) and apps/backend/src/modules/cost-centers/dto/update-cost-center.dto.ts (all optional, isActive?)
-- [ ] T059 [P] [US7] Create apps/backend/src/modules/cost-centers/cost-centers.service.ts: list with page/limit/search (name, code)/status; create enforces name uniqueness (409 COST_CENTER_NAME_CONFLICT) and code uniqueness case-insensitive when provided (409 COST_CENTER_CODE_CONFLICT); patch same
-- [ ] T060 [US7] Create apps/backend/src/modules/cost-centers/cost-centers.controller.ts with @AuditEntity('costCenter'), @UseInterceptors(AuditInterceptor), RBAC COST_CENTERS; create cost-centers.module.ts and add CostCentersModule to apps/backend/src/app.module.ts
+- [ ] T059 [P] [US7] Create apps/backend/src/modules/cost-centers/cost-centers.service.ts: list with page/limit/search (name, code)/status; findOne (throws 404 COST_CENTER_NOT_FOUND if absent); create enforces name uniqueness (409 COST_CENTER_NAME_CONFLICT) and code uniqueness case-insensitive when provided (409 COST_CENTER_CODE_CONFLICT); patch same
+- [ ] T060 [US7] Create apps/backend/src/modules/cost-centers/cost-centers.controller.ts with @AuditEntity('costCenter'), @UseInterceptors(AuditInterceptor), RBAC COST_CENTERS; expose GET /:id (COST_CENTERS:READ) calling findOne with 404 on miss; create cost-centers.module.ts and add CostCentersModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US7
 
-- [ ] T061 [P] [US7] Create apps/backend/test/integration/cost-centers.spec.ts: duplicate code case-insensitive returns 409; duplicate name returns 409; MANAGER create returns 403; ADMIN create returns 201; inactivated center absent from ?status=active list; previousState non-null on PATCH
+- [ ] T061 [P] [US7] Create apps/backend/test/integration/cost-centers.spec.ts: duplicate code case-insensitive returns 409; duplicate name returns 409; MANAGER GET /cost-centers returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /cost-centers/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /cost-centers/:id returns 200; GET /cost-centers/:id with unknown id returns 404 COST_CENTER_NOT_FOUND; inactivated center absent from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US7
 

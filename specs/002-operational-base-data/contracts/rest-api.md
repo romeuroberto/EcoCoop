@@ -521,12 +521,26 @@ Retorna um veículo pelo seu ID. Utilizado pelo frontend de edição para pré-c
 
 ### GET /api/v1/epi-types
 
-| Query | Default | Descrição |
-|---|---|---|
-| `status` | `active` | `active` \| `inactive` \| `all` |
-| `search` | — | Busca por nome |
+| Query | Tipo | Default | Descrição |
+|---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
+| `status` | `active` \| `inactive` \| `all` | `active` | Filtro de status |
+| `search` | string | — | Busca por nome (case-insensitive) |
 
 **Permissão**: `EPI_TYPES:READ`
+
+**Response 200**:
+```json
+{
+  "data": [
+    { "id": "uuid", "name": "Luva de raspa", "defaultValidityDays": 180, "isActive": true }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
 
 ---
 
@@ -536,7 +550,31 @@ Retorna um veículo pelo seu ID. Utilizado pelo frontend de edição para pré-c
 
 **Request body**: `{ "name": "Luva de raspa", "defaultValidityDays": 180 }`
 
+**Response 201**: objeto EpiType criado.
+
 **Errors**: `409 EPI_TYPE_NAME_CONFLICT`
+
+---
+
+### GET /api/v1/epi-types/:id
+
+Retorna um tipo de EPI pelo seu ID. Utilizado pelo frontend de edição para pré-carregar o formulário.
+
+**Permissão**: `EPI_TYPES:READ`
+
+**Response 200**:
+```json
+{
+  "id": "uuid",
+  "name": "Luva de raspa",
+  "defaultValidityDays": 180,
+  "isActive": true,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Errors**: `404 EPI_TYPE_NOT_FOUND`
 
 ---
 
@@ -544,18 +582,36 @@ Retorna um veículo pelo seu ID. Utilizado pelo frontend de edição para pré-c
 
 **Permissão**: `EPI_TYPES:MANAGE`
 
+**Request body** (todos opcionais): `{ "name": "...", "defaultValidityDays": 90, "isActive": false }`
+
+**Errors**: `404 EPI_TYPE_NOT_FOUND`, `409 EPI_TYPE_NAME_CONFLICT`
+
 ---
 
 ## 9. Cost Centers — `/api/v1/cost-centers`
 
 ### GET /api/v1/cost-centers
 
-| Query | Default | Descrição |
-|---|---|---|
-| `status` | `active` | `active` \| `inactive` \| `all` |
-| `search` | — | Busca por nome, código |
+| Query | Tipo | Default | Descrição |
+|---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
+| `status` | `active` \| `inactive` \| `all` | `active` | Filtro de status |
+| `search` | string | — | Busca por nome ou código (case-insensitive) |
 
 **Permissão**: `COST_CENTERS:READ`
+
+**Response 200**:
+```json
+{
+  "data": [
+    { "id": "uuid", "name": "Logística", "code": "LOG-001", "description": "Custos de coleta e transporte", "isActive": true }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
 
 ---
 
@@ -565,13 +621,42 @@ Retorna um veículo pelo seu ID. Utilizado pelo frontend de edição para pré-c
 
 **Request body**: `{ "name": "Logística", "code": "LOG-001", "description": "..." }`
 
+**Response 201**: objeto CostCenter criado.
+
 **Errors**: `409 COST_CENTER_NAME_CONFLICT`, `409 COST_CENTER_CODE_CONFLICT`
+
+---
+
+### GET /api/v1/cost-centers/:id
+
+Retorna um centro de custo pelo seu ID. Utilizado pelo frontend de edição para pré-carregar o formulário.
+
+**Permissão**: `COST_CENTERS:READ`
+
+**Response 200**:
+```json
+{
+  "id": "uuid",
+  "name": "Logística",
+  "code": "LOG-001",
+  "description": "Custos de coleta e transporte",
+  "isActive": true,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Errors**: `404 COST_CENTER_NOT_FOUND`
 
 ---
 
 ### PATCH /api/v1/cost-centers/:id
 
 **Permissão**: `COST_CENTERS:MANAGE`
+
+**Request body** (todos opcionais): `{ "name": "...", "code": "...", "description": "...", "isActive": false }`
+
+**Errors**: `404 COST_CENTER_NOT_FOUND`, `409 COST_CENTER_NAME_CONFLICT`, `409 COST_CENTER_CODE_CONFLICT`
 
 ---
 
