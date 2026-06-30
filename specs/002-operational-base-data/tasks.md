@@ -203,19 +203,19 @@
 
 ### Backend — EPI Types
 
-- [ ] T051 [P] [US6] Create apps/backend/src/modules/epi-types/dto/create-epi-type.dto.ts (name: string, defaultValidityDays?: number @Min(1)) and apps/backend/src/modules/epi-types/dto/update-epi-type.dto.ts (name?, defaultValidityDays?, isActive?)
-- [ ] T052 [P] [US6] Create apps/backend/src/modules/epi-types/epi-types.service.ts: list with page/limit/search (name)/status; findOne (throws 404 EPI_TYPE_NOT_FOUND if absent); create enforces name uniqueness (409 EPI_TYPE_NAME_CONFLICT); patch same
-- [ ] T053 [US6] Create apps/backend/src/modules/epi-types/epi-types.controller.ts with @AuditEntity('epiType'), @UseInterceptors(AuditInterceptor), RBAC EPI_TYPES; expose GET /:id (EPI_TYPES:READ) calling findOne with 404 on miss; create epi-types.module.ts and add EpiTypesModule to apps/backend/src/app.module.ts
+- [X] T051 [P] [US6] Create apps/backend/src/modules/epi-types/dto/create-epi-type.dto.ts (name: string, defaultValidityDays?: number @Min(1)) and apps/backend/src/modules/epi-types/dto/update-epi-type.dto.ts (name?, defaultValidityDays?, isActive?)
+- [X] T052 [P] [US6] Create apps/backend/src/modules/epi-types/epi-types.service.ts: list with page/limit/search (name)/status; findOne (throws 404 EPI_TYPE_NOT_FOUND if absent); create enforces name uniqueness (409 EPI_TYPE_NAME_CONFLICT); patch same
+- [X] T053 [US6] Create apps/backend/src/modules/epi-types/epi-types.controller.ts with @AuditEntity('epiType'), @UseInterceptors(AuditInterceptor), RBAC EPI_TYPES; expose GET /:id (EPI_TYPES:READ) calling findOne with 404 on miss; create epi-types.module.ts and add EpiTypesModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US6
 
-- [ ] T054 [P] [US6] Create apps/backend/test/integration/epi-types.spec.ts: duplicate name returns 409; defaultValidityDays of 0 returns 400; MANAGER GET /epi-types returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /epi-types/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /epi-types/:id returns 200; GET /epi-types/:id with unknown id returns 404 EPI_TYPE_NOT_FOUND; inactivated type absent from ?status=active list; previousState non-null on PATCH
+- [X] T054 [P] [US6] Create apps/backend/test/integration/epi-types.spec.ts: duplicate name returns 409; defaultValidityDays of 0 returns 400; MANAGER GET /epi-types returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /epi-types/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /epi-types/:id returns 200; GET /epi-types/:id with unknown id returns 404 EPI_TYPE_NOT_FOUND; inactivated type absent from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US6
 
-- [ ] T055 [P] [US6] Create apps/frontend/src/services/epiTypes.service.ts (list, create, update)
-- [ ] T056 [P] [US6] Create apps/frontend/src/pages/epi-types/EpiTypeListPage.tsx (paginated, search, status filter, show defaultValidityDays as "180 dias" or "sem validade padrão") and apps/frontend/src/pages/epi-types/EpiTypeFormPage.tsx (optional validity field with min:1 hint)
-- [ ] T057 [US6] Register route /epi-types in apps/frontend/src/router/index.tsx; add sidebar entry with EPI_TYPES permission visibility
+- [X] T055 [P] [US6] Create apps/frontend/src/services/epiTypes.service.ts (list, create, update)
+- [X] T056 [P] [US6] Create apps/frontend/src/pages/epi-types/EpiTypeListPage.tsx (paginated, search, status filter, show defaultValidityDays as "180 dias" or "sem validade padrão") and apps/frontend/src/pages/epi-types/EpiTypeFormPage.tsx (optional validity field with min:1 hint)
+- [X] T057 [US6] Register route /epi-types in apps/frontend/src/router/index.tsx; add sidebar entry with EPI_TYPES permission visibility
 
 **Checkpoint**: ADMIN cria tipo de EPI com e sem validade. MANAGER vê listagem mas recebe 403 ao tentar criar.
 
@@ -229,19 +229,19 @@
 
 ### Backend — Cost Centers
 
-- [ ] T058 [P] [US7] Create apps/backend/src/modules/cost-centers/dto/create-cost-center.dto.ts (name: string, code?: string, description?: string) and apps/backend/src/modules/cost-centers/dto/update-cost-center.dto.ts (all optional, isActive?)
-- [ ] T059 [P] [US7] Create apps/backend/src/modules/cost-centers/cost-centers.service.ts: list with page/limit/search (name, code)/status; findOne (throws 404 COST_CENTER_NOT_FOUND if absent); create enforces name uniqueness (409 COST_CENTER_NAME_CONFLICT) and code uniqueness case-insensitive when provided (409 COST_CENTER_CODE_CONFLICT); patch same
-- [ ] T060 [US7] Create apps/backend/src/modules/cost-centers/cost-centers.controller.ts with @AuditEntity('costCenter'), @UseInterceptors(AuditInterceptor), RBAC COST_CENTERS; expose GET /:id (COST_CENTERS:READ) calling findOne with 404 on miss; create cost-centers.module.ts and add CostCentersModule to apps/backend/src/app.module.ts
+- [X] T058 [P] [US7] Create apps/backend/src/modules/cost-centers/dto/create-cost-center.dto.ts (name: string, code?: string, description?: string) and apps/backend/src/modules/cost-centers/dto/update-cost-center.dto.ts (all optional, isActive?)
+- [X] T059 [P] [US7] Create apps/backend/src/modules/cost-centers/cost-centers.service.ts: list with page/limit/search (name, code)/status; findOne (throws 404 COST_CENTER_NOT_FOUND if absent); create enforces name uniqueness (409 COST_CENTER_NAME_CONFLICT) and code uniqueness case-insensitive when provided (409 COST_CENTER_CODE_CONFLICT); patch same
+- [X] T060 [US7] Create apps/backend/src/modules/cost-centers/cost-centers.controller.ts with @AuditEntity('costCenter'), @UseInterceptors(AuditInterceptor), RBAC COST_CENTERS; expose GET /:id (COST_CENTERS:READ) calling findOne with 404 on miss; create cost-centers.module.ts and add CostCentersModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US7
 
-- [ ] T061 [P] [US7] Create apps/backend/test/integration/cost-centers.spec.ts: duplicate code case-insensitive returns 409; duplicate name returns 409; MANAGER GET /cost-centers returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /cost-centers/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /cost-centers/:id returns 200; GET /cost-centers/:id with unknown id returns 404 COST_CENTER_NOT_FOUND; inactivated center absent from ?status=active list; previousState non-null on PATCH
+- [X] T061 [P] [US7] Create apps/backend/test/integration/cost-centers.spec.ts: duplicate code case-insensitive returns 409; duplicate name returns 409; MANAGER GET /cost-centers returns 200 with paginated envelope {data, total, page, limit}; MANAGER GET /cost-centers/:id returns 200; MANAGER create (POST) returns 403; MANAGER patch (PATCH) returns 403; ADMIN create returns 201; ADMIN GET /cost-centers/:id returns 200; GET /cost-centers/:id with unknown id returns 404 COST_CENTER_NOT_FOUND; inactivated center absent from ?status=active list; previousState non-null on PATCH
 
 ### Frontend — US7
 
-- [ ] T062 [P] [US7] Create apps/frontend/src/services/costCenters.service.ts (list, create, update)
-- [ ] T063 [P] [US7] Create apps/frontend/src/pages/cost-centers/CostCenterListPage.tsx (paginated, search by name/code, status filter) and apps/frontend/src/pages/cost-centers/CostCenterFormPage.tsx (optional code field with uppercase hint)
-- [ ] T064 [US7] Register route /cost-centers in apps/frontend/src/router/index.tsx; add sidebar entry with COST_CENTERS permission visibility
+- [X] T062 [P] [US7] Create apps/frontend/src/services/costCenters.service.ts (list, create, update)
+- [X] T063 [P] [US7] Create apps/frontend/src/pages/cost-centers/CostCenterListPage.tsx (paginated, search by name/code, status filter) and apps/frontend/src/pages/cost-centers/CostCenterFormPage.tsx (optional code field with uppercase hint)
+- [X] T064 [US7] Register route /cost-centers in apps/frontend/src/router/index.tsx; add sidebar entry with COST_CENTERS permission visibility
 
 **Checkpoint**: ADMIN completa ciclo completo de centro de custo. MANAGER vê listagem mas não pode criar ou editar.
 
@@ -251,12 +251,12 @@
 
 **Purpose**: Infraestrutura de UI compartilhada e validação dos comportamentos transversais entre todas as user stories.
 
-- [ ] T065 [P] Create shared apps/frontend/src/components/PaginatedList.tsx wrapper with built-in page/limit controls (prev/next buttons, page info), debounced search input (300ms delay), and status filter (active/inactive/all tabs or select) — to be used by all 9 listing pages replacing any ad-hoc implementations
-- [ ] T066 [P] Audit sidebar navigation (apps/frontend/src/components/Sidebar.tsx or equivalent layout component): verify MANAGER sees structural modules (MEMBER_ROLES, MATERIALS, UNITS, EPI_TYPES, COST_CENTERS) in read-only mode (list link visible, no create button) and MANAGER sees operational modules (MEMBERS, BUYERS, VEHICLES) with full CRUD buttons
-- [ ] T067 [P] Add HTTP 403 interceptor in apps/frontend/src/services/api.ts (or axios interceptor) showing a user-friendly "Sem permissão" toast/banner rather than blank page or raw JSON error
-- [ ] T068 Run all backend integration tests: `npx -w apps/backend jest --runInBand --forceExit` and confirm 0 failures across all 9 new spec files
-- [ ] T069 Run frontend typecheck: `npx -w apps/frontend tsc --noEmit` and confirm 0 type errors
-- [ ] T070 Execute all scenarios from specs/002-operational-base-data/quickstart.md end-to-end and confirm each expected result matches
+- [X] T065 [P] Create shared apps/frontend/src/components/PaginatedList.tsx wrapper with built-in page/limit controls (prev/next buttons, page info), debounced search input (300ms delay), and status filter (active/inactive/all tabs or select) — to be used by all 9 listing pages replacing any ad-hoc implementations
+- [X] T066 [P] Audit sidebar navigation (apps/frontend/src/components/Sidebar.tsx or equivalent layout component): verify MANAGER sees structural modules (MEMBER_ROLES, MATERIALS, UNITS, EPI_TYPES, COST_CENTERS) in read-only mode (list link visible, no create button) and MANAGER sees operational modules (MEMBERS, BUYERS, VEHICLES) with full CRUD buttons
+- [X] T067 [P] Add HTTP 403 interceptor in apps/frontend/src/services/api.ts (or axios interceptor) showing a user-friendly "Sem permissão" toast/banner rather than blank page or raw JSON error
+- [X] T068 Run all backend integration tests: `npx -w apps/backend jest --runInBand --forceExit` and confirm 0 failures across all 9 new spec files
+- [X] T069 Run frontend typecheck: `npx -w apps/frontend tsc --noEmit` and confirm 0 type errors
+- [X] T070 Execute all scenarios from specs/002-operational-base-data/quickstart.md end-to-end and confirm each expected result matches
 
 **Checkpoint**: Zero failing tests. Zero type errors. All quickstart.md scenarios pass.
 

@@ -16,6 +16,8 @@ import { ProfilesModule } from './modules/profiles/profiles.module';
 import { UnitsModule } from './modules/units/units.module';
 import { UsersModule } from './modules/users/users.module';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
+import { EpiTypesModule } from './modules/epi-types/epi-types.module';
+import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
     UnitsModule,
     BuyersModule,
     VehiclesModule,
+    EpiTypesModule,
+    CostCentersModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

@@ -66,6 +66,22 @@ const VehicleFormPage = lazy(() =>
   import('../pages/vehicles/VehicleFormPage').then((m) => ({ default: m.VehicleFormPage })),
 );
 
+// US6 — EPI Types
+const EpiTypeListPage = lazy(() =>
+  import('../pages/epi-types/EpiTypeListPage').then((m) => ({ default: m.EpiTypeListPage })),
+);
+const EpiTypeFormPage = lazy(() =>
+  import('../pages/epi-types/EpiTypeFormPage').then((m) => ({ default: m.EpiTypeFormPage })),
+);
+
+// US7 — Cost Centers
+const CostCenterListPage = lazy(() =>
+  import('../pages/cost-centers/CostCenterListPage').then((m) => ({ default: m.CostCenterListPage })),
+);
+const CostCenterFormPage = lazy(() =>
+  import('../pages/cost-centers/CostCenterFormPage').then((m) => ({ default: m.CostCenterFormPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -121,6 +137,14 @@ export const router = createBrowserRouter([
           // US5 — Vehicles
           { path: 'vehicles', element: S(VehicleListPage) },
           { path: 'vehicles/:id', element: S(VehicleFormPage) },
+
+          // US6 — EPI Types
+          { path: 'epi-types', element: S(EpiTypeListPage) },
+          { path: 'epi-types/:id', element: S(EpiTypeFormPage) },
+
+          // US7 — Cost Centers
+          { path: 'cost-centers', element: S(CostCenterListPage) },
+          { path: 'cost-centers/:id', element: S(CostCenterFormPage) },
         ],
       },
     ],

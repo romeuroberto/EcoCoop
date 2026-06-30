@@ -13,6 +13,8 @@ const navLinks = [
   { to: '/units', label: 'Unidades', module: 'UNITS' },
   { to: '/buyers', label: 'Compradores', module: 'BUYERS' },
   { to: '/vehicles', label: 'Veículos', module: 'VEHICLES' },
+  { to: '/epi-types', label: 'Tipos de EPI', module: 'EPI_TYPES' },
+  { to: '/cost-centers', label: 'Centros de Custo', module: 'COST_CENTERS' },
 ];
 
 export function AdminLayout() {
