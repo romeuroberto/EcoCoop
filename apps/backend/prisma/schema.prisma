@@ -31,6 +31,20 @@ enum ProfitSharingBase {
   MANUAL
 }
 
+// Phase 2 enums
+enum VehicleType {
+  TRUCK
+  VAN
+  PICKUP
+  MOTORCYCLE
+  OTHER
+}
+
+enum DocumentType {
+  CPF
+  CNPJ
+}
+
 // Singleton — one record per instance
 model Cooperative {
   id        String               @id @default(uuid())
@@ -85,9 +99,9 @@ model User {
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  // memberId omitted — FK to Member (Phase 2+)
-  // buyerId omitted — FK to Buyer (Phase 4)
   auditLogs    AuditLog[]
+  member       Member?    @relation("MemberUser")
+  buyer        Buyer?     @relation("BuyerUser")
 }
 
 model AuditLog {
@@ -104,4 +118,136 @@ model AuditLog {
   createdAt     DateTime    @default(now())
 
   @@index([entityType, entityId, createdAt])
+}
+
+// ─── Phase 2: Operational Base Data ─────────────────────────────────────────
+
+model MemberRole {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   Member[]
+}
+
+model Member {
+  id         String     @id @default(uuid())
+  name       String
+  cpf        String     @unique
+  phone      String
+  email      String?
+  admittedAt DateTime
+  roleId     String
+  role       MemberRole @relation(fields: [roleId], references: [id])
+  isActive   Boolean    @default(true)
+  notes      String?
+  userId     String?    @unique
+  user       User?      @relation("MemberUser", fields: [userId], references: [id])
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([isActive])
+  @@index([roleId])
+}
+
+model MaterialCategory {
+  id            String                @id @default(uuid())
+  name          String                @unique
+  description   String?
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  subcategories MaterialSubcategory[]
+}
+
+model MaterialSubcategory {
+  id            String           @id @default(uuid())
+  categoryId    String
+  category      MaterialCategory @relation(fields: [categoryId], references: [id])
+  name          String
+  defaultUnitId String
+  defaultUnit   UnitOfMeasure    @relation("SubcategoryDefaultUnit", fields: [defaultUnitId], references: [id])
+  isSellable    Boolean          @default(false)
+  acceptsStock  Boolean          @default(false)
+  notes         String?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([categoryId, name])
+  @@index([categoryId, isActive])
+}
+
+model UnitOfMeasure {
+  id               String                @id @default(uuid())
+  name             String                @unique
+  symbol           String                @unique
+  baseUnitId       String?
+  baseUnit         UnitOfMeasure?        @relation("UnitConversion", fields: [baseUnitId], references: [id])
+  derivedUnits     UnitOfMeasure[]       @relation("UnitConversion")
+  conversionFactor Decimal?
+  isActive         Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  subcategories    MaterialSubcategory[] @relation("SubcategoryDefaultUnit")
+  vehicles         Vehicle[]             @relation("VehicleCapacityUnit")
+}
+
+model Buyer {
+  id                String       @id @default(uuid())
+  legalName         String
+  documentType      DocumentType
+  documentNumber    String       @unique
+  phone             String?
+  email             String?
+  addressStreet     String?
+  addressNumber     String?
+  addressComplement String?
+  addressCity       String?
+  addressState      String?
+  addressZip        String?
+  notes             String?
+  isActive          Boolean      @default(true)
+  userId            String?      @unique
+  user              User?        @relation("BuyerUser", fields: [userId], references: [id])
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([isActive])
+}
+
+model Vehicle {
+  id             String         @id @default(uuid())
+  plate          String         @unique
+  type           VehicleType
+  model          String
+  capacityValue  Decimal?
+  capacityUnitId String?
+  capacityUnit   UnitOfMeasure? @relation("VehicleCapacityUnit", fields: [capacityUnitId], references: [id])
+  capacityNotes  String?
+  isActive       Boolean        @default(true)
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model EpiType {
+  id                  String   @id @default(uuid())
+  name                String   @unique
+  defaultValidityDays Int?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model CostCenter {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String?  @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -6,6 +6,11 @@ const navLinks = [
   { to: '/cooperative', label: 'Cooperativa', module: 'COOPERATIVE' },
   { to: '/users', label: 'Usuários', module: 'USERS' },
   { to: '/profiles', label: 'Perfis', module: 'PROFILES' },
+  { to: '/member-roles', label: 'Funções', module: 'MEMBER_ROLES' },
+  { to: '/members', label: 'Cooperados', module: 'MEMBERS' },
+  { to: '/material-categories', label: 'Categorias', module: 'MATERIALS' },
+  { to: '/material-subcategories', label: 'Subcategorias', module: 'MATERIALS' },
+  { to: '/units', label: 'Unidades', module: 'UNITS' },
 ];
 
 export function AdminLayout() {
@@ -19,7 +24,7 @@ export function AdminLayout() {
   };
 
   const hasAccess = (module: string) =>
-    user?.permissions.some((p) => p.module === module) ?? false;
+    module === 'DASHBOARD' || (user?.permissions.some((p) => p.module === module) ?? false);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -30,7 +35,7 @@ export function AdminLayout() {
         </div>
         <nav className="flex-1 p-4 space-y-1">
           {navLinks.map((link) =>
-            hasAccess(link.module) || link.module === 'DASHBOARD' ? (
+            hasAccess(link.module) ? (
               <Link
                 key={link.to}
                 to={link.to}

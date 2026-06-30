@@ -22,8 +22,8 @@
 
 **Purpose**: Extender o schema Prisma com todas as entidades da Fase 2 e aplicar a migration. DEVE ser concluída antes de qualquer trabalho em módulo backend.
 
-- [ ] T001 Add 9 new models (MemberRole, Member, MaterialCategory, MaterialSubcategory, UnitOfMeasure, Buyer, Vehicle, EpiType, CostCenter) and 2 enums (VehicleType, DocumentType) to apps/backend/prisma/schema.prisma following specs/002-operational-base-data/data-model.md
-- [ ] T002 Run `npx -w apps/backend prisma migrate dev --name phase2-operational-base-data` and verify migration applies cleanly against the dev database
+- [X] T00Add 9 new models (MemberRole, Member, MaterialCategory, MaterialSubcategory, UnitOfMeasure, Buyer, Vehicle, EpiType, CostCenter) and 2 enums (VehicleType, DocumentType) to apps/backend/prisma/schema.prisma following specs/002-operational-base-data/data-model.md
+- [X] T00Run `npx -w apps/backend prisma migrate dev --name phase2-operational-base-data` and verify migration applies cleanly against the dev database
 
 **Checkpoint**: `npx -w apps/backend prisma studio` must show all 9 new tables with correct columns and FK relationships.
 
@@ -35,9 +35,9 @@
 
 **⚠️ CRÍTICO**: Concluir antes de iniciar qualquer módulo. Nenhuma user story pode começar sem esta fase.
 
-- [ ] T003 [P] Create @IsCPF() custom class-validator decorator in apps/backend/src/common/validators/cpf.validator.ts implementing CPF format check ("000.000.000-00") and modulo-11 check digit algorithm
-- [ ] T004 [P] Create @IsCNPJ() custom class-validator decorator in apps/backend/src/common/validators/cnpj.validator.ts implementing CNPJ format check ("00.000.000/0000-00") and check digit algorithm
-- [ ] T005 Update apps/backend/prisma/seeds/seed.ts: (a) add 5 default MemberRoles (Triador, Motorista, Cooperado Geral, Coordenador, Outro) with isDefault:true; (b) add RBAC Permission entries for ADMIN profile (MANAGE on MEMBER_ROLES, MEMBERS, MATERIALS, UNITS, BUYERS, VEHICLES, EPI_TYPES, COST_CENTERS) and MANAGER profile (MANAGE on MEMBERS, BUYERS, VEHICLES; READ on MEMBER_ROLES, MATERIALS, UNITS, EPI_TYPES, COST_CENTERS)
+- [X] T00[P] Create @IsCPF() custom class-validator decorator in apps/backend/src/common/validators/cpf.validator.ts implementing CPF format check ("000.000.000-00") and modulo-11 check digit algorithm
+- [X] T00[P] Create @IsCNPJ() custom class-validator decorator in apps/backend/src/common/validators/cnpj.validator.ts implementing CNPJ format check ("00.000.000/0000-00") and check digit algorithm
+- [X] T00Update apps/backend/prisma/seeds/seed.ts: (a) add 5 default MemberRoles (Triador, Motorista, Cooperado Geral, Coordenador, Outro) with isDefault:true; (b) add RBAC Permission entries for ADMIN profile (MANAGE on MEMBER_ROLES, MEMBERS, MATERIALS, UNITS, BUYERS, VEHICLES, EPI_TYPES, COST_CENTERS) and MANAGER profile (MANAGE on MEMBERS, BUYERS, VEHICLES; READ on MEMBER_ROLES, MATERIALS, UNITS, EPI_TYPES, COST_CENTERS)
 
 **Checkpoint**: `npx -w apps/backend prisma db seed` completes without errors. DB shows 5 MemberRoles with isDefault:true and correct Permission entries per profile.
 
@@ -51,27 +51,27 @@
 
 ### Backend — Member Roles
 
-- [ ] T006 [P] [US1] Create apps/backend/src/modules/member-roles/dto/create-member-role.dto.ts (name: string, required, @IsNotEmpty) and apps/backend/src/modules/member-roles/dto/update-member-role.dto.ts (name?: string, isActive?: boolean)
-- [ ] T007 [P] [US1] Create apps/backend/src/modules/member-roles/member-roles.service.ts: list with page/limit/search (by name)/status params; create enforces name uniqueness (throw 409 MEMBER_ROLE_NAME_CONFLICT); patch enforces name uniqueness and blocks rename of isDefault roles (throw 422 if isDefault and name is changing)
-- [ ] T008 [US1] Create apps/backend/src/modules/member-roles/member-roles.controller.ts with @AuditEntity('memberRole'), @UseInterceptors(AuditInterceptor), @RequirePermission('MEMBER_ROLES', Action.READ/MANAGE) on each route; create apps/backend/src/modules/member-roles/member-roles.module.ts and add MemberRolesModule to imports in apps/backend/src/app.module.ts
+- [X] T00[P] [US1] Create apps/backend/src/modules/member-roles/dto/create-member-role.dto.ts (name: string, required, @IsNotEmpty) and apps/backend/src/modules/member-roles/dto/update-member-role.dto.ts (name?: string, isActive?: boolean)
+- [X] T00[P] [US1] Create apps/backend/src/modules/member-roles/member-roles.service.ts: list with page/limit/search (by name)/status params; create enforces name uniqueness (throw 409 MEMBER_ROLE_NAME_CONFLICT); patch enforces name uniqueness and blocks rename of isDefault roles (throw 422 if isDefault and name is changing)
+- [X] T00[US1] Create apps/backend/src/modules/member-roles/member-roles.controller.ts with @AuditEntity('memberRole'), @UseInterceptors(AuditInterceptor), @RequirePermission('MEMBER_ROLES', Action.READ/MANAGE) on each route; create apps/backend/src/modules/member-roles/member-roles.module.ts and add MemberRolesModule to imports in apps/backend/src/app.module.ts
 
 ### Backend — Members
 
-- [ ] T009 [P] [US1] Create apps/backend/src/modules/members/dto/create-member.dto.ts (name: string, cpf: string @IsCPF(), phone: string, email?: string, admittedAt: string @IsDateString(), roleId: string @IsUUID(), notes?: string) and apps/backend/src/modules/members/dto/update-member.dto.ts (all fields optional via PartialType) and apps/backend/src/modules/members/dto/link-user.dto.ts (userId: string | null)
-- [ ] T010 [P] [US1] Create apps/backend/src/modules/members/members.service.ts: list with page/limit/search (name, cpf, phone, email)/status; create enforces CPF uniqueness (409 MEMBER_CPF_CONFLICT) and active roleId (400 MEMBER_ROLE_INACTIVE); patch same validations; linkUser validates user exists, has no memberId conflict and no buyerId conflict (User must not be linked to another Member or Buyer)
-- [ ] T011 [US1] Create apps/backend/src/modules/members/members.controller.ts with @AuditEntity('member'), @UseInterceptors(AuditInterceptor), RBAC MEMBERS; PATCH /:id/link-user as separate route; create apps/backend/src/modules/members/members.module.ts and add MembersModule to apps/backend/src/app.module.ts
+- [X] T00[P] [US1] Create apps/backend/src/modules/members/dto/create-member.dto.ts (name: string, cpf: string @IsCPF(), phone: string, email?: string, admittedAt: string @IsDateString(), roleId: string @IsUUID(), notes?: string) and apps/backend/src/modules/members/dto/update-member.dto.ts (all fields optional via PartialType) and apps/backend/src/modules/members/dto/link-user.dto.ts (userId: string | null)
+- [X] T010 [P] [US1] Create apps/backend/src/modules/members/members.service.ts: list with page/limit/search (name, cpf, phone, email)/status; create enforces CPF uniqueness (409 MEMBER_CPF_CONFLICT) and active roleId (400 MEMBER_ROLE_INACTIVE); patch same validations; linkUser validates user exists, has no memberId conflict and no buyerId conflict (User must not be linked to another Member or Buyer)
+- [X] T011 [US1] Create apps/backend/src/modules/members/members.controller.ts with @AuditEntity('member'), @UseInterceptors(AuditInterceptor), RBAC MEMBERS; PATCH /:id/link-user as separate route; create apps/backend/src/modules/members/members.module.ts and add MembersModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US1
 
-- [ ] T012 [P] [US1] Create apps/backend/test/integration/member-roles.spec.ts: ADMIN creates role (201); MANAGER create returns 403; isDefault role: patch name returns 422; inactive role used in new member returns 400; list returns paginated envelope {data, total, page, limit}
-- [ ] T013 [P] [US1] Create apps/backend/test/integration/members.spec.ts: ADMIN creates member (201); duplicate CPF returns 409; invalid CPF check digit returns 400; MANAGER creates member (201); user without permission returns 403; PATCH sets previousState non-null in AuditLog (SC-004); inactivated member hidden from ?status=active list (SC-002); link-user already linked to another member returns 409
+- [X] T012 [P] [US1] Create apps/backend/test/integration/member-roles.spec.ts: ADMIN creates role (201); MANAGER create returns 403; isDefault role: patch name returns 422; inactive role used in new member returns 400; list returns paginated envelope {data, total, page, limit}
+- [X] T013 [P] [US1] Create apps/backend/test/integration/members.spec.ts: ADMIN creates member (201); duplicate CPF returns 409; invalid CPF check digit returns 400; MANAGER creates member (201); user without permission returns 403; PATCH sets previousState non-null in AuditLog (SC-004); inactivated member hidden from ?status=active list (SC-002); link-user already linked to another member returns 409
 
 ### Frontend — US1
 
-- [ ] T014 [P] [US1] Create apps/frontend/src/services/memberRoles.service.ts and apps/frontend/src/services/members.service.ts (API clients: list with pagination params, getById, create, update, linkUser using React Query or fetch wrapper consistent with Fase 1 pattern)
-- [ ] T015 [P] [US1] Create apps/frontend/src/pages/member-roles/MemberRoleListPage.tsx (paginated table, search input, status filter active/inactive/all, toggle activate/deactivate with permission guard) and apps/frontend/src/pages/member-roles/MemberRoleFormPage.tsx (create/edit form, disable rename for isDefault roles)
-- [ ] T016 [P] [US1] Create apps/frontend/src/pages/members/MemberListPage.tsx (paginated, search, status filter) and apps/frontend/src/pages/members/MemberFormPage.tsx (CPF masked input, role selector showing only active MemberRoles, admittedAt date input) and apps/frontend/src/pages/members/LinkUserModal.tsx (search user by email, show current link, allow unlink)
-- [ ] T017 [US1] Register routes /member-roles and /members in apps/frontend/src/router/index.tsx; add sidebar entries with visibility controlled by MEMBER_ROLES and MEMBERS permissions
+- [X] T014 [P] [US1] Create apps/frontend/src/services/memberRoles.service.ts and apps/frontend/src/services/members.service.ts (API clients: list with pagination params, getById, create, update, linkUser using React Query or fetch wrapper consistent with Fase 1 pattern)
+- [X] T015 [P] [US1] Create apps/frontend/src/pages/member-roles/MemberRoleListPage.tsx (paginated table, search input, status filter active/inactive/all, toggle activate/deactivate with permission guard) and apps/frontend/src/pages/member-roles/MemberRoleFormPage.tsx (create/edit form, disable rename for isDefault roles)
+- [X] T016 [P] [US1] Create apps/frontend/src/pages/members/MemberListPage.tsx (paginated, search, status filter) and apps/frontend/src/pages/members/MemberFormPage.tsx (CPF masked input, role selector showing only active MemberRoles, admittedAt date input) and apps/frontend/src/pages/members/LinkUserModal.tsx (search user by email, show current link, allow unlink)
+- [X] T017 [US1] Register routes /member-roles and /members in apps/frontend/src/router/index.tsx; add sidebar entries with visibility controlled by MEMBER_ROLES and MEMBERS permissions
 
 **Checkpoint**: ADMIN pode completar ciclo completo: criar função → criar cooperado → inativar cooperado → verificar ocultação na listagem ativa. MANAGER vê member roles mas não consegue criar; MANAGER pode criar/inativar membros.
 
@@ -87,27 +87,27 @@
 
 ### Backend — Material Categories
 
-- [ ] T018 [P] [US2] Create apps/backend/src/modules/material-categories/dto/create-material-category.dto.ts (name: string, description?: string) and apps/backend/src/modules/material-categories/dto/update-material-category.dto.ts (all optional, isActive?: boolean)
-- [ ] T019 [P] [US2] Create apps/backend/src/modules/material-categories/material-categories.service.ts: list with page/limit/search/status and optional includeSubcategories query; create enforces name uniqueness (409 CATEGORY_NAME_CONFLICT); patch: on isActive:false, count active subcategories and throw 422 CANNOT_DEACTIVATE_CATEGORY_WITH_ACTIVE_SUBCATEGORIES with details:[subcategoryNames] array if any exist
-- [ ] T020 [US2] Create apps/backend/src/modules/material-categories/material-categories.controller.ts with @AuditEntity('materialCategory'), @UseInterceptors(AuditInterceptor), RBAC MATERIALS; create material-categories.module.ts and add MaterialCategoriesModule to apps/backend/src/app.module.ts
+- [X] T018 [P] [US2] Create apps/backend/src/modules/material-categories/dto/create-material-category.dto.ts (name: string, description?: string) and apps/backend/src/modules/material-categories/dto/update-material-category.dto.ts (all optional, isActive?: boolean)
+- [X] T019 [P] [US2] Create apps/backend/src/modules/material-categories/material-categories.service.ts: list with page/limit/search/status and optional includeSubcategories query; create enforces name uniqueness (409 CATEGORY_NAME_CONFLICT); patch: on isActive:false, count active subcategories and throw 422 CANNOT_DEACTIVATE_CATEGORY_WITH_ACTIVE_SUBCATEGORIES with details:[subcategoryNames] array if any exist
+- [X] T020 [US2] Create apps/backend/src/modules/material-categories/material-categories.controller.ts with @AuditEntity('materialCategory'), @UseInterceptors(AuditInterceptor), RBAC MATERIALS; create material-categories.module.ts and add MaterialCategoriesModule to apps/backend/src/app.module.ts
 
 ### Backend — Material Subcategories
 
-- [ ] T021 [P] [US2] Create apps/backend/src/modules/material-subcategories/dto/create-material-subcategory.dto.ts (categoryId: UUID, name: string, defaultUnitId: UUID, isSellable: boolean, acceptsStock: boolean, notes?: string) and apps/backend/src/modules/material-subcategories/dto/update-material-subcategory.dto.ts (all optional)
-- [ ] T022 [P] [US2] Create apps/backend/src/modules/material-subcategories/material-subcategories.service.ts: list with page/limit/categoryId filter/search/status; create enforces name uniqueness within same categoryId (409 SUBCATEGORY_NAME_CONFLICT_IN_CATEGORY) and validates defaultUnitId references an active UnitOfMeasure (400 UNIT_INACTIVE); patch same validations
-- [ ] T023 [US2] Create apps/backend/src/modules/material-subcategories/material-subcategories.controller.ts with @AuditEntity('materialSubcategory'), @UseInterceptors(AuditInterceptor), RBAC MATERIALS; create material-subcategories.module.ts and add MaterialSubcategoriesModule to apps/backend/src/app.module.ts
+- [X] T021 [P] [US2] Create apps/backend/src/modules/material-subcategories/dto/create-material-subcategory.dto.ts (categoryId: UUID, name: string, defaultUnitId: UUID, isSellable: boolean, acceptsStock: boolean, notes?: string) and apps/backend/src/modules/material-subcategories/dto/update-material-subcategory.dto.ts (all optional)
+- [X] T022 [P] [US2] Create apps/backend/src/modules/material-subcategories/material-subcategories.service.ts: list with page/limit/categoryId filter/search/status; create enforces name uniqueness within same categoryId (409 SUBCATEGORY_NAME_CONFLICT_IN_CATEGORY) and validates defaultUnitId references an active UnitOfMeasure (400 UNIT_INACTIVE); patch same validations
+- [X] T023 [US2] Create apps/backend/src/modules/material-subcategories/material-subcategories.controller.ts with @AuditEntity('materialSubcategory'), @UseInterceptors(AuditInterceptor), RBAC MATERIALS; create material-subcategories.module.ts and add MaterialSubcategoriesModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US2
 
-- [ ] T024 [P] [US2] Create apps/backend/test/integration/material-categories.spec.ts: MANAGER create returns 403; deactivating category with active subcategory returns 422 with subcategory names in details array; deactivating after subcategories inactivated succeeds; duplicate name returns 409; previousState non-null on PATCH
-- [ ] T025 [P] [US2] Create apps/backend/test/integration/material-subcategories.spec.ts: same name allowed in different category; same name in same category returns 409; inactive defaultUnitId returns 400; inactive subcategory absent from ?status=active list; MANAGER create returns 403
+- [X] T024 [P] [US2] Create apps/backend/test/integration/material-categories.spec.ts: MANAGER create returns 403; deactivating category with active subcategory returns 422 with subcategory names in details array; deactivating after subcategories inactivated succeeds; duplicate name returns 409; previousState non-null on PATCH
+- [X] T025 [P] [US2] Create apps/backend/test/integration/material-subcategories.spec.ts: same name allowed in different category; same name in same category returns 409; inactive defaultUnitId returns 400; inactive subcategory absent from ?status=active list; MANAGER create returns 403
 
 ### Frontend — US2
 
-- [ ] T026 [P] [US2] Create apps/frontend/src/services/materialCategories.service.ts and apps/frontend/src/services/materialSubcategories.service.ts (list, create, update; materialCategories supports includeSubcategories param)
-- [ ] T027 [P] [US2] Create apps/frontend/src/pages/material-categories/MaterialCategoryListPage.tsx (paginated list, expandable rows showing subcategories when includeSubcategories=true, search, status filter) and apps/frontend/src/pages/material-categories/MaterialCategoryFormPage.tsx (create/edit; display 422 error with subcategory names when blocking deactivation)
-- [ ] T028 [P] [US2] Create apps/frontend/src/pages/material-subcategories/MaterialSubcategoryListPage.tsx and apps/frontend/src/pages/material-subcategories/MaterialSubcategoryFormPage.tsx (category selector, defaultUnit selector showing only active units from units API, isSellable/acceptsStock toggles)
-- [ ] T029 [US2] Register routes /material-categories and /material-subcategories in apps/frontend/src/router/index.tsx; add sidebar entries with MATERIALS permission visibility
+- [X] T026 [P] [US2] Create apps/frontend/src/services/materialCategories.service.ts and apps/frontend/src/services/materialSubcategories.service.ts (list, create, update; materialCategories supports includeSubcategories param)
+- [X] T027 [P] [US2] Create apps/frontend/src/pages/material-categories/MaterialCategoryListPage.tsx (paginated list, expandable rows showing subcategories when includeSubcategories=true, search, status filter) and apps/frontend/src/pages/material-categories/MaterialCategoryFormPage.tsx (create/edit; display 422 error with subcategory names when blocking deactivation)
+- [X] T028 [P] [US2] Create apps/frontend/src/pages/material-subcategories/MaterialSubcategoryListPage.tsx and apps/frontend/src/pages/material-subcategories/MaterialSubcategoryFormPage.tsx (category selector, defaultUnit selector showing only active units from units API, isSellable/acceptsStock toggles)
+- [X] T029 [US2] Register routes /material-categories and /material-subcategories in apps/frontend/src/router/index.tsx; add sidebar entries with MATERIALS permission visibility
 
 **Checkpoint**: ADMIN pode criar hierarquia completa (categoria → subcategoria) e verificar bloqueio na inativação de categoria com filhos ativos.
 
@@ -123,19 +123,19 @@
 
 ### Backend — Units of Measure
 
-- [ ] T030 [P] [US3] Create apps/backend/src/modules/units/dto/create-unit.dto.ts (name: string, symbol: string, baseUnitId?: UUID, conversionFactor?: number) and apps/backend/src/modules/units/dto/update-unit.dto.ts (all optional); add cross-field @ValidateIf / custom @ValidateTogether decorator ensuring baseUnitId and conversionFactor are both present or both absent
-- [ ] T031 [P] [US3] Create apps/backend/src/modules/units/units.service.ts: list with page/limit/search (name, symbol)/status; create enforces name uniqueness (409 UNIT_NAME_CONFLICT), symbol uniqueness (409 UNIT_SYMBOL_CONFLICT), self-reference check (400 UNIT_SELF_REFERENCE), conversion pair validation (400 if only one of the pair provided); patch same
-- [ ] T032 [US3] Create apps/backend/src/modules/units/units.controller.ts with @AuditEntity('unitOfMeasure'), @UseInterceptors(AuditInterceptor), RBAC UNITS; create units.module.ts and add UnitsModule to apps/backend/src/app.module.ts
+- [X] T030 [P] [US3] Create apps/backend/src/modules/units/dto/create-unit.dto.ts (name: string, symbol: string, baseUnitId?: UUID, conversionFactor?: number) and apps/backend/src/modules/units/dto/update-unit.dto.ts (all optional); add cross-field @ValidateIf / custom @ValidateTogether decorator ensuring baseUnitId and conversionFactor are both present or both absent
+- [X] T031 [P] [US3] Create apps/backend/src/modules/units/units.service.ts: list with page/limit/search (name, symbol)/status; create enforces name uniqueness (409 UNIT_NAME_CONFLICT), symbol uniqueness (409 UNIT_SYMBOL_CONFLICT), self-reference check (400 UNIT_SELF_REFERENCE), conversion pair validation (400 if only one of the pair provided); patch same
+- [X] T032 [US3] Create apps/backend/src/modules/units/units.controller.ts with @AuditEntity('unitOfMeasure'), @UseInterceptors(AuditInterceptor), RBAC UNITS; create units.module.ts and add UnitsModule to apps/backend/src/app.module.ts
 
 ### Integration Tests — US3
 
-- [ ] T033 [P] [US3] Create apps/backend/test/integration/units.spec.ts: self-reference returns 400; conversionFactor without baseUnitId returns 400; baseUnitId without conversionFactor returns 400; duplicate name returns 409; duplicate symbol returns 409; MANAGER create returns 403; unit without conversion created (201) with null conversionFactor; baseUnit nested in list response
+- [X] T033 [P] [US3] Create apps/backend/test/integration/units.spec.ts: self-reference returns 400; conversionFactor without baseUnitId returns 400; baseUnitId without conversionFactor returns 400; duplicate name returns 409; duplicate symbol returns 409; MANAGER create returns 403; unit without conversion created (201) with null conversionFactor; baseUnit nested in list response
 
 ### Frontend — US3
 
-- [ ] T034 [P] [US3] Create apps/frontend/src/services/units.service.ts (list with pagination, create, update)
-- [ ] T035 [P] [US3] Create apps/frontend/src/pages/units/UnitListPage.tsx (paginated list showing name, symbol, baseUnit.symbol, conversionFactor, status) and apps/frontend/src/pages/units/UnitFormPage.tsx (conditional conversion section: show conversionFactor input only when baseUnit is selected; clear both fields when baseUnit cleared)
-- [ ] T036 [US3] Register route /units in apps/frontend/src/router/index.tsx; add sidebar entry with UNITS permission visibility
+- [X] T034 [P] [US3] Create apps/frontend/src/services/units.service.ts (list with pagination, create, update)
+- [X] T035 [P] [US3] Create apps/frontend/src/pages/units/UnitListPage.tsx (paginated list showing name, symbol, baseUnit.symbol, conversionFactor, status) and apps/frontend/src/pages/units/UnitFormPage.tsx (conditional conversion section: show conversionFactor input only when baseUnit is selected; clear both fields when baseUnit cleared)
+- [X] T036 [US3] Register route /units in apps/frontend/src/router/index.tsx; add sidebar entry with UNITS permission visibility
 
 **Checkpoint**: Todas as três variações de unidade (base, derivada, autônoma) podem ser criadas e listadas. Auto-referência rejeitada na UI com mensagem clara.
 

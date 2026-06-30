@@ -5,6 +5,20 @@ const prisma = new PrismaClient();
 
 const PHASE1_MODULES = ['COOPERATIVE', 'USERS', 'PROFILES', 'PERMISSIONS', 'AUDIT', 'DASHBOARD'];
 
+const PHASE2_ADMIN_MODULES = [
+  'MEMBER_ROLES',
+  'MEMBERS',
+  'MATERIALS',
+  'UNITS',
+  'BUYERS',
+  'VEHICLES',
+  'EPI_TYPES',
+  'COST_CENTERS',
+];
+
+const PHASE2_MANAGER_MANAGE_MODULES = ['MEMBERS', 'BUYERS', 'VEHICLES'];
+const PHASE2_MANAGER_READ_MODULES = ['MEMBER_ROLES', 'MATERIALS', 'UNITS', 'EPI_TYPES', 'COST_CENTERS'];
+
 interface ProfileSeed {
   name: string;
   type: ProfileType;
@@ -15,7 +29,10 @@ const PROFILES: ProfileSeed[] = [
   {
     name: 'Administrador',
     type: ProfileType.ADMIN,
-    permissions: PHASE1_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+    permissions: [
+      ...PHASE1_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+      ...PHASE2_ADMIN_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+    ],
   },
   {
     name: 'Gestor',
@@ -24,6 +41,8 @@ const PROFILES: ProfileSeed[] = [
       { module: 'COOPERATIVE', action: 'READ' },
       { module: 'USERS', action: 'READ' },
       { module: 'DASHBOARD', action: 'READ' },
+      ...PHASE2_MANAGER_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+      ...PHASE2_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
     ],
   },
   {
@@ -48,6 +67,8 @@ const PROFILES: ProfileSeed[] = [
   },
 ];
 
+const DEFAULT_MEMBER_ROLES = ['Triador', 'Motorista', 'Cooperado Geral', 'Coordenador', 'Outro'];
+
 async function seedProfiles(): Promise<Record<ProfileType, string>> {
   const profileMap = {} as Record<ProfileType, string>;
 
@@ -65,7 +86,16 @@ async function seedProfiles(): Promise<Record<ProfileType, string>> {
       });
       console.log(`  Created profile: ${p.name}`);
     } else {
-      console.log(`  Profile exists: ${p.name}`);
+      for (const perm of p.permissions) {
+        await prisma.profilePermission.upsert({
+          where: {
+            profileId_module_action: { profileId: profile.id, module: perm.module, action: perm.action },
+          },
+          create: { profileId: profile.id, module: perm.module, action: perm.action },
+          update: {},
+        });
+      }
+      console.log(`  Profile exists (permissions synced): ${p.name}`);
     }
 
     profileMap[p.type] = profile.id;
@@ -74,22 +104,29 @@ async function seedProfiles(): Promise<Record<ProfileType, string>> {
   return profileMap;
 }
 
+async function seedMemberRoles() {
+  console.log('Seeding default member roles...');
+  for (const name of DEFAULT_MEMBER_ROLES) {
+    const existing = await prisma.memberRole.findUnique({ where: { name } });
+    if (!existing) {
+      await prisma.memberRole.create({ data: { name, isDefault: true } });
+      console.log(`  Created member role: ${name}`);
+    } else {
+      console.log(`  Member role exists: ${name}`);
+    }
+  }
+}
+
 async function main() {
   console.log('Seeding database...');
 
-  // 1. Cooperative placeholder (singleton)
   let coop = await prisma.cooperative.findFirst();
   if (!coop) {
     coop = await prisma.cooperative.create({
       data: {
         name: 'EcoCoop',
         cnpj: '00.000.000/0001-00',
-        settings: {
-          create: {
-            attendanceEnabled: false,
-            rejectAlertDaysWithoutStatus: 30,
-          },
-        },
+        settings: { create: { attendanceEnabled: false, rejectAlertDaysWithoutStatus: 30 } },
       },
     });
     console.log(`Created cooperative: ${coop.name}`);
@@ -97,11 +134,9 @@ async function main() {
     console.log(`Cooperative exists: ${coop.name}`);
   }
 
-  // 2. Profiles + Phase 1 permissions (no STOCK, SORTING, ROUTES, SALES, FINANCE, etc.)
   console.log('Seeding profiles...');
   const profileMap = await seedProfiles();
 
-  // 3. Default users with bcrypt-hashed passwords — never plain text
   console.log('Seeding users...');
   const users = [
     { email: 'admin@ecocoop.local', password: 'admin123', profileType: ProfileType.ADMIN },
@@ -114,17 +149,15 @@ async function main() {
     if (!existing) {
       const hash = await bcrypt.hash(u.password, 10);
       await prisma.user.create({
-        data: {
-          email: u.email,
-          passwordHash: hash,
-          profileId: profileMap[u.profileType],
-        },
+        data: { email: u.email, passwordHash: hash, profileId: profileMap[u.profileType] },
       });
       console.log(`  Created user: ${u.email}`);
     } else {
       console.log(`  User exists: ${u.email}`);
     }
   }
+
+  await seedMemberRoles();
 
   console.log('Seed complete.');
 }

@@ -13,6 +13,7 @@ interface ErrorBody {
   error: string;
   message: string;
   code?: string;
+  details?: unknown;
 }
 
 @Catch()
@@ -46,6 +47,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             ? (r['message'] as string[]).join('; ')
             : (r['message'] as string) ?? exception.message,
           code: r['code'] as string | undefined,
+          ...(r['details'] !== undefined && { details: r['details'] }),
         };
       }
     } else if (exception instanceof Error) {
