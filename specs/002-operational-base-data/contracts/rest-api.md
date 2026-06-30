@@ -371,10 +371,12 @@ Para desvincular: `{ "userId": null }`
 
 ### GET /api/v1/buyers
 
-| Query | Default | Descrição |
-|---|---|---|
-| `status` | `active` | `active` \| `inactive` \| `all` |
-| `search` | — | Busca por razão social/nome, CPF/CNPJ, telefone, e-mail |
+| Query | Tipo | Default | Descrição |
+|---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
+| `status` | `active` \| `inactive` \| `all` | `active` | Filtro de status |
+| `search` | string | — | Busca por razão social/nome, CPF/CNPJ, telefone, e-mail |
 
 **Permissão**: `BUYERS:READ`
 
@@ -428,7 +430,10 @@ Vincula/desvincula usuário BUYER ao comprador.
 
 **Request body**: `{ "userId": "uuid" }` ou `{ "userId": null }`
 
-**Errors**: `409 USER_ALREADY_LINKED`, `422 USER_NOT_BUYER_PROFILE`
+**Errors**:
+- `409 USER_ALREADY_LINKED` — usuário já vinculado a outro Buyer
+- `409 USER_ALREADY_LINKED_TO_MEMBER` — usuário já vinculado a um Member (cooperado); operação incompatível
+- `422 USER_NOT_BUYER_PROFILE` — usuário não possui perfil BUYER
 
 ---
 
@@ -436,22 +441,29 @@ Vincula/desvincula usuário BUYER ao comprador.
 
 ### GET /api/v1/vehicles
 
-| Query | Default | Descrição |
-|---|---|---|
-| `status` | `active` | `active` \| `inactive` \| `all` |
-| `search` | — | Busca por placa, modelo, tipo |
+| Query | Tipo | Default | Descrição |
+|---|---|---|---|
+| `page` | int | `1` | Página atual |
+| `limit` | int | `20` | Registros por página (máx 100) |
+| `status` | `active` \| `inactive` \| `all` | `active` | Filtro de status |
+| `search` | string | — | Busca por placa, modelo, tipo |
 
 **Permissão**: `VEHICLES:READ`
 
 **Response 200**:
 ```json
-[
-  {
-    "id": "uuid", "plate": "ABC-1234", "type": "TRUCK", "model": "VW Delivery 9.170",
-    "capacityValue": 9000, "capacityUnit": { "id": "uuid", "symbol": "kg" },
-    "capacityNotes": null, "isActive": true
-  }
-]
+{
+  "data": [
+    {
+      "id": "uuid", "plate": "ABC-1234", "type": "TRUCK", "model": "VW Delivery 9.170",
+      "capacityValue": 9000, "capacityUnit": { "id": "uuid", "symbol": "kg" },
+      "capacityNotes": null, "isActive": true
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
 ```
 
 ---
@@ -477,9 +489,31 @@ Vincula/desvincula usuário BUYER ao comprador.
 
 ---
 
+### GET /api/v1/vehicles/:id
+
+Retorna um veículo pelo seu ID. Utilizado pelo frontend de edição para pré-carregar o formulário.
+
+**Permissão**: `VEHICLES:READ`
+
+**Response 200**:
+```json
+{
+  "id": "uuid", "plate": "ABC-1234", "type": "TRUCK", "model": "VW Delivery 9.170",
+  "capacityValue": 9000, "capacityUnit": { "id": "uuid", "name": "Quilograma", "symbol": "kg" },
+  "capacityNotes": null, "notes": null, "isActive": true,
+  "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z"
+}
+```
+
+**Errors**: `404 VEHICLE_NOT_FOUND`
+
+---
+
 ### PATCH /api/v1/vehicles/:id
 
 **Permissão**: `VEHICLES:MANAGE`
+
+**Errors**: `404 VEHICLE_NOT_FOUND`, `409 VEHICLE_PLATE_CONFLICT`, `400 CAPACITY_UNIT_REQUIRED_WITH_VALUE`, `400 UNIT_INACTIVE`
 
 ---
 
