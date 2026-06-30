@@ -26,7 +26,7 @@ export function IsCNPJ(options?: ValidationOptions) {
       name: 'isCNPJ',
       target: object.constructor,
       propertyName,
-      options: { message: `${propertyName} must be a valid CNPJ`, ...options },
+      options: { message: 'CNPJ inválido', ...options },
       validator: { validate: validateCNPJ },
     });
   };

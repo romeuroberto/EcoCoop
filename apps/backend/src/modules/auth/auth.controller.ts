@@ -56,7 +56,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
-    return { message: 'Logged out' };
+    return { message: 'Sessão encerrada' };
   }
 
   @Get('me')

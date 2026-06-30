@@ -28,7 +28,7 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException({
         statusCode: 403,
         error: 'Forbidden',
-        message: 'You do not have permission to perform this action',
+        message: 'Você não tem permissão para executar esta ação',
         code: 'UNAUTHORIZED_PROFILE',
       });
     }

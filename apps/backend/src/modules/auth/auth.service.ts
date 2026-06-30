@@ -23,7 +23,7 @@ export class AuthService {
       throw new UnauthorizedException({
         statusCode: 401,
         error: 'Unauthorized',
-        message: 'Invalid credentials',
+        message: 'Credenciais inválidas',
         code: 'INVALID_CREDENTIALS',
       });
     }
@@ -32,7 +32,7 @@ export class AuthService {
       throw new UnauthorizedException({
         statusCode: 401,
         error: 'Unauthorized',
-        message: 'Account is disabled',
+        message: 'Conta desativada',
         code: 'ACCOUNT_DISABLED',
       });
     }
@@ -42,7 +42,7 @@ export class AuthService {
       throw new UnauthorizedException({
         statusCode: 401,
         error: 'Unauthorized',
-        message: 'Invalid credentials',
+        message: 'Credenciais inválidas',
         code: 'INVALID_CREDENTIALS',
       });
     }
@@ -81,7 +81,7 @@ export class AuthService {
       throw new UnauthorizedException({
         statusCode: 401,
         error: 'Unauthorized',
-        message: 'Account is disabled',
+        message: 'Conta desativada',
         code: 'ACCOUNT_DISABLED',
       });
     }

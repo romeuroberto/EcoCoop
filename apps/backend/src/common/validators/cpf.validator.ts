@@ -24,7 +24,7 @@ export function IsCPF(options?: ValidationOptions) {
       name: 'isCPF',
       target: object.constructor,
       propertyName,
-      options: { message: `${propertyName} must be a valid CPF`, ...options },
+      options: { message: 'CPF inválido', ...options },
       validator: { validate: validateCPF },
     });
   };

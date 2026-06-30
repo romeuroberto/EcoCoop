@@ -6,7 +6,7 @@ export class UpdateVehicleDto {
   @IsNotEmpty()
   @IsOptional()
   @Matches(/^[A-Z]{3}-\d{4}$|^[A-Z]{3}-\d[A-Z]\d{2}$/, {
-    message: 'plate must be in Brazilian format (AAA-0000 or AAA-0A00)',
+    message: 'Placa deve estar no formato brasileiro (AAA-0000 ou AAA-0A00)',
   })
   plate?: string;
 
