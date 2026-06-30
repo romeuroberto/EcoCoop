@@ -22,8 +22,9 @@
 | `RAW_MATERIAL_BALANCE` | READ | READ | — | READ (se permitido) |
 
 > **MANAGE** = CREATE + READ + UPDATE + MANAGE_TEAM + EXECUTE + REVERSAL conforme o módulo.
-> **EXECUTE** = iniciar / concluir execução de rota.
+> **EXECUTE** = iniciar / concluir execução de rota própria. Para DRIVER, EXECUTE sempre deve ser combinado com `RouteOwnershipGuard` e não concede criar, editar, cancelar ou planejar rotas.
 > **Ownership check** (DRIVER): além da permissão de perfil, o guard valida que o DRIVER é o `driverId` ou está em `routeTeamMembers` da rota.
+> ADMIN e MANAGER mantêm acesso completo conforme permissões de gestão.
 
 ---
 
@@ -215,6 +216,7 @@ Retorna rota completa com pontos ordenados por sequência.
   "status": "PLANEJADA",
   "startedAt": null,
   "completedAt": null,
+  "cancelReason": null,
   "notes": null,
   "vehicle": { "id": "uuid", "plate": "ABC-1234", "type": "VAN", "model": "VW Delivery" },
   "driver": { "id": "uuid", "name": "João Silva", "email": "joao@eco.coop" },
@@ -435,7 +437,9 @@ Permitido em `PLANEJADA` e `EM_ANDAMENTO`.
 
 Inicia a execução da rota (`PLANEJADA → EM_ANDAMENTO`). Registra `startedAt`.
 
-**Permissão**: `COLLECTION_ROUTES:EXECUTE` + ownership check (DRIVER deve ser o `driverId` ou estar na equipe). ADMIN/MANAGER também podem iniciar.
+**Permissão**: `COLLECTION_ROUTES:EXECUTE` + ownership check (DRIVER deve ser o `driverId` ou estar na equipe). ADMIN/MANAGER também podem iniciar conforme permissões de gestão.
+
+**Auditoria**: deve ser registrada como UPDATE, não CREATE. O controller deve usar override explícito no `AuditInterceptor` (ex.: `@AuditAsUpdate` ou equivalente) para capturar `previousState` antes da mutação e `newState` depois da mutação, sem gerar auditoria duplicada.
 
 **Request body**: vazio `{}`
 
@@ -454,6 +458,10 @@ Conclui a execução da rota (`EM_ANDAMENTO → CONCLUIDA`). Registra `completed
 
 **Permissão**: `COLLECTION_ROUTES:EXECUTE` + ownership check.
 
+Para DRIVER, EXECUTE permite apenas concluir rota própria e sempre exige `RouteOwnershipGuard`; não concede criar, editar, cancelar ou planejar rotas. ADMIN/MANAGER também podem concluir conforme permissões de gestão.
+
+**Auditoria**: deve ser registrada como UPDATE, não CREATE. O controller deve usar override explícito no `AuditInterceptor` (ex.: `@AuditAsUpdate` ou equivalente) para capturar `previousState` antes da mutação e `newState` depois da mutação, sem gerar auditoria duplicada.
+
 **Request body**: vazio `{}`
 
 **Response 200**: rota atualizada com `status: "CONCLUIDA"` e `completedAt` preenchido.
@@ -470,6 +478,8 @@ Cancela a rota (`PLANEJADA | EM_ANDAMENTO → CANCELADA`).
 
 **Permissão**: `COLLECTION_ROUTES:MANAGE` (apenas ADMIN/MANAGER)
 
+**Auditoria**: deve ser registrada como UPDATE, não CREATE. O controller deve usar override explícito no `AuditInterceptor` (ex.: `@AuditAsUpdate` ou equivalente) para capturar `previousState` antes da mutação e `newState` depois da mutação, sem gerar auditoria duplicada.
+
 **Request body**:
 ```json
 {
@@ -481,7 +491,9 @@ Cancela a rota (`PLANEJADA | EM_ANDAMENTO → CANCELADA`).
 |---|---|---|
 | `reason` | string | sim |
 
-**Response 200**: rota atualizada com `status: "CANCELADA"`.
+`reason` é obrigatório no request e deve ser persistido em `CollectionRoute.cancelReason`; `cancelReason` é nullable no banco para rotas não canceladas.
+
+**Response 200**: rota atualizada com `status: "CANCELADA"` e `cancelReason` preenchido.
 
 **Errors**:
 - `409 INVALID_ROUTE_TRANSITION` — rota já `CONCLUIDA` ou `CANCELADA`

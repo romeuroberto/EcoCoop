@@ -63,7 +63,7 @@ Como motorista (DRIVER) atribuído à rota, quero registrar o início e a conclu
 1. **Given** uma rota `PLANEJADA` com motorista X, **When** o motorista X registra início da rota, **Then** o status muda para `EM_ANDAMENTO` e o timestamp de início é registrado.
 2. **Given** uma rota `EM_ANDAMENTO`, **When** o motorista registra a conclusão, **Then** o status muda para `CONCLUÍDA` e o timestamp de conclusão é registrado.
 3. **Given** uma rota `EM_ANDAMENTO`, **When** o gestor cancela a rota, **Then** o status muda para `CANCELADA` e não permite mais alterações de execução.
-4. **Given** uma rota `CONCLUÍDA`, **When** qualquer usuário tenta alterar veículo, equipe ou sequência de pontos, **Then** recebe HTTP 403 (ou erro indicando que rota concluída não é editável sem permissão especial).
+4. **Given** uma rota `CONCLUÍDA`, **When** qualquer usuário tenta alteração estrutural, como veículo ou sequência de pontos, **Then** recebe HTTP 409 com código `ROUTE_NOT_EDITABLE` porque o bloqueio é conflito de estado, não falha de permissão.
 5. **Given** uma rota `CANCELADA`, **When** qualquer usuário tenta concluí-la, **Then** recebe erro indicando que rota cancelada não pode ser concluída.
 6. **Given** um DRIVER não atribuído à rota, **When** ele tenta registrar início ou conclusão de uma rota que não é sua, **Then** recebe HTTP 403.
 

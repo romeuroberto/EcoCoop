@@ -51,6 +51,7 @@ model CollectionRoute {
   status      RouteStatus @default(PLANEJADA)
   startedAt   DateTime?
   completedAt DateTime?
+  cancelReason String?
   vehicleId   String
   vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
   driverId    String
@@ -187,11 +188,12 @@ HAVING SUM(quantity) >= 0
 - `driverId`: referencia `User` com perfil DRIVER
 - `vehicleId`: referencia `Vehicle` ativo
 - `version`: incrementado atomicamente a cada transição de estado (optimistic locking)
+- `cancelReason`: nullable no banco; preenchido obrigatoriamente ao cancelar uma rota
 - Transições permitidas:
   - `PLANEJADA → EM_ANDAMENTO` (apenas driverId ou admin/manager)
   - `EM_ANDAMENTO → CONCLUIDA` (apenas driverId ou admin/manager)
-  - `PLANEJADA → CANCELADA` (admin/manager)
-  - `EM_ANDAMENTO → CANCELADA` (admin/manager)
+  - `PLANEJADA → CANCELADA` (admin/manager; exige `cancelReason`)
+  - `EM_ANDAMENTO → CANCELADA` (admin/manager; exige `cancelReason`)
   - Nenhuma outra transição é válida
 
 ### RoutePoint
