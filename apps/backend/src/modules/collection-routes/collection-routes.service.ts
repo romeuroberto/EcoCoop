@@ -38,6 +38,18 @@ const ROUTE_INCLUDE = {
   },
 };
 
+const INVALID_ROUTE_TRANSITION = {
+  statusCode: 409,
+  message: 'Transição de estado inválida',
+  code: 'INVALID_ROUTE_TRANSITION',
+};
+
+const ROUTE_CONCURRENT_MODIFICATION = {
+  statusCode: 409,
+  message: 'Rota modificada simultaneamente. Recarregue e tente novamente.',
+  code: 'ROUTE_CONCURRENT_MODIFICATION',
+};
+
 export interface ListCollectionRoutesQuery {
   page?: number;
   limit?: number;
@@ -123,7 +135,7 @@ export class CollectionRoutesService {
         code: 'COLLECTION_ROUTE_NOT_FOUND',
       });
     }
-    return route;
+    return { ...route, cancelReason: await this.getCancelReason(id) };
   }
 
   async create(dto: CreateCollectionRouteDto) {
@@ -323,6 +335,101 @@ export class CollectionRoutesService {
 
     await this.prisma.routeTeamMember.delete({ where: { id: member.id } });
     return this.findOne(routeId);
+  }
+
+  async startRoute(routeId: string) {
+    const route = await this.getRouteVersionForTransition(routeId);
+    if (route.status !== RouteStatus.PLANEJADA) {
+      throw new ConflictException(INVALID_ROUTE_TRANSITION);
+    }
+
+    const result = await this.prisma.collectionRoute.updateMany({
+      where: { id: routeId, version: route.version, status: RouteStatus.PLANEJADA },
+      data: {
+        status: RouteStatus.EM_ANDAMENTO,
+        startedAt: new Date(),
+        version: { increment: 1 },
+      },
+    });
+
+    if (result.count === 0) {
+      throw new ConflictException(ROUTE_CONCURRENT_MODIFICATION);
+    }
+
+    return this.findOne(routeId);
+  }
+
+  async completeRoute(routeId: string) {
+    const route = await this.getRouteVersionForTransition(routeId);
+    if (route.status !== RouteStatus.EM_ANDAMENTO) {
+      throw new ConflictException(INVALID_ROUTE_TRANSITION);
+    }
+
+    const result = await this.prisma.collectionRoute.updateMany({
+      where: { id: routeId, version: route.version, status: RouteStatus.EM_ANDAMENTO },
+      data: {
+        status: RouteStatus.CONCLUIDA,
+        completedAt: new Date(),
+        version: { increment: 1 },
+      },
+    });
+
+    if (result.count === 0) {
+      throw new ConflictException(ROUTE_CONCURRENT_MODIFICATION);
+    }
+
+    return this.findOne(routeId);
+  }
+
+  async cancelRoute(routeId: string, reason: string) {
+    const route = await this.getRouteVersionForTransition(routeId);
+    if (route.status !== RouteStatus.PLANEJADA && route.status !== RouteStatus.EM_ANDAMENTO) {
+      throw new ConflictException(INVALID_ROUTE_TRANSITION);
+    }
+
+    const count = await this.prisma.$executeRaw`
+      UPDATE "CollectionRoute"
+      SET "status" = 'CANCELADA',
+          "cancelReason" = ${reason},
+          "version" = "version" + 1,
+          "updatedAt" = NOW()
+      WHERE "id" = ${routeId}
+        AND "version" = ${route.version}
+        AND "status" IN ('PLANEJADA', 'EM_ANDAMENTO')
+    `;
+
+    if (count === 0) {
+      throw new ConflictException(ROUTE_CONCURRENT_MODIFICATION);
+    }
+
+    const updated = await this.findOne(routeId);
+    return { ...updated, cancelReason: reason };
+  }
+
+  private async getCancelReason(routeId: string): Promise<string | null> {
+    try {
+      const rows = await this.prisma.$queryRaw<Array<{ cancelReason: string | null }>>`
+        SELECT "cancelReason" FROM "CollectionRoute" WHERE "id" = ${routeId}
+      `;
+      return rows[0]?.cancelReason ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getRouteVersionForTransition(routeId: string) {
+    const route = await this.prisma.collectionRoute.findUnique({
+      where: { id: routeId },
+      select: { id: true, status: true, version: true },
+    });
+    if (!route) {
+      throw new NotFoundException({
+        statusCode: 404,
+        message: 'Rota não encontrada',
+        code: 'COLLECTION_ROUTE_NOT_FOUND',
+      });
+    }
+    return route;
   }
 
   private async assertPlanejada(routeId: string) {

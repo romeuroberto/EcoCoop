@@ -299,6 +299,7 @@ model CollectionRoute {
   status      RouteStatus @default(PLANEJADA)
   startedAt   DateTime?
   completedAt DateTime?
+  cancelReason String?
   vehicleId   String
   vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
   driverId    String

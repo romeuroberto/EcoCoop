@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuditEntity } from '../../common/decorators/audit-entity.decorator';
+import { AuditAsUpdate, AuditEntity } from '../../common/decorators/audit-entity.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { RouteOwnershipGuard } from '../../common/guards/route-ownership.guard';
@@ -21,6 +21,7 @@ import { CollectionRoutesService } from './collection-routes.service';
 import { RouteSequenceSuggesterService } from './route-sequence-suggester.service';
 import { AddRoutePointDto } from './dto/add-route-point.dto';
 import { AddTeamMembersDto } from './dto/add-team-members.dto';
+import { CancelCollectionRouteDto } from './dto/cancel-collection-route.dto';
 import { CreateCollectionRouteDto } from './dto/create-collection-route.dto';
 import { ReorderRoutePointsDto } from './dto/reorder-route-points.dto';
 import { UpdateCollectionRouteDto } from './dto/update-collection-route.dto';
@@ -114,5 +115,31 @@ export class CollectionRoutesController {
   @RequirePermission('COLLECTION_ROUTES', 'MANAGE')
   removeTeamMember(@Param('id') routeId: string, @Param('userId') userId: string) {
     return this.service.removeTeamMember(routeId, userId);
+  }
+
+  @Post(':id/start')
+  @HttpCode(200)
+  @RequirePermission('COLLECTION_ROUTES', 'EXECUTE')
+  @UseGuards(RouteOwnershipGuard)
+  @AuditAsUpdate()
+  startRoute(@Param('id') routeId: string) {
+    return this.service.startRoute(routeId);
+  }
+
+  @Post(':id/complete')
+  @HttpCode(200)
+  @RequirePermission('COLLECTION_ROUTES', 'EXECUTE')
+  @UseGuards(RouteOwnershipGuard)
+  @AuditAsUpdate()
+  completeRoute(@Param('id') routeId: string) {
+    return this.service.completeRoute(routeId);
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(200)
+  @RequirePermission('COLLECTION_ROUTES', 'MANAGE')
+  @AuditAsUpdate()
+  cancelRoute(@Param('id') routeId: string, @Body() dto: CancelCollectionRouteDto) {
+    return this.service.cancelRoute(routeId, dto.reason);
   }
 }

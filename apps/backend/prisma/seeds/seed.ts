@@ -69,6 +69,7 @@ const PROFILES: ProfileSeed[] = [
     permissions: [
       { module: 'DASHBOARD', action: 'READ' },
       { module: 'COLLECTION_ROUTES', action: 'READ' },
+      { module: 'COLLECTION_ROUTES', action: 'EXECUTE' },
     ],
   },
   {

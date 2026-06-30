@@ -97,6 +97,9 @@ const CollectionRoutesPage = lazy(() =>
 const CollectionRouteFormPage = lazy(() =>
   import('../pages/collection-routes/CollectionRouteFormPage').then((m) => ({ default: m.CollectionRouteFormPage })),
 );
+const CollectionRouteDetailPage = lazy(() =>
+  import('../pages/collection-routes/CollectionRouteDetailPage').then((m) => ({ default: m.CollectionRouteDetailPage })),
+);
 
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -170,7 +173,7 @@ export const router = createBrowserRouter([
           // Phase 3 — Collection Routes
           { path: 'collection-routes', element: S(CollectionRoutesPage) },
           { path: 'collection-routes/new', element: S(CollectionRouteFormPage) },
-          { path: 'collection-routes/:id', element: S(CollectionRouteFormPage) },
+          { path: 'collection-routes/:id', element: S(CollectionRouteDetailPage) },
           { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
         ],
       },

@@ -18,6 +18,7 @@ export interface RouteDriver {
 export interface RouteTeamMember {
   userId: string;
   email: string;
+  user?: { id: string; email: string };
   addedAt?: string;
 }
 
@@ -45,6 +46,7 @@ export interface CollectionRoute {
   status: RouteStatus;
   startedAt: string | null;
   completedAt: string | null;
+  cancelReason: string | null;
   notes: string | null;
   version: number;
   vehicle: RouteVehicle;
@@ -123,4 +125,13 @@ export const collectionRoutesService = {
 
   removeTeamMember: (id: string, userId: string) =>
     api.delete<CollectionRoute>(`/collection-routes/${id}/team/${userId}`).then((r) => r.data),
+
+  start: (id: string) =>
+    api.post<CollectionRoute>(`/collection-routes/${id}/start`, {}).then((r) => r.data),
+
+  complete: (id: string) =>
+    api.post<CollectionRoute>(`/collection-routes/${id}/complete`, {}).then((r) => r.data),
+
+  cancel: (id: string, reason: string) =>
+    api.post<CollectionRoute>(`/collection-routes/${id}/cancel`, { reason }).then((r) => r.data),
 };

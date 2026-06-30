@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Observable, from, switchMap, tap } from 'rxjs';
 import { AuditAction, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
-import { AUDIT_ENTITY_KEY } from '../decorators/audit-entity.decorator';
+import { AUDIT_ACTION_KEY, AUDIT_ENTITY_KEY } from '../decorators/audit-entity.decorator';
 import { CurrentUserDto } from '@ecocoop/shared';
 import { Request } from 'express';
 
@@ -40,7 +40,11 @@ export class AuditInterceptor implements NestInterceptor {
     const entityType = this.reflector.get<string>(AUDIT_ENTITY_KEY, context.getClass());
     if (!entityType) return next.handle();
 
-    const action = METHOD_TO_ACTION[method];
+    const action =
+      this.reflector.getAllAndOverride<AuditAction | undefined>(AUDIT_ACTION_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? METHOD_TO_ACTION[method];
     const user = request.user as CurrentUserDto | undefined;
     const entityId = request.params?.id ?? null;
 
