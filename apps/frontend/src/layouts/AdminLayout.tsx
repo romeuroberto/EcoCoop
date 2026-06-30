@@ -16,6 +16,7 @@ const navLinks = [
   { to: '/epi-types', label: 'Tipos de EPI', module: 'EPI_TYPES' },
   { to: '/cost-centers', label: 'Centros de Custo', module: 'COST_CENTERS' },
   { to: '/collection-points', label: 'Pontos de Coleta', module: 'COLLECTION_POINTS' },
+  { to: '/collection-routes', label: 'Rotas de Coleta', module: 'COLLECTION_ROUTES' },
 ];
 
 export function AdminLayout() {

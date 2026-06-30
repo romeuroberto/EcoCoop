@@ -19,6 +19,7 @@ import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { EpiTypesModule } from './modules/epi-types/epi-types.module';
 import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CollectionPointsModule } from './modules/collection-points/collection-points.module';
+import { CollectionRoutesModule } from './modules/collection-routes/collection-routes.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { CollectionPointsModule } from './modules/collection-points/collection-p
     EpiTypesModule,
     CostCentersModule,
     CollectionPointsModule,
+    CollectionRoutesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

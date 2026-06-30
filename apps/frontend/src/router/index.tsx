@@ -90,6 +90,14 @@ const CollectionPointFormPage = lazy(() =>
   import('../pages/collection-points/CollectionPointFormPage').then((m) => ({ default: m.CollectionPointFormPage })),
 );
 
+// Phase 3 — Collection Routes
+const CollectionRoutesPage = lazy(() =>
+  import('../pages/collection-routes/CollectionRoutesPage').then((m) => ({ default: m.CollectionRoutesPage })),
+);
+const CollectionRouteFormPage = lazy(() =>
+  import('../pages/collection-routes/CollectionRouteFormPage').then((m) => ({ default: m.CollectionRouteFormPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -158,6 +166,12 @@ export const router = createBrowserRouter([
           { path: 'collection-points', element: S(CollectionPointsPage) },
           { path: 'collection-points/new', element: S(CollectionPointFormPage) },
           { path: 'collection-points/:id', element: S(CollectionPointFormPage) },
+
+          // Phase 3 — Collection Routes
+          { path: 'collection-routes', element: S(CollectionRoutesPage) },
+          { path: 'collection-routes/new', element: S(CollectionRouteFormPage) },
+          { path: 'collection-routes/:id', element: S(CollectionRouteFormPage) },
+          { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
         ],
       },
     ],
