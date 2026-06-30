@@ -86,6 +86,24 @@ const PROFILES: ProfileSeed[] = [
 
 const DEFAULT_MEMBER_ROLES = ['Triador', 'Motorista', 'Cooperado Geral', 'Coordenador', 'Outro'];
 
+interface UnitSeed {
+  name: string;
+  symbol: string;
+  aliases?: string[];
+  baseSymbol?: string;
+  conversionFactor?: number;
+}
+
+const DEFAULT_UNITS: UnitSeed[] = [
+  { name: 'Quilograma', symbol: 'kg', aliases: ['Kg'] },
+  { name: 'Grama', symbol: 'g', baseSymbol: 'kg', conversionFactor: 0.001 },
+  { name: 'Tonelada', symbol: 't', baseSymbol: 'kg', conversionFactor: 1000 },
+  { name: 'Litro', symbol: 'L' },
+  { name: 'Mililitro', symbol: 'mL', baseSymbol: 'L', conversionFactor: 0.001 },
+  { name: 'Metro cubico', symbol: 'm3' },
+  { name: 'Unidade', symbol: 'un' },
+];
+
 async function seedProfiles(): Promise<Record<ProfileType, string>> {
   const profileMap = {} as Record<ProfileType, string>;
 
@@ -134,6 +152,68 @@ async function seedMemberRoles() {
   }
 }
 
+async function seedUnits() {
+  console.log('Seeding default units...');
+  const unitBySymbol = new Map<string, string>();
+
+  for (const unit of DEFAULT_UNITS.filter((u) => !u.baseSymbol)) {
+    const existing = await prisma.unitOfMeasure.findFirst({
+      where: { OR: [{ name: unit.name }, { symbol: { in: [unit.symbol, ...(unit.aliases ?? [])] } }] },
+    });
+
+    const saved = existing
+      ? await prisma.unitOfMeasure.update({
+          where: { id: existing.id },
+          data: {
+            name: unit.name,
+            symbol: unit.symbol,
+            baseUnitId: null,
+            conversionFactor: null,
+            isActive: true,
+          },
+        })
+      : await prisma.unitOfMeasure.create({
+          data: { name: unit.name, symbol: unit.symbol, isActive: true },
+        });
+
+    unitBySymbol.set(unit.symbol, saved.id);
+    console.log(`  Unit ready: ${unit.name} (${unit.symbol})`);
+  }
+
+  for (const unit of DEFAULT_UNITS.filter((u) => u.baseSymbol)) {
+    const baseUnitId = unitBySymbol.get(unit.baseSymbol!);
+    if (!baseUnitId) throw new Error(`Base unit not found for ${unit.symbol}`);
+
+    const existing = await prisma.unitOfMeasure.findFirst({
+      where: { OR: [{ name: unit.name }, { symbol: { in: [unit.symbol, ...(unit.aliases ?? [])] } }] },
+    });
+
+    const saved = existing
+      ? await prisma.unitOfMeasure.update({
+          where: { id: existing.id },
+          data: {
+            name: unit.name,
+            symbol: unit.symbol,
+            baseUnitId,
+            conversionFactor: unit.conversionFactor,
+            isActive: true,
+          },
+        })
+      : await prisma.unitOfMeasure.create({
+          data: {
+            name: unit.name,
+            symbol: unit.symbol,
+            baseUnitId,
+            conversionFactor: unit.conversionFactor,
+            isActive: true,
+          },
+        });
+
+    unitBySymbol.set(unit.symbol, saved.id);
+    console.log(`  Unit ready: ${unit.name} (${unit.symbol})`);
+  }
+}
+
 async function main() {
   console.log('Seeding database...');
 
@@ -175,6 +255,7 @@ async function main() {
   }
 
   await seedMemberRoles();
+  await seedUnits();
 
   console.log('Seed complete.');
 }
