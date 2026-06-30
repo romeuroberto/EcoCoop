@@ -1,4 +1,4 @@
-# EcoFluxo — Documentação Inicial para GitHub Spec Kit
+# EcoCoop — Documentação Inicial para GitHub Spec Kit
 
 Projeto de software para gestão completa de cooperativa de reciclagem, usando Spec-Driven Development com GitHub Spec Kit.
 

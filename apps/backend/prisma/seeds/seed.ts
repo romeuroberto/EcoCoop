@@ -19,6 +19,16 @@ const PHASE2_ADMIN_MODULES = [
 const PHASE2_MANAGER_MANAGE_MODULES = ['MEMBERS', 'BUYERS', 'VEHICLES'];
 const PHASE2_MANAGER_READ_MODULES = ['MEMBER_ROLES', 'MATERIALS', 'UNITS', 'EPI_TYPES', 'COST_CENTERS'];
 
+// Phase 3 modules
+const PHASE3_ADMIN_MANAGE_MODULES = [
+  'COLLECTION_POINTS',
+  'COLLECTION_ROUTES',
+  'RAW_MATERIAL_ENTRIES',
+  'RAW_MATERIAL_BALANCE',
+];
+const PHASE3_MANAGER_MANAGE_MODULES = ['COLLECTION_POINTS', 'COLLECTION_ROUTES', 'RAW_MATERIAL_ENTRIES'];
+const PHASE3_MANAGER_READ_MODULES = ['RAW_MATERIAL_BALANCE'];
+
 interface ProfileSeed {
   name: string;
   type: ProfileType;
@@ -32,6 +42,7 @@ const PROFILES: ProfileSeed[] = [
     permissions: [
       ...PHASE1_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE2_ADMIN_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+      ...PHASE3_ADMIN_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
     ],
   },
   {
@@ -43,6 +54,8 @@ const PROFILES: ProfileSeed[] = [
       { module: 'DASHBOARD', action: 'READ' },
       ...PHASE2_MANAGER_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE2_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
+      ...PHASE3_MANAGER_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+      ...PHASE3_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
     ],
   },
   {
@@ -53,7 +66,10 @@ const PROFILES: ProfileSeed[] = [
   {
     name: 'Motorista',
     type: ProfileType.DRIVER,
-    permissions: [{ module: 'DASHBOARD', action: 'READ' }],
+    permissions: [
+      { module: 'DASHBOARD', action: 'READ' },
+      { module: 'COLLECTION_ROUTES', action: 'READ' },
+    ],
   },
   {
     name: 'Cooperado',

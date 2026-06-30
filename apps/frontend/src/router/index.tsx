@@ -82,6 +82,14 @@ const CostCenterFormPage = lazy(() =>
   import('../pages/cost-centers/CostCenterFormPage').then((m) => ({ default: m.CostCenterFormPage })),
 );
 
+// Phase 3 — Collection Points
+const CollectionPointsPage = lazy(() =>
+  import('../pages/collection-points/CollectionPointsPage').then((m) => ({ default: m.CollectionPointsPage })),
+);
+const CollectionPointFormPage = lazy(() =>
+  import('../pages/collection-points/CollectionPointFormPage').then((m) => ({ default: m.CollectionPointFormPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -145,6 +153,11 @@ export const router = createBrowserRouter([
           // US7 — Cost Centers
           { path: 'cost-centers', element: S(CostCenterListPage) },
           { path: 'cost-centers/:id', element: S(CostCenterFormPage) },
+
+          // Phase 3 — Collection Points
+          { path: 'collection-points', element: S(CollectionPointsPage) },
+          { path: 'collection-points/new', element: S(CollectionPointFormPage) },
+          { path: 'collection-points/:id', element: S(CollectionPointFormPage) },
         ],
       },
     ],

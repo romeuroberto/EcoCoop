@@ -99,9 +99,13 @@ model User {
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  auditLogs    AuditLog[]
-  member       Member?    @relation("MemberUser")
-  buyer        Buyer?     @relation("BuyerUser")
+  auditLogs          AuditLog[]
+  member             Member?                @relation("MemberUser")
+  buyer              Buyer?                 @relation("BuyerUser")
+  routesAsDriver     CollectionRoute[]      @relation("RouteDriver")
+  routeTeamMembers   RouteTeamMember[]      @relation("RouteTeamMember")
+  rawMaterialEntries RawMaterialEntry[]     @relation("RawMaterialEntryUser")
+  stockEvents        RawMaterialStockEvent[] @relation("StockEventUser")
 }
 
 model AuditLog {
@@ -175,6 +179,8 @@ model MaterialSubcategory {
   isActive      Boolean          @default(true)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  rawMaterialEntries   RawMaterialEntry[]     @relation("RawMaterialEntrySubcategory")
+  stockEvents          RawMaterialStockEvent[] @relation("StockEventSubcategory")
 
   @@unique([categoryId, name])
   @@index([categoryId, isActive])
@@ -188,11 +194,13 @@ model UnitOfMeasure {
   baseUnit         UnitOfMeasure?        @relation("UnitConversion", fields: [baseUnitId], references: [id])
   derivedUnits     UnitOfMeasure[]       @relation("UnitConversion")
   conversionFactor Decimal?
-  isActive         Boolean               @default(true)
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  subcategories    MaterialSubcategory[] @relation("SubcategoryDefaultUnit")
-  vehicles         Vehicle[]             @relation("VehicleCapacityUnit")
+  isActive         Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  subcategories    MaterialSubcategory[]  @relation("SubcategoryDefaultUnit")
+  vehicles         Vehicle[]              @relation("VehicleCapacityUnit")
+  rawMaterialEntries   RawMaterialEntry[]     @relation("RawMaterialEntryUnit")
+  stockEvents          RawMaterialStockEvent[] @relation("StockEventUnit")
 }
 
 model Buyer {
@@ -227,10 +235,11 @@ model Vehicle {
   capacityUnitId String?
   capacityUnit   UnitOfMeasure? @relation("VehicleCapacityUnit", fields: [capacityUnitId], references: [id])
   capacityNotes  String?
-  isActive       Boolean        @default(true)
+  isActive       Boolean          @default(true)
   notes          String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  collectionRoutes CollectionRoute[]
 }
 
 model EpiType {
@@ -250,4 +259,131 @@ model CostCenter {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Phase 3: Collection Routes & Raw Material ────────────────────────────────
+
+enum RouteStatus {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum RawMaterialStockEventType {
+  ENTRADA_BRUTO
+  ESTORNO_BRUTO
+}
+
+model CollectionPoint {
+  id              String       @id @default(uuid())
+  name            String
+  address         String
+  latitude        Decimal?     @db.Decimal(10, 7)
+  longitude       Decimal?     @db.Decimal(10, 7)
+  locationPending Boolean      @default(true)
+  reference       String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  routePoints     RoutePoint[]
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model CollectionRoute {
+  id          String      @id @default(uuid())
+  name        String
+  plannedDate DateTime    @db.Date
+  status      RouteStatus @default(PLANEJADA)
+  startedAt   DateTime?
+  completedAt DateTime?
+  vehicleId   String
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
+  driverId    String
+  driver      User        @relation("RouteDriver", fields: [driverId], references: [id])
+  notes       String?
+  version     Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  routePoints     RoutePoint[]
+  teamMembers     RouteTeamMember[]
+  materialEntries RawMaterialEntry[]
+
+  @@index([status])
+  @@index([driverId])
+  @@index([plannedDate])
+}
+
+model RoutePoint {
+  id                String          @id @default(uuid())
+  routeId           String
+  route             CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  sequence          Int
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([routeId, collectionPointId])
+  @@unique([routeId, sequence])
+  @@index([routeId, sequence])
+}
+
+model RouteTeamMember {
+  id      String          @id @default(uuid())
+  routeId String
+  route   CollectionRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User            @relation("RouteTeamMember", fields: [userId], references: [id])
+  addedAt DateTime        @default(now())
+
+  @@unique([routeId, userId])
+  @@index([routeId])
+}
+
+model RawMaterialEntry {
+  id            String              @id @default(uuid())
+  routeId       String
+  route         CollectionRoute     @relation(fields: [routeId], references: [id])
+  subcategoryId String
+  subcategory   MaterialSubcategory @relation("RawMaterialEntrySubcategory", fields: [subcategoryId], references: [id])
+  quantity      Decimal             @db.Decimal(12, 3)
+  unitId        String
+  unit          UnitOfMeasure       @relation("RawMaterialEntryUnit", fields: [unitId], references: [id])
+  notes         String?
+  userId        String
+  user          User                @relation("RawMaterialEntryUser", fields: [userId], references: [id])
+  createdAt     DateTime            @default(now())
+
+  stockEvent RawMaterialStockEvent?
+
+  @@index([routeId])
+  @@index([subcategoryId, unitId])
+}
+
+model RawMaterialStockEvent {
+  id                 String                    @id @default(uuid())
+  type               RawMaterialStockEventType
+  subcategoryId      String
+  subcategory        MaterialSubcategory       @relation("StockEventSubcategory", fields: [subcategoryId], references: [id])
+  unitId             String
+  unit               UnitOfMeasure             @relation("StockEventUnit", fields: [unitId], references: [id])
+  quantity           Decimal                   @db.Decimal(12, 3)
+  rawMaterialEntryId String?                   @unique
+  rawMaterialEntry   RawMaterialEntry?         @relation(fields: [rawMaterialEntryId], references: [id])
+  referencedEventId  String?
+  referencedEvent    RawMaterialStockEvent?    @relation("EventReversal", fields: [referencedEventId], references: [id])
+  reversals          RawMaterialStockEvent[]   @relation("EventReversal")
+  justification      String?
+  userId             String
+  user               User                      @relation("StockEventUser", fields: [userId], references: [id])
+  createdAt          DateTime                  @default(now())
+
+  @@index([subcategoryId, unitId])
+  @@index([type])
+  @@index([rawMaterialEntryId])
 }
