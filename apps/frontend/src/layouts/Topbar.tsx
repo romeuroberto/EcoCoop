@@ -32,7 +32,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   };
 
   return (
-    <header className="bg-white border-b border-grafite-200 h-14 px-4 flex items-center justify-between shadow-sm shrink-0">
+    <header className="bg-white border-b border-grafite-200 h-20 px-4 flex items-center justify-between shadow-sm shrink-0">
       {/* Left: hamburger + breadcrumbs */}
       <div className="flex items-center gap-3 min-w-0">
         <button

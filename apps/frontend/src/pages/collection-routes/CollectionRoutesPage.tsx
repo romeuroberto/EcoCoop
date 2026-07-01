@@ -69,7 +69,7 @@ export function CollectionRoutesPage() {
 
       <FilterBar>
         <input
-          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-petroleo-500 focus:border-petroleo-500"
+          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-0 focus:outline-none focus:ring-2 focus:ring-petroleo-500 focus:border-petroleo-500"
           placeholder="Buscar por nome..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}

@@ -30,6 +30,7 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
 
       {/* Sidebar panel */}
       <aside
+        aria-label="Navegação lateral"
         className={[
           'fixed inset-y-0 left-0 z-40 w-64 bg-white text-slate-900 flex flex-col border-r border-slate-200 shadow-sm',
           'transform transition-transform duration-300 ease-in-out',
@@ -38,11 +39,11 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
         ].join(' ')}
       >
         {/* Logo header */}
-        <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="h-20 px-4 border-b border-slate-200 flex items-center justify-between">
           <img
             src="/brand/logo-horizontal-color.png"
             alt="EcoCoop"
-            className="h-12 w-auto max-w-[160px] object-contain"
+            className="h-14 w-auto max-w-[190px] object-contain"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = 'none';
               const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -58,7 +59,7 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
 
           {/* Close button — mobile only */}
           <button
-            className="lg:hidden p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="lg:hidden p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-petroleo-500"
             onClick={onClose}
             aria-label="Fechar menu"
           >
@@ -69,7 +70,10 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 overflow-y-auto p-3 space-y-0.5" aria-label="Navegação principal">
+        <nav
+          className="flex-1 overflow-y-auto p-3 space-y-0.5"
+          aria-label="Navegação principal"
+        >
           {navLinks.map((link) => {
             if (!hasAccess(link.module)) return null;
             const isActive = pathname === link.to || (link.to !== '/' && pathname.startsWith(link.to));
@@ -80,8 +84,9 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
                 onClick={onClose}
                 className={[
                   'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-petroleo-500 focus-visible:ring-inset',
                   isActive
-                    ? 'bg-emerald-50 text-emerald-800 shadow-sm'
+                    ? 'bg-petroleo-50 text-petroleo-800 shadow-sm'
                     : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
