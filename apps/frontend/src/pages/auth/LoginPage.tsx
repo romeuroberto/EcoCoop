@@ -41,16 +41,18 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:grid lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="hidden min-h-screen border-r border-emerald-900 bg-emerald-900 text-white lg:flex lg:flex-col lg:justify-between">
-        <div className="px-12 py-10 xl:px-16">
-          <img
-            src="/brand/logo-horizontal-color.png"
-            alt="EcoCoop"
-            className="h-20 w-auto rounded-lg object-contain object-left shadow-lg shadow-emerald-950/20"
-          />
+      <section className="relative hidden min-h-screen overflow-hidden border-r border-emerald-900 bg-emerald-900 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="pointer-events-none absolute -left-28 -top-32 h-96 w-96 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute bottom-28 left-[38%] h-64 w-64 rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute -bottom-28 -right-24 h-80 w-80 rounded-full bg-emerald-400/20" />
+
+        <div className="relative px-12 py-10 xl:px-16">
+          <div className="text-3xl font-bold tracking-tight text-white">
+            Eco<span className="text-emerald-200">Coop</span>
+          </div>
         </div>
 
-        <div className="max-w-2xl px-12 pb-16 xl:px-16">
+        <div className="relative max-w-2xl px-12 pb-16 xl:px-16">
           <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-emerald-200">
             Ambiente operacional
           </p>
@@ -61,18 +63,45 @@ export function LoginPage() {
             Acompanhe cadastros, rotas e materiais em uma interface pensada para uso diário.
           </p>
 
-          <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
-              <span className="block text-sm font-semibold text-white">Rotas</span>
-              <span className="mt-1 block text-xs text-emerald-100">planejamento e execução</span>
+          <div className="mt-10 max-w-xl space-y-5">
+            <div className="flex gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/12 text-emerald-100">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 6h10M9 12h10M9 18h10M5 6h.01M5 12h.01M5 18h.01" />
+                </svg>
+              </span>
+              <div>
+                <span className="block text-sm font-semibold text-white">Rotas de coleta</span>
+                <span className="mt-1 block text-sm leading-6 text-emerald-100">
+                  Planeje sequências, motoristas e execução em campo.
+                </span>
+              </div>
             </div>
-            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
-              <span className="block text-sm font-semibold text-white">Materiais</span>
-              <span className="mt-1 block text-xs text-emerald-100">entrada e saldo bruto</span>
+            <div className="flex gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/12 text-emerald-100">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M6 7v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+              </span>
+              <div>
+                <span className="block text-sm font-semibold text-white">Material bruto</span>
+                <span className="mt-1 block text-sm leading-6 text-emerald-100">
+                  Registre entradas e acompanhe saldo com rastreabilidade.
+                </span>
+              </div>
             </div>
-            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
-              <span className="block text-sm font-semibold text-white">Equipe</span>
-              <span className="mt-1 block text-xs text-emerald-100">acessos por perfil</span>
+            <div className="flex gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/12 text-emerald-100">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </span>
+              <div>
+                <span className="block text-sm font-semibold text-white">Operação diária</span>
+                <span className="mt-1 block text-sm leading-6 text-emerald-100">
+                  Centralize cadastros, permissões e histórico operacional.
+                </span>
+              </div>
             </div>
           </div>
         </div>
