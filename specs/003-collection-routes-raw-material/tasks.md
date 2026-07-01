@@ -163,7 +163,7 @@
 - [X] T043 [P] Adicionar itens de navegação da Fase 3 no menu lateral em `apps/frontend/src/layouts/` (ou equivalente): "Pontos de Coleta", "Rotas de Coleta", "Saldo Bruto"
 - [X] T044 [P] Escrever `apps/backend/test/rbac-phase3.e2e-spec.ts` cobrindo todos os cenários 403 da tabela de permissões em `contracts/rest-api.md`: DRIVER em POST `/collection-points`, POST `/collection-routes`, cancel route; SORTER em todos os endpoints exceto GET se tiver permissão explícita; DRIVER sem ownership em start/complete de rota de outro; DRIVER em POST reversal; resposta 403 não vaza informações do recurso (FR-006, SC-006)
 - [X] T045 Escrever `apps/backend/test/edge-cases-phase3.e2e-spec.ts` cobrindo: geocoding falha → ponto salvo com `locationPending=true` (mock do provider); dois usuários iniciam mesma rota simultaneamente → segundo recebe 409 `ROUTE_CONCURRENT_MODIFICATION`; quantidade 0 e negativa em material entry → 422; estorno que tornaria saldo negativo → 409; ponto de coleta inativado após estar em rota existente → ponto permanece na rota com `collectionPoint.isActive=false`; saldo consultado para subcategoria inativa com histórico → histórico preservado
-- [ ] T046 Executar todos os cenários de `quickstart.md` manualmente (ou via script) contra ambiente local; registrar resultado de cada cenário e corrigir divergências encontradas
+- [X] T046 Executar todos os cenários de `quickstart.md` manualmente (ou via script) contra ambiente local; registrar resultado de cada cenário e corrigir divergências encontradas
 
 ---
 
