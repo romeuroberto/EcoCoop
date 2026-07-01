@@ -23,6 +23,13 @@ const STATUS_COLORS: Record<RouteStatus, string> = {
   CANCELADA: 'bg-gray-100 text-gray-500',
 };
 
+const MATERIAL_ENTRY_MESSAGES: Record<RouteStatus, string> = {
+  PLANEJADA: 'Inicie a rota para registrar entradas de material bruto.',
+  EM_ANDAMENTO: 'Registre o material bruto coletado nesta rota.',
+  CONCLUIDA: 'Registre ou consulte entradas após a pesagem na cooperativa.',
+  CANCELADA: 'Entrada de material bruto indisponível para rota cancelada.',
+};
+
 const canManageRoutes = (route: CollectionRoute | undefined, user: ReturnType<typeof useAuthStore.getState>['user']) =>
   Boolean(route && user?.permissions.some((p) => p.module === 'COLLECTION_ROUTES' && p.action === 'MANAGE'));
 
@@ -104,6 +111,8 @@ export function CollectionRouteDetailPage() {
   if (!route) {
     return <div className="text-sm text-gray-400">Rota não encontrada.</div>;
   }
+
+  const canAccessMaterialEntries = route.status === 'EM_ANDAMENTO' || route.status === 'CONCLUIDA';
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -268,6 +277,22 @@ export function CollectionRouteDetailPage() {
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="rounded-xl bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700">Material bruto</h2>
+            <p className="mt-1 text-sm text-gray-500">{MATERIAL_ENTRY_MESSAGES[route.status]}</p>
+          </div>
+          <button
+            onClick={() => navigate(`/collection-routes/${route.id}/material-entries`)}
+            disabled={!canAccessMaterialEntries}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+          >
+            Acessar entradas
+          </button>
+        </div>
       </div>
     </div>
   );

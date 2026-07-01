@@ -185,7 +185,7 @@ export const router = createBrowserRouter([
           { path: 'collection-routes/new', element: S(CollectionRouteFormPage) },
           { path: 'collection-routes/:id', element: S(CollectionRouteDetailPage) },
           { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
-          { path: 'collection-routes/:id/material-entries', element: S(RawMaterialEntriesPage) },
+          { path: 'collection-routes/:routeId/material-entries', element: S(RawMaterialEntriesPage) },
 
           // Phase 3 — Raw Material Balance
           { path: 'raw-material-balance', element: S(RawMaterialBalancePage) },
