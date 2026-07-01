@@ -184,10 +184,12 @@ O Dashboard será redesenhado como uma navegação operacional agrupada por áre
 | Área | Cards ativos permitidos | Rotas existentes |
 |------|--------------------------|------------------|
 | Cadastros | Cooperados, Funções, Categorias, Subcategorias, Unidades, Compradores, Veículos, Tipos de EPI, Centros de Custo | `/members`, `/member-roles`, `/material-categories`, `/material-subcategories`, `/units`, `/buyers`, `/vehicles`, `/epi-types`, `/cost-centers` |
-| Coleta | Pontos de Coleta, Rotas de Coleta, Execução de Rotas | `/collection-points`, `/collection-routes`, `/collection-routes` ou detalhe existente `/collection-routes/:id` quando acessado a partir de uma rota real |
-| Material Bruto / Estoque Bruto | Entrada de Material Bruto, Saldo Bruto | Entrada via rota existente `/collection-routes/:id/material-entries`; Saldo via `/raw-material-balance` |
+| Coleta | Pontos de Coleta, Rotas de Coleta, Execução de Rotas | `/collection-points`, `/collection-routes`, `/collection-routes` |
+| Material Bruto / Estoque Bruto | Entrada de Material Bruto, Saldo Bruto | Entrada via `/collection-routes` com helper text "Acesse via Rotas de Coleta > Detalhe da Rota"; Saldo via `/raw-material-balance` |
 
 Cards futuros obrigatórios: Triagem, Estoque pronto, Rejeito, Vendas operacionais, Financeiro, Rateio e Relatórios avançados. Esses cards não podem ter navegação ativa enquanto não houver implementação real e rota correspondente.
+
+"Rotas de Coleta" e "Execução de Rotas" podem apontar inicialmente para `/collection-routes`, sem criar funcionalidade nova, desde que tenham textos diferenciados: "Rotas de Coleta" comunica gestão/listagem das rotas; "Execução de Rotas" comunica acesso operacional ao fluxo de execução. "Entrada de Material Bruto" também não cria rota nova; o card direciona para a listagem de rotas e explica que a entrada ocorre no detalhe de uma rota real.
 
 ## Complexity Tracking
 

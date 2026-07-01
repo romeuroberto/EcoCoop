@@ -124,8 +124,9 @@ Um motorista usa o sistema em um tablet durante a execução de uma rota de cole
 ### Key Entities *(include if feature involves data)*
 
 - **Token Visual**: Valor nomeado e reutilizável que representa uma decisão de design (cor, espaçamento, tipografia, borda). Base de consistência do sistema.
-- **Componente de Interface**: Elemento de UI reutilizável construído sobre tokens visuais (Badge, PageHeader, DataTable, EmptyState, LoadingState, Sidebar, Topbar, Breadcrumb).
+- **Componente de Interface**: Elemento de UI reutilizável construído sobre tokens visuais (Badge, Button, PageHeader, DataTable, EmptyState, LoadingState, Sidebar, Topbar, Breadcrumb).
 - **Badge de Status**: Componente visual que comunica o estado de uma entidade operacional usando cor semântica + rótulo textual padronizado.
+- **Button**: Componente base de ação usado em telas, cards, formulários e estados interativos, com variantes visuais padronizadas pelo design system para ações primárias, secundárias, discretas e destrutivas.
 - **Tela-Modelo**: Tela que recebe a aplicação completa do novo design system na primeira fase, servindo como referência para as demais telas do sistema.
 - **Card de Módulo**: Elemento visual do Dashboard que representa um módulo do sistema. Pode estar ativo, apontando para rota existente, ou futuro, exibindo "Em breve" sem ação principal.
 
@@ -149,8 +150,10 @@ Um motorista usa o sistema em um tablet durante a execução de uma rota de cole
 - Não há sistema de design externo (Figma, Storybook) obrigatório; a especificação de tokens e componentes será feita diretamente no código.
 - O logotipo e nome da cooperativa já existem no sistema atual e serão mantidos; este escopo não inclui redesign de marca, apenas aplicação de identidade visual consistente.
 - A aplicação do design system nas quatro telas-modelo serve como prova de conceito; as demais telas do sistema serão atualizadas em fases subsequentes.
+- DataTable é uma entidade reconhecida do design system, mas a implementação reutilizável de uma abstração global de DataTable está adiada para fase posterior. Nesta Fase 4, as tabelas existentes podem receber apenas ajustes visuais mínimos, preservando colunas, ações e comportamentos atuais.
 - A acessibilidade básica (contraste WCAG AA, foco visível, navegação por teclado) é suficiente para esta fase; certificação formal de acessibilidade fica fora do escopo.
 - Modo escuro, temas configuráveis por cooperativa e upload de logo pelo administrador estão explicitamente fora do escopo desta fase.
 - Alterações de backend, banco de dados, schema, endpoints, regras de negócio e permissões estão fora do escopo.
 - O Dashboard pode expor visualmente como ativos somente módulos já existentes no frontend: Cooperados, Funções, Categorias, Subcategorias, Unidades, Compradores, Veículos, Tipos de EPI, Centros de Custo, Pontos de Coleta, Rotas de Coleta, Execução de Rotas, Entrada de Material Bruto e Saldo Bruto.
+- "Rotas de Coleta" e "Execução de Rotas" podem apontar inicialmente para `/collection-routes`, desde que tenham textos diferenciados e não criem funcionalidade nova: "Rotas de Coleta" representa gestão/listagem das rotas, enquanto "Execução de Rotas" representa acesso operacional ao fluxo de execução.
 - Triagem, Estoque pronto, Rejeito, Vendas operacionais, Financeiro, Rateio e Relatórios avançados permanecem como módulos futuros com badge "Em breve".
