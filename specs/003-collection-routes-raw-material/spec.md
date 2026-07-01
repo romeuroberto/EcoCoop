@@ -201,9 +201,9 @@ Como administrador, quero que todas as operações de criação, edição e tran
 
 **Saldo Bruto**
 
-- **FR-027**: O sistema DEVE disponibilizar consulta de saldo bruto por subcategoria e unidade de medida, calculado a partir da soma algébrica dos eventos: entradas positivas (`ENTRADA_BRUTO`) e estornos negativos (`ESTORNO_BRUTO`).
+- **FR-027**: O sistema DEVE disponibilizar consulta de saldo bruto por subcategoria e unidade de medida, calculado a partir da soma algébrica dos eventos: entradas positivas (`ENTRADA_BRUTO`) e estornos negativos (`ESTORNO_BRUTO`). A resposta DEVE incluir: `balance` (saldo atual ≥ 0), `eventCount` (total de eventos que compõem o saldo) e `calculatedAt` (timestamp ISO da consulta).
 - **FR-028**: O saldo bruto DEVE refletir apenas eventos da Fase 3 (entrada e estorno de material bruto); eventos de triagem e saída ficam para fases futuras.
-- **FR-029**: O sistema DEVE retornar saldo zero para subcategorias sem eventos de entrada registrados.
+- **FR-029**: O sistema DEVE retornar resultado vazio (`data: []`) para subcategorias sem nenhum evento registrado. A subcategoria simplesmente não aparece na listagem de saldo. Para consultar uma subcategoria específica sem eventos via `?subcategoryId=uuid`, o retorno também é `data: []`.
 
 **Auditoria**
 
