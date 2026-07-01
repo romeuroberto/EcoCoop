@@ -26,7 +26,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const showBreadcrumbs = pathname !== '/dashboard';
+  const isDashboard = pathname === '/dashboard';
 
   const handleLogout = async () => {
     await logout();
@@ -46,7 +46,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        {showBreadcrumbs && <Breadcrumbs />}
+        {isDashboard ? (
+          <span className="text-sm font-medium text-grafite-900">Início</span>
+        ) : (
+          <Breadcrumbs />
+        )}
       </div>
 
       {/* Right: user info + logout */}
