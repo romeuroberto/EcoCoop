@@ -6,10 +6,10 @@
 
 ## Pré-requisitos
 
-1. Backend rodando: `pnpm --filter backend dev` (porta 3000)
-2. Frontend rodando: `pnpm --filter frontend dev` (porta 5173)
-3. Banco de dados migrado: `pnpm --filter backend prisma:migrate:dev`
-4. Seed executado: `pnpm --filter backend prisma:seed` (inclui dados base da Fase 2)
+1. Backend rodando: `npm run start:dev -w apps/backend` (porta 3000)
+2. Frontend rodando: `npm run dev -w apps/frontend` (porta 5173)
+3. Banco de dados migrado: `npm run prisma:migrate -w apps/backend`
+4. Seed executado: `npm run prisma:seed -w apps/backend` (inclui dados base da Fase 2)
 5. Tokens JWT disponíveis para:
    - `ADMIN` — via `POST /api/v1/auth/login` com admin@eco.coop
    - `MANAGER` — com manager@eco.coop
