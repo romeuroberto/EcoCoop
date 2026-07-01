@@ -31,14 +31,14 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
       {/* Sidebar panel */}
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-40 w-64 bg-[#0e2540] text-white flex flex-col shadow-xl',
+          'fixed inset-y-0 left-0 z-40 w-64 bg-white text-slate-900 flex flex-col border-r border-slate-200 shadow-sm',
           'transform transition-transform duration-300 ease-in-out',
           'lg:relative lg:translate-x-0 lg:flex',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
         {/* Logo header */}
-        <div className="px-4 py-4 border-b border-[#163756] flex items-center justify-between">
+        <div className="px-4 py-4 border-b border-slate-200 flex items-center justify-between">
           <img
             src="/brand/logo-horizontal-color.png"
             alt="EcoCoop"
@@ -50,7 +50,7 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
             }}
           />
           <span
-            className="text-xl font-bold text-white hidden"
+            className="text-xl font-bold text-emerald-700 hidden"
             aria-hidden="true"
           >
             EcoCoop
@@ -58,7 +58,7 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
 
           {/* Close button — mobile only */}
           <button
-            className="lg:hidden p-1 rounded text-slate-200 hover:text-white hover:bg-[#163756] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="lg:hidden p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             onClick={onClose}
             aria-label="Fechar menu"
           >
@@ -81,8 +81,8 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
                 className={[
                   'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-[#163756] text-white shadow-sm'
-                    : 'text-slate-200 hover:bg-[#163756]/70 hover:text-white',
+                    ? 'bg-emerald-50 text-emerald-800 shadow-sm'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
               >
