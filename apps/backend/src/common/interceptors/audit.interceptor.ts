@@ -2,15 +2,32 @@ import {
   CallHandler,
   ExecutionContext,
   Injectable,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, from, switchMap, tap } from 'rxjs';
+import { Observable, from, switchMap } from 'rxjs';
 import { AuditAction, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { AUDIT_ACTION_KEY, AUDIT_ENTITY_KEY } from '../decorators/audit-entity.decorator';
 import { CurrentUserDto } from '@ecocoop/shared';
 import { Request } from 'express';
+
+function toJsonSafe(value: unknown): Prisma.InputJsonValue {
+  if (value === null || value === undefined) return null as unknown as Prisma.InputJsonValue;
+  if (Prisma.Decimal.isDecimal(value)) return (value as Prisma.Decimal).toNumber();
+  if (typeof value === 'bigint') return value.toString();
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(toJsonSafe) as Prisma.InputJsonValue;
+  if (typeof value === 'object') {
+    const result: Record<string, Prisma.InputJsonValue> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      result[k] = toJsonSafe(v);
+    }
+    return result;
+  }
+  return value as Prisma.InputJsonValue;
+}
 
 const METHOD_TO_ACTION: Record<string, AuditAction> = {
   POST: AuditAction.CREATE,
@@ -26,6 +43,8 @@ type PrismaDelegate = {
 
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(AuditInterceptor.name);
+
   constructor(
     private prisma: PrismaService,
     private reflector: Reflector,
@@ -51,18 +70,21 @@ export class AuditInterceptor implements NestInterceptor {
     return from(this.fetchPreviousState(action, entityType, entityId)).pipe(
       switchMap((previousState) =>
         next.handle().pipe(
-          tap(async (responseBody: unknown) => {
+          switchMap(async (responseBody: unknown) => {
             try {
               const resolvedEntityId =
                 entityId ??
                 (responseBody && typeof responseBody === 'object' && 'id' in responseBody
                   ? (responseBody as { id: string }).id
                   : null);
-              if (!resolvedEntityId) return;
+              if (!resolvedEntityId) return responseBody;
+
+              const safePreviousState =
+                previousState === Prisma.DbNull ? Prisma.DbNull : toJsonSafe(previousState);
 
               const newState =
                 action !== AuditAction.DELETE
-                  ? (responseBody as Prisma.InputJsonValue)
+                  ? toJsonSafe(responseBody)
                   : Prisma.DbNull;
 
               await this.prisma.auditLog.create({
@@ -70,16 +92,18 @@ export class AuditInterceptor implements NestInterceptor {
                   entityType,
                   entityId: resolvedEntityId,
                   action,
-                  previousState,
+                  previousState: safePreviousState,
                   newState,
                   userId: user?.id ?? 'system',
                   ipAddress: request.ip,
                   userAgent: request.headers['user-agent'],
                 },
               });
-            } catch {
+            } catch (err) {
               // Audit failures must never break the main request
+              this.logger.error(`Audit log failed for ${entityType}/${entityId}: ${(err as Error).message}`);
             }
+            return responseBody;
           }),
         ),
       ),
