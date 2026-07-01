@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -25,6 +25,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const showBreadcrumbs = pathname !== '/dashboard';
 
   const handleLogout = async () => {
     await logout();
@@ -44,7 +46,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <Breadcrumbs />
+        {showBreadcrumbs && <Breadcrumbs />}
       </div>
 
       {/* Right: user info + logout */}

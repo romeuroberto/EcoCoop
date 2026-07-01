@@ -41,38 +41,38 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:grid lg:grid-cols-[0.95fr_1.05fr]">
-      <section className="hidden min-h-screen border-r border-slate-200 bg-white text-slate-900 lg:flex lg:flex-col lg:justify-between">
+      <section className="hidden min-h-screen border-r border-emerald-900 bg-emerald-900 text-white lg:flex lg:flex-col lg:justify-between">
         <div className="px-12 py-10 xl:px-16">
           <img
             src="/brand/logo-horizontal-color.png"
             alt="EcoCoop"
-            className="h-20 w-auto max-w-[280px] object-contain object-left"
+            className="h-20 w-auto rounded-lg object-contain object-left shadow-lg shadow-emerald-950/20"
           />
         </div>
 
         <div className="max-w-2xl px-12 pb-16 xl:px-16">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-emerald-700">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-wide text-emerald-200">
             Ambiente operacional
           </p>
-          <h1 className="max-w-xl text-4xl font-bold leading-tight text-slate-950 xl:text-5xl">
+          <h1 className="max-w-xl text-4xl font-bold leading-tight text-white xl:text-5xl">
             Gestão clara para a rotina da cooperativa.
           </h1>
-          <p className="mt-5 max-w-lg text-base leading-7 text-slate-600">
+          <p className="mt-5 max-w-lg text-base leading-7 text-emerald-50">
             Acompanhe cadastros, rotas e materiais em uma interface pensada para uso diário.
           </p>
 
           <div className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-            <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3">
-              <span className="block text-sm font-semibold text-emerald-900">Rotas</span>
-              <span className="mt-1 block text-xs text-emerald-700">planejamento e execução</span>
+            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
+              <span className="block text-sm font-semibold text-white">Rotas</span>
+              <span className="mt-1 block text-xs text-emerald-100">planejamento e execução</span>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="block text-sm font-semibold text-slate-900">Materiais</span>
-              <span className="mt-1 block text-xs text-slate-600">entrada e saldo bruto</span>
+            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
+              <span className="block text-sm font-semibold text-white">Materiais</span>
+              <span className="mt-1 block text-xs text-emerald-100">entrada e saldo bruto</span>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="block text-sm font-semibold text-slate-900">Equipe</span>
-              <span className="mt-1 block text-xs text-slate-600">acessos por perfil</span>
+            <div className="rounded-lg border border-emerald-400/30 bg-white/10 px-4 py-3">
+              <span className="block text-sm font-semibold text-white">Equipe</span>
+              <span className="mt-1 block text-xs text-emerald-100">acessos por perfil</span>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ export function LoginPage() {
               <p className="mt-3 text-sm text-slate-500">Gestão de cooperativas de reciclagem</p>
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 text-center">
               <h2 className="text-xl font-semibold text-slate-950">Acesse sua conta</h2>
               <p className="mt-1 text-sm text-slate-500">Informe suas credenciais para continuar.</p>
             </div>
