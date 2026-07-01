@@ -101,6 +101,11 @@ const CollectionRouteDetailPage = lazy(() =>
   import('../pages/collection-routes/CollectionRouteDetailPage').then((m) => ({ default: m.CollectionRouteDetailPage })),
 );
 
+// Phase 3 — Raw Material Entries
+const RawMaterialEntriesPage = lazy(() =>
+  import('../pages/raw-material/RawMaterialEntriesPage').then((m) => ({ default: m.RawMaterialEntriesPage })),
+);
+
 // Phase 3 — Raw Material Balance
 const RawMaterialBalancePage = lazy(() =>
   import('../pages/raw-material/RawMaterialBalancePage').then((m) => ({ default: m.RawMaterialBalancePage })),
@@ -180,6 +185,7 @@ export const router = createBrowserRouter([
           { path: 'collection-routes/new', element: S(CollectionRouteFormPage) },
           { path: 'collection-routes/:id', element: S(CollectionRouteDetailPage) },
           { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
+          { path: 'collection-routes/:id/material-entries', element: S(RawMaterialEntriesPage) },
 
           // Phase 3 — Raw Material Balance
           { path: 'raw-material-balance', element: S(RawMaterialBalancePage) },
