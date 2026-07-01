@@ -1,7 +1,10 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { Sidebar, type NavLink } from './Sidebar';
+import { Topbar } from './Topbar';
 
-const navLinks = [
+const navLinks: NavLink[] = [
   { to: '/dashboard', label: 'Dashboard', module: 'DASHBOARD' },
   { to: '/cooperative', label: 'Cooperativa', module: 'COOPERATIVE' },
   { to: '/users', label: 'Usuários', module: 'USERS' },
@@ -21,64 +24,25 @@ const navLinks = [
 ];
 
 export function AdminLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   const hasAccess = (module: string) =>
     module === 'DASHBOARD' || (user?.permissions.some((p) => p.module === module) ?? false);
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md flex flex-col">
-        <div className="px-6 py-4 border-b">
-          <img
-            src="/brand/logo-horizontal-color.png"
-            alt="EcoCoop"
-            className="h-16 w-auto max-w-full object-contain"
-          />
-        </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {navLinks.map((link) =>
-            hasAccess(link.module) ? (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ) : null,
-          )}
-        </nav>
-      </aside>
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        navLinks={navLinks}
+        hasAccess={hasAccess}
+      />
 
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-          <div />
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">
-              {user?.email} &mdash; <span className="font-medium">{user?.profileType}</span>
-            </span>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-red-600 hover:text-red-800 font-medium"
-            >
-              Sair
-            </button>
-          </div>
-        </header>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto bg-grafite-50 p-6">
           <Outlet />
         </main>
       </div>

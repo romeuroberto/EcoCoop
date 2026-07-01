@@ -1,5 +1,4 @@
-// Componentes base — recorte 004A
-// Breadcrumbs será adicionado no recorte 004B (layout global)
+// Componentes base — recortes 004A e 004B
 
 export { Badge } from './Badge';
 export type { BadgeVariant, BadgeProps } from './Badge';
@@ -24,3 +23,6 @@ export type { PaginationProps } from './Pagination';
 
 export { FilterBar } from './FilterBar';
 export type { FilterBarProps } from './FilterBar';
+
+export { Breadcrumbs } from './Breadcrumbs';
+export type { BreadcrumbItem, BreadcrumbsProps } from './Breadcrumbs';
