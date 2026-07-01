@@ -2,10 +2,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Badge,
+  Button,
+  EmptyState,
+  FilterBar,
+  LoadingState,
+  PageHeader,
+  Pagination,
+} from '../../components/ui';
+import {
   collectionRoutesService,
   type CollectionRoute,
   type RouteStatus,
 } from '../../services/collectionRoutes.service';
+import type { BadgeVariant } from '../../components/ui';
 
 const STATUS_LABELS: Record<RouteStatus, string> = {
   PLANEJADA: 'Planejada',
@@ -14,11 +24,11 @@ const STATUS_LABELS: Record<RouteStatus, string> = {
   CANCELADA: 'Cancelada',
 };
 
-const STATUS_COLORS: Record<RouteStatus, string> = {
-  PLANEJADA: 'bg-blue-100 text-blue-700',
-  EM_ANDAMENTO: 'bg-yellow-100 text-yellow-700',
-  CONCLUIDA: 'bg-green-100 text-green-700',
-  CANCELADA: 'bg-gray-100 text-gray-500',
+const ROUTE_STATUS_TO_BADGE: Record<RouteStatus, BadgeVariant> = {
+  PLANEJADA: 'planned',
+  EM_ANDAMENTO: 'in_progress',
+  CONCLUIDA: 'completed',
+  CANCELADA: 'cancelled',
 };
 
 const ALL_STATUSES: RouteStatus[] = ['PLANEJADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'];
@@ -47,25 +57,25 @@ export function CollectionRoutesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Rotas de Coleta</h1>
-        <button
-          onClick={() => navigate('/collection-routes/new')}
-          className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700"
-        >
-          Nova rota
-        </button>
-      </div>
+      <PageHeader
+        title="Rotas de Coleta"
+        subtitle="Gerencie as rotas de coleta da cooperativa"
+        actions={
+          <Button onClick={() => navigate('/collection-routes/new')}>
+            Nova rota
+          </Button>
+        }
+      />
 
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-3">
+      <FilterBar>
         <input
-          className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px]"
+          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-petroleo-500 focus:border-petroleo-500"
           placeholder="Buscar por nome..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
         <select
-          className="border rounded-lg px-3 py-2 text-sm"
+          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-petroleo-500"
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
         >
@@ -74,86 +84,85 @@ export function CollectionRoutesPage() {
             <option key={s} value={s}>{STATUS_LABELS[s]}</option>
           ))}
         </select>
-      </div>
+      </FilterBar>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center text-gray-400 text-sm">Carregando...</div>
-        ) : !data?.data.length ? (
-          <div className="p-8 text-center text-gray-400 text-sm">Nenhuma rota encontrada.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-              <tr>
-                <th className="px-4 py-3 text-left">Nome</th>
-                <th className="px-4 py-3 text-left">Data planejada</th>
-                <th className="px-4 py-3 text-left">Motorista</th>
-                <th className="px-4 py-3 text-left">Veículo</th>
-                <th className="px-4 py-3 text-left">Pontos</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Ações</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {data.data.map((route: CollectionRoute) => (
-                <tr key={route.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-800">{route.name}</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {new Date(route.plannedDate).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{route.driver?.email ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{route.vehicle?.plate ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{route.pointsCount ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[route.status]}`}
-                    >
-                      {STATUS_LABELS[route.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => navigate(`/collection-routes/${route.id}`)}
-                      className="text-brand-600 hover:underline text-xs mr-3"
-                    >
-                      Ver
-                    </button>
-                    {route.status === 'PLANEJADA' && (
-                      <button
-                        onClick={() => navigate(`/collection-routes/${route.id}/edit`)}
-                        className="text-gray-500 hover:underline text-xs"
-                      >
-                        Editar
-                      </button>
-                    )}
-                  </td>
+      {isLoading ? (
+        <LoadingState variant="skeleton" rows={8} />
+      ) : !data?.data.length ? (
+        <EmptyState
+          title={search || statusFilter !== 'all' ? 'Nenhuma rota encontrada' : 'Nenhuma rota de coleta cadastrada'}
+          description={
+            search || statusFilter !== 'all'
+              ? 'Tente ajustar os filtros para encontrar o que procura.'
+              : 'Cadastre a primeira rota de coleta da cooperativa.'
+          }
+          action={
+            !search && statusFilter === 'all' ? (
+              <Button onClick={() => navigate('/collection-routes/new')}>Nova rota</Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <>
+          <div className="bg-white rounded-xl shadow-sm overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-grafite-50 text-grafite-500 text-xs uppercase">
+                <tr>
+                  <th className="px-4 py-3 text-left">Nome</th>
+                  <th className="px-4 py-3 text-left">Data planejada</th>
+                  <th className="px-4 py-3 text-left">Motorista</th>
+                  <th className="px-4 py-3 text-left">Veículo</th>
+                  <th className="px-4 py-3 text-left">Pontos</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-left">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-grafite-100">
+                {data.data.map((route: CollectionRoute) => (
+                  <tr key={route.id} className="hover:bg-grafite-50">
+                    <td className="px-4 py-3 font-medium text-grafite-800">{route.name}</td>
+                    <td className="px-4 py-3 text-grafite-600">
+                      {new Date(route.plannedDate).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-4 py-3 text-grafite-600">{route.driver?.email ?? '—'}</td>
+                    <td className="px-4 py-3 text-grafite-600">{route.vehicle?.plate ?? '—'}</td>
+                    <td className="px-4 py-3 text-grafite-600">{route.pointsCount ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={ROUTE_STATUS_TO_BADGE[route.status]} />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/collection-routes/${route.id}`)}
+                        className="mr-1"
+                      >
+                        Ver
+                      </Button>
+                      {route.status === 'PLANEJADA' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/collection-routes/${route.id}/edit`)}
+                        >
+                          Editar
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1 text-sm border rounded disabled:opacity-40"
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-500 self-center">
-            {page} / {totalPages}
-          </span>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 text-sm border rounded disabled:opacity-40"
-          >
-            Próxima
-          </button>
-        </div>
+          {totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </div>
   );
