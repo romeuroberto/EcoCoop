@@ -17,6 +17,7 @@ const navLinks = [
   { to: '/cost-centers', label: 'Centros de Custo', module: 'COST_CENTERS' },
   { to: '/collection-points', label: 'Pontos de Coleta', module: 'COLLECTION_POINTS' },
   { to: '/collection-routes', label: 'Rotas de Coleta', module: 'COLLECTION_ROUTES' },
+  { to: '/raw-material-balance', label: 'Saldo Bruto', module: 'RAW_MATERIAL_BALANCE' },
 ];
 
 export function AdminLayout() {

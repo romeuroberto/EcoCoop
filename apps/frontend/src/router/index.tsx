@@ -101,6 +101,11 @@ const CollectionRouteDetailPage = lazy(() =>
   import('../pages/collection-routes/CollectionRouteDetailPage').then((m) => ({ default: m.CollectionRouteDetailPage })),
 );
 
+// Phase 3 — Raw Material Balance
+const RawMaterialBalancePage = lazy(() =>
+  import('../pages/raw-material/RawMaterialBalancePage').then((m) => ({ default: m.RawMaterialBalancePage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -175,6 +180,9 @@ export const router = createBrowserRouter([
           { path: 'collection-routes/new', element: S(CollectionRouteFormPage) },
           { path: 'collection-routes/:id', element: S(CollectionRouteDetailPage) },
           { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
+
+          // Phase 3 — Raw Material Balance
+          { path: 'raw-material-balance', element: S(RawMaterialBalancePage) },
         ],
       },
     ],

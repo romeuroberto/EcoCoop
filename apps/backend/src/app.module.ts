@@ -21,6 +21,7 @@ import { CostCentersModule } from './modules/cost-centers/cost-centers.module';
 import { CollectionPointsModule } from './modules/collection-points/collection-points.module';
 import { CollectionRoutesModule } from './modules/collection-routes/collection-routes.module';
 import { RawMaterialEntriesModule } from './modules/raw-material-entries/raw-material-entries.module';
+import { RawMaterialBalanceModule } from './modules/raw-material-balance/raw-material-balance.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RawMaterialEntriesModule } from './modules/raw-material-entries/raw-mat
     CollectionPointsModule,
     CollectionRoutesModule,
     RawMaterialEntriesModule,
+    RawMaterialBalanceModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

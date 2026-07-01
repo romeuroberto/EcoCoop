@@ -55,6 +55,24 @@ export interface ListEntriesQuery {
   limit?: number;
 }
 
+export interface RawMaterialBalanceItem {
+  subcategory: { id: string; name: string; isActive: boolean; category: { id: string; name: string } };
+  unit: { id: string; name: string; symbol: string };
+  balance: string;
+  eventCount: number;
+}
+
+export interface RawMaterialBalanceResponse {
+  data: RawMaterialBalanceItem[];
+  calculatedAt: string;
+}
+
+export interface BalanceQuery {
+  subcategoryId?: string;
+  unitId?: string;
+  includeInactive?: boolean;
+}
+
 export const rawMaterialService = {
   listEntries: (routeId: string, q: ListEntriesQuery = {}) =>
     api
@@ -77,5 +95,10 @@ export const rawMaterialService = {
         `/collection-routes/${routeId}/material-entries/${entryId}/reversal`,
         body,
       )
+      .then((r) => r.data),
+
+  getBalance: (q: BalanceQuery = {}) =>
+    api
+      .get<RawMaterialBalanceResponse>('/raw-material-balance', { params: q })
       .then((r) => r.data),
 };
