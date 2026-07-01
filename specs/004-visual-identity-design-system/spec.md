@@ -39,6 +39,7 @@ Um gestor acessa diferentes módulos do sistema ao longo do dia. Em cada tela, e
 1. **Given** o usuário está em qualquer tela interna, **When** olha para a área de navegação, **Then** a sidebar exibe claramente a seção ativa com destaque visual diferenciado.
 2. **Given** o usuário está em uma tela de detalhe ou sub-página, **When** olha para o topo da área de conteúdo, **Then** breadcrumbs ou indicador de localização mostram o caminho atual (ex.: Rotas de Coleta > Executar Rota).
 3. **Given** o usuário está em desktop, tablet ou mobile, **When** acessa a navegação principal, **Then** a sidebar adapta seu comportamento de forma adequada a cada tamanho de tela.
+4. **Given** o usuário acessa o Dashboard, **When** observa os cards de módulos, **Then** os módulos já implementados aparecem como ativos e navegáveis, agrupados por área operacional, enquanto módulos não implementados permanecem com badge "Em breve" e sem ação principal ativa.
 
 ---
 
@@ -117,6 +118,8 @@ Um motorista usa o sistema em um tablet durante a execução de uma rota de cole
 - **FR-013**: O layout DEVE ser responsivo para três breakpoints: desktop (≥1280px), tablet (768px–1279px) e mobile (<768px).
 - **FR-014**: O sistema NÃO DEVE quebrar nenhuma funcionalidade existente durante a aplicação do novo design system.
 - **FR-015**: O build do frontend DEVE continuar passando sem erros após todas as alterações de design.
+- **FR-016**: O Dashboard DEVE exibir cards de módulos agrupados por áreas operacionais, liberando visualmente apenas módulos com frontend já implementado e rota existente. Cards futuros DEVEM manter badge "Em breve" e não DEVEM exibir ação principal ativa.
+- **FR-017**: A Fase 4 NÃO DEVE criar funcionalidades novas de domínio, desbloquear módulos sem implementação real, alterar backend, schema, permissões ou regras de negócio; o redesenho do Dashboard é apenas refinamento visual e de navegação.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -124,6 +127,7 @@ Um motorista usa o sistema em um tablet durante a execução de uma rota de cole
 - **Componente de Interface**: Elemento de UI reutilizável construído sobre tokens visuais (Badge, PageHeader, DataTable, EmptyState, LoadingState, Sidebar, Topbar, Breadcrumb).
 - **Badge de Status**: Componente visual que comunica o estado de uma entidade operacional usando cor semântica + rótulo textual padronizado.
 - **Tela-Modelo**: Tela que recebe a aplicação completa do novo design system na primeira fase, servindo como referência para as demais telas do sistema.
+- **Card de Módulo**: Elemento visual do Dashboard que representa um módulo do sistema. Pode estar ativo, apontando para rota existente, ou futuro, exibindo "Em breve" sem ação principal.
 
 ## Success Criteria *(mandatory)*
 
@@ -148,3 +152,5 @@ Um motorista usa o sistema em um tablet durante a execução de uma rota de cole
 - A acessibilidade básica (contraste WCAG AA, foco visível, navegação por teclado) é suficiente para esta fase; certificação formal de acessibilidade fica fora do escopo.
 - Modo escuro, temas configuráveis por cooperativa e upload de logo pelo administrador estão explicitamente fora do escopo desta fase.
 - Alterações de backend, banco de dados, schema, endpoints, regras de negócio e permissões estão fora do escopo.
+- O Dashboard pode expor visualmente como ativos somente módulos já existentes no frontend: Cooperados, Funções, Categorias, Subcategorias, Unidades, Compradores, Veículos, Tipos de EPI, Centros de Custo, Pontos de Coleta, Rotas de Coleta, Execução de Rotas, Entrada de Material Bruto e Saldo Bruto.
+- Triagem, Estoque pronto, Rejeito, Vendas operacionais, Financeiro, Rateio e Relatórios avançados permanecem como módulos futuros com badge "Em breve".

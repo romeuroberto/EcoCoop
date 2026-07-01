@@ -8,7 +8,7 @@
 
 ## Summary
 
-Evoluir a interface existente do EcoCoop de um admin template genérico para um produto visual dedicado à operação de cooperativas de reciclagem. A abordagem é **incrementar sobre Tailwind CSS 3.4 já presente**, criar uma biblioteca de componentes reutilizáveis (`src/components/ui/`) e aplicar o novo design nas 4 telas-modelo (Login, Dashboard, Pontos de Coleta, Rotas de Coleta), sem tocar em backend, schema, ou regras de negócio.
+Evoluir a interface existente do EcoCoop de um admin template genérico para um produto visual dedicado à operação de cooperativas de reciclagem. A abordagem é **incrementar sobre Tailwind CSS 3.4 já presente**, criar uma biblioteca de componentes reutilizáveis (`src/components/ui/`) e aplicar o novo design nas 4 telas-modelo (Login, Dashboard, Pontos de Coleta, Rotas de Coleta), incluindo o redesenho do Dashboard de módulos como refinamento visual/navegação. O Dashboard deve liberar visualmente apenas módulos já implementados e manter módulos futuros como "Em breve", sem tocar em backend, schema, permissões ou regras de negócio.
 
 ## Technical Context
 
@@ -31,7 +31,7 @@ Evoluir a interface existente do EcoCoop de um admin template genérico para um 
 - Nenhuma alteração em `apps/backend/`, schema Prisma, migrations, seeds, permissões ou contratos REST
 - Compatibilidade retroativa com telas fora do primeiro recorte — classes Tailwind existentes devem continuar funcionando durante a transição
 
-**Scale/Scope**: 4 telas-modelo na fase 1; ~15 telas existentes preservadas sem quebra; ~8 componentes base criados
+**Scale/Scope**: 4 telas-modelo na fase 1; Dashboard com cards de módulos agrupados por áreas operacionais; ~15 telas existentes preservadas sem quebra; ~8 componentes base criados
 
 ## Constitution Check
 
@@ -102,7 +102,7 @@ apps/frontend/
 │       ├── auth/
 │       │   └── LoginPage.tsx               # ALTERAR — tela-modelo 1
 │       ├── dashboard/
-│       │   └── DashboardPage.tsx           # ALTERAR — tela-modelo 2
+│       │   └── DashboardPage.tsx           # ALTERAR — tela-modelo 2; cards de módulos por área operacional
 │       ├── collection-points/
 │       │   └── CollectionPointsPage.tsx    # ALTERAR — tela-modelo 3
 │       └── collection-routes/
@@ -176,6 +176,18 @@ As pages existentes que usam `STATUS_COLORS` inline (ex.: `CollectionRoutesPage`
 - Modal/Dialog
 - Form inputs padronizados (fora do escopo)
 - Toasts/notificações
+
+### 7. Dashboard de Módulos
+
+O Dashboard será redesenhado como uma navegação operacional agrupada por áreas, sem criar funcionalidades novas de domínio. Cards ativos devem apontar exclusivamente para rotas já existentes no frontend; cards futuros permanecem visualmente bloqueados com badge "Em breve" e sem ação principal ativa.
+
+| Área | Cards ativos permitidos | Rotas existentes |
+|------|--------------------------|------------------|
+| Cadastros | Cooperados, Funções, Categorias, Subcategorias, Unidades, Compradores, Veículos, Tipos de EPI, Centros de Custo | `/members`, `/member-roles`, `/material-categories`, `/material-subcategories`, `/units`, `/buyers`, `/vehicles`, `/epi-types`, `/cost-centers` |
+| Coleta | Pontos de Coleta, Rotas de Coleta, Execução de Rotas | `/collection-points`, `/collection-routes`, `/collection-routes` ou detalhe existente `/collection-routes/:id` quando acessado a partir de uma rota real |
+| Material Bruto / Estoque Bruto | Entrada de Material Bruto, Saldo Bruto | Entrada via rota existente `/collection-routes/:id/material-entries`; Saldo via `/raw-material-balance` |
+
+Cards futuros obrigatórios: Triagem, Estoque pronto, Rejeito, Vendas operacionais, Financeiro, Rateio e Relatórios avançados. Esses cards não podem ter navegação ativa enquanto não houver implementação real e rota correspondente.
 
 ## Complexity Tracking
 
