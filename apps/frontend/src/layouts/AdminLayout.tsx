@@ -21,6 +21,8 @@ const navLinks: NavLink[] = [
   { to: '/collection-points', label: 'Pontos de Coleta', module: 'COLLECTION_POINTS' },
   { to: '/collection-routes', label: 'Rotas de Coleta', module: 'COLLECTION_ROUTES' },
   { to: '/raw-material-balance', label: 'Saldo Bruto', module: 'RAW_MATERIAL_BALANCE' },
+  { to: '/sorting', label: 'Triagens', module: 'SORTING' },
+  { to: '/ready-stock', label: 'Estoque Pronto', module: 'READY_STOCK' },
 ];
 
 export function AdminLayout() {
