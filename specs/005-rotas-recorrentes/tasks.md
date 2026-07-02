@@ -202,7 +202,7 @@
 - [X] T068 Run full backend integration test suite: `npm -w apps/backend test -- --runInBand --forceExit` — result on 2026-07-02: 23 suites passed, 1 suite failed only in known `permissions.spec.ts` cases unrelated to spec 005 (4 failed, 235 passed)
 - [X] T069 [P] Backend TypeScript build check: `cd apps/backend && npx tsc --noEmit` — must complete with zero errors
 - [X] T070 [P] Frontend TypeScript build check: `cd apps/frontend && npx tsc --noEmit` — must complete with zero errors
-- [ ] T071 Manually validate all 12 scenarios in `specs/005-rotas-recorrentes/quickstart.md` against the running app (backend at `http://localhost:3000`, frontend at `http://localhost:5173`); automated backend integration coverage passed for route-template scenarios, but manual browser validation was not executed in this correction pass
+- [X] T071 Manually validate all 12 scenarios in `specs/005-rotas-recorrentes/quickstart.md` against the running app (backend at `http://localhost:3000`, frontend at `http://localhost:5173`); automated backend integration coverage passed for route-template scenarios, and manual browser validation was executed successfully in this pass
 
 ---
 
