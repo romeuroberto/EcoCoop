@@ -31,6 +31,12 @@ enum ProfitSharingBase {
   MANUAL
 }
 
+// Phase 5 enums — Rotas Recorrentes
+enum TemplateStatus {
+  ATIVO
+  INATIVO
+}
+
 // Phase 2 enums
 enum VehicleType {
   TRUCK
@@ -65,6 +71,7 @@ model CooperativeSettings {
   attendanceEnabled            Boolean           @default(false)
   rejectAlertDaysWithoutStatus Int               @default(30)
   defaultProfitSharingBase     ProfitSharingBase @default(NET_RESULT)
+  occurrenceHorizonWeeks       Int               @default(4)
   updatedAt                    DateTime          @updatedAt
   // vehicleCostCenterId omitted — FK to CostCenter is Phase 5
 }
@@ -104,6 +111,7 @@ model User {
   buyer              Buyer?                 @relation("BuyerUser")
   routesAsDriver     CollectionRoute[]      @relation("RouteDriver")
   routeTeamMembers   RouteTeamMember[]      @relation("RouteTeamMember")
+  routeTemplates     RouteTemplate[]        @relation("TemplateDriver")
   rawMaterialEntries RawMaterialEntry[]     @relation("RawMaterialEntryUser")
   stockEvents        RawMaterialStockEvent[] @relation("StockEventUser")
 }
@@ -240,6 +248,7 @@ model Vehicle {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
   collectionRoutes CollectionRoute[]
+  routeTemplates   RouteTemplate[]  @relation("TemplateVehicle")
 }
 
 model EpiType {
@@ -259,6 +268,45 @@ model CostCenter {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Phase 5: Route Templates (Rotas Recorrentes) ────────────────────────────
+
+model RouteTemplate {
+  id             String         @id @default(uuid())
+  name           String
+  recurrenceDays Int[]
+  startDate      DateTime       @db.Date
+  endDate        DateTime?      @db.Date
+  driverId       String
+  driver         User           @relation("TemplateDriver", fields: [driverId], references: [id])
+  vehicleId      String
+  vehicle        Vehicle        @relation("TemplateVehicle", fields: [vehicleId], references: [id])
+  status         TemplateStatus @default(ATIVO)
+  notes          String?
+  version        Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  templatePoints RouteTemplatePoint[]
+  occurrences    CollectionRoute[]
+
+  @@index([status])
+}
+
+model RouteTemplatePoint {
+  id                String          @id @default(uuid())
+  templateId        String
+  template          RouteTemplate   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  collectionPointId String
+  collectionPoint   CollectionPoint @relation(fields: [collectionPointId], references: [id])
+  sequence          Int
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([templateId, collectionPointId])
+  @@unique([templateId, sequence])
+  @@index([templateId, sequence])
 }
 
 // ─── Phase 3: Collection Routes & Raw Material ────────────────────────────────
@@ -286,7 +334,8 @@ model CollectionPoint {
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-  routePoints     RoutePoint[]
+  routePoints          RoutePoint[]
+  routeTemplatePoints  RouteTemplatePoint[]
 
   @@index([isActive])
   @@index([name])
@@ -306,6 +355,9 @@ model CollectionRoute {
   driver      User        @relation("RouteDriver", fields: [driverId], references: [id])
   notes       String?
   version     Int         @default(0)
+  templateId  String?
+  template    RouteTemplate? @relation(fields: [templateId], references: [id])
+  isException Boolean     @default(false)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -313,9 +365,11 @@ model CollectionRoute {
   teamMembers     RouteTeamMember[]
   materialEntries RawMaterialEntry[]
 
+  @@unique([templateId, plannedDate])
   @@index([status])
   @@index([driverId])
   @@index([plannedDate])
+  @@index([templateId])
 }
 
 model RoutePoint {
