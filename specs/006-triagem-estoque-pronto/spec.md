@@ -100,8 +100,8 @@ O triador percebeu após o registro que informou dados incorretos (erro de pesag
 - **FR-005**: O sistema DEVE registrar automaticamente o usuário responsável e o timestamp de cada triagem.
 - **FR-006**: O sistema DEVE registrar rejeitos e perdas com tipo identificável (REJEITO ou PERDA), descrição textual livre e referência opcional à MaterialSubcategory existente (quando o material rejeitado for identificável no cadastro), preservando rastreabilidade.
 - **FR-007**: O sistema DEVE manter estoque pronto separado do estoque bruto, com saldos independentes por material e unidade.
-- **FR-008**: O sistema DEVE permitir consultar estoque pronto com filtros por material, unidade, status e período.
-- **FR-009**: O sistema DEVE exibir histórico de movimentações do estoque pronto, com cada entrada e saída identificada por tipo (TRIAGEM, AJUSTE, ESTORNO), quantidade, responsável e timestamp.
+- **FR-008**: O sistema DEVE permitir consultar estoque pronto com filtros por material, unidade, status da subcategoria (parâmetro `includeInactive: boolean` — quando `true` inclui subcategorias inativas; padrão `false`) e período.
+- **FR-009**: O sistema DEVE exibir histórico de movimentações do estoque pronto, com cada entrada e saída identificada por tipo (`TRIAGEM_OUTPUT`, `AJUSTE`, `ESTORNO`), quantidade, responsável e timestamp. A UI pode exibir o label amigável "Triagem" para `TRIAGEM_OUTPUT`, mas o valor técnico do enum e da API deve ser `TRIAGEM_OUTPUT`.
 - **FR-010**: O sistema DEVE permitir registrar ajuste manual de estoque pronto (positivo ou negativo) com justificativa obrigatória.
 - **FR-011**: O sistema DEVE rejeitar ajustes que resultem em saldo pronto negativo.
 - **FR-012**: O sistema DEVE registrar ajustes manuais com tipo AJUSTE, justificativa, responsável e timestamp no histórico de movimentações.
@@ -128,7 +128,7 @@ O triador percebeu após o registro que informou dados incorretos (erro de pesag
 ### Measurable Outcomes
 
 - **SC-001**: Triador consegue registrar uma triagem completa (material, quantidades, outputs, rejeitos) em menos de 3 minutos.
-- **SC-002**: Após salvar uma triagem válida, os saldos bruto e pronto são atualizados imediatamente, sem necessidade de atualização manual da página.
+- **SC-002**: Após salvar uma triagem válida, os saldos bruto e pronto são refletidos na UI sem exigir refresh manual da página. "Imediatamente" significa que, ao retornar para a tela de detalhe ou listagem após envio bem-sucedido do formulário, os dados já devem estar atualizados — satisfeito por navegação pós-submit ou invalidação de query no cliente. Não requer polling nem WebSocket nesta fase.
 - **SC-003**: Qualquer tentativa de triagem inválida (saldo insuficiente ou soma inconsistente) é rejeitada antes de alterar qualquer saldo.
 - **SC-004**: Gestor consegue visualizar o saldo de estoque pronto por material e o histórico de movimentações em menos de 1 minuto de navegação.
 - **SC-005**: Ajuste manual de estoque pronto sem justificativa é impedido 100% das vezes pelo sistema.
