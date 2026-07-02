@@ -123,7 +123,7 @@ describe('CollectionRoutes — Execution (integration)', () => {
     const unitForCapacity = await prisma.unitOfMeasure.findFirst();
     const vehicle = await prisma.vehicle.create({
       data: {
-        plate: `EXE-${Date.now()}`.slice(0, 10),
+        plate: `EXE-${Math.random().toString(36).slice(2, 8)}`.toUpperCase(),
         type: 'VAN',
         model: 'Execution Test Van',
         isActive: true,
@@ -237,7 +237,7 @@ describe('CollectionRoutes — Execution (integration)', () => {
     const res = await request(app.getHttpServer())
       .post(`/api/v1/collection-routes/${route.id}/cancel`)
       .set('Authorization', `Bearer ${managerToken}`)
-      .send({ reason: 'Chuva forte' });
+      .send({ reason: 'Chuva forte', confirmInProgress: true });
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('CANCELADA');
@@ -320,7 +320,7 @@ describe('CollectionRoutes — Execution (integration)', () => {
     expect(cancelRes.status).toBe(403);
   });
 
-  it('edição estrutural em CONCLUIDA → 409 ROUTE_NOT_EDITABLE', async () => {
+  it('edição estrutural em CONCLUIDA → 422 ROUTE_NOT_EDITABLE', async () => {
     const route = await createRoute('CONCLUIDA');
 
     const res = await request(app.getHttpServer())
@@ -328,7 +328,7 @@ describe('CollectionRoutes — Execution (integration)', () => {
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ name: 'Tentativa concluída' });
 
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(422);
     expect(res.body.code).toBe('ROUTE_NOT_EDITABLE');
   });
 
