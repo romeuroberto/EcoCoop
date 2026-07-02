@@ -87,6 +87,22 @@ describe('CollectionPoints (integration)', () => {
     createdIds.push(res.body.id);
   });
 
+  it('ADMIN POST — geocodes valid address automatically (201)', async () => {
+    mockGeocodingProvider.geocode.mockResolvedValueOnce({ lat: -3.7319, lng: -38.5267 });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/collection-points')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Ponto Geocodificado', address: 'Rua Teste, 100, Fortaleza, CE' });
+
+    expect(res.status).toBe(201);
+    expect(res.body.locationPending).toBe(false);
+    expect(parseFloat(res.body.latitude)).toBeCloseTo(-3.7319, 4);
+    expect(parseFloat(res.body.longitude)).toBeCloseTo(-38.5267, 4);
+    expect(mockGeocodingProvider.geocode).toHaveBeenCalledWith('Rua Teste, 100, Fortaleza, CE');
+    createdIds.push(res.body.id);
+  });
+
   it('ADMIN POST — creates point with manual coords → locationPending=false (201)', async () => {
     const res = await request(app.getHttpServer())
       .post('/api/v1/collection-points')

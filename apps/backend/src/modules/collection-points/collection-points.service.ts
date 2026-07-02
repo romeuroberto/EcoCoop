@@ -58,30 +58,26 @@ export class CollectionPointsService {
 
   async create(dto: CreateCollectionPointDto) {
     const hasManualCoords = dto.latitude != null && dto.longitude != null;
+    const geocoded = hasManualCoords ? null : await this.geocodeAddress(dto.address);
 
-    const point = await this.prisma.collectionPoint.create({
+    return this.prisma.collectionPoint.create({
       data: {
         name: dto.name,
         address: dto.address,
         reference: dto.reference,
-        latitude: hasManualCoords ? dto.latitude : null,
-        longitude: hasManualCoords ? dto.longitude : null,
-        locationPending: !hasManualCoords,
+        latitude: hasManualCoords ? dto.latitude : geocoded?.lat ?? null,
+        longitude: hasManualCoords ? dto.longitude : geocoded?.lng ?? null,
+        locationPending: !hasManualCoords && !geocoded,
       },
     });
-
-    if (!hasManualCoords) {
-      this.tryGeocodeAsync(point.id, dto.address);
-    }
-
-    return point;
   }
 
   async update(id: string, dto: UpdateCollectionPointDto) {
     await this.findOne(id);
 
     const hasManualCoords = dto.latitude != null && dto.longitude != null;
-    const clearingAddress = dto.address != null && !hasManualCoords;
+    const shouldGeocodeAddress = dto.address != null && !hasManualCoords;
+    const geocoded = shouldGeocodeAddress ? await this.geocodeAddress(dto.address as string) : null;
 
     const data: Record<string, unknown> = {};
     if (dto.name !== undefined) data['name'] = dto.name;
@@ -95,27 +91,20 @@ export class CollectionPointsService {
       data['locationPending'] = false;
     }
 
-    const updated = await this.prisma.collectionPoint.update({ where: { id }, data });
-
-    if (clearingAddress) {
-      this.tryGeocodeAsync(id, dto.address as string);
+    if (shouldGeocodeAddress) {
+      data['latitude'] = geocoded?.lat ?? null;
+      data['longitude'] = geocoded?.lng ?? null;
+      data['locationPending'] = !geocoded;
     }
 
-    return updated;
+    return this.prisma.collectionPoint.update({ where: { id }, data });
   }
 
-  private tryGeocodeAsync(id: string, address: string): void {
-    this.geocoding
-      .geocode(address)
-      .then(async (result) => {
-        if (!result) return;
-        await this.prisma.collectionPoint.update({
-          where: { id },
-          data: { latitude: result.lat, longitude: result.lng, locationPending: false },
-        });
-      })
-      .catch(() => {
-        // Geocoding failures must never crash the main request
-      });
+  private async geocodeAddress(address: string) {
+    try {
+      return await this.geocoding.geocode(address);
+    } catch {
+      return null;
+    }
   }
 }
