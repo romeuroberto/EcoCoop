@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { rawMaterialService } from '../../services/rawMaterialService';
+import {
+  rawMaterialService,
+  type RawMaterialBalanceItem,
+  type RawMaterialBalanceResponse,
+} from '../../services/rawMaterialService';
 
 export function RawMaterialBalancePage() {
   const [subcategoryFilter, setSubcategoryFilter] = useState('');
   const [includeInactive, setIncludeInactive] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<RawMaterialBalanceResponse>({
     queryKey: ['raw-material-balance', subcategoryFilter, includeInactive],
     queryFn: () =>
       rawMaterialService.getBalance({
@@ -73,7 +77,7 @@ export function RawMaterialBalancePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {data?.data.map((item) => (
+                {data?.data.map((item: RawMaterialBalanceItem) => (
                   <tr
                     key={`${item.subcategory.id}-${item.unit.id}`}
                     className="hover:bg-gray-50"

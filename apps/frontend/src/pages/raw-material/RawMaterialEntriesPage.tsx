@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { rawMaterialService, type CreateEntryBody, type RawMaterialEntry } from '../../services/rawMaterialService';
+import type { PagedResult } from '../../services/memberRoles.service';
 import { useAuthStore } from '../../store/auth.store';
 
 const canManageEntries = (user: ReturnType<typeof useAuthStore.getState>['user']) =>
@@ -124,7 +125,7 @@ function NewEntryModal({
               onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })}
             >
               <option value="">Selecione...</option>
-              {(subcategories ?? []).map((s) => (
+              {(subcategories ?? []).map((s: { id: string; name: string; category?: { name: string } }) => (
                 <option key={s.id} value={s.id}>
                   {s.category?.name ? `${s.category.name} › ` : ''}{s.name}
                 </option>
@@ -152,7 +153,7 @@ function NewEntryModal({
               onChange={(e) => setForm({ ...form, unitId: e.target.value })}
             >
               <option value="">Selecione...</option>
-              {(units ?? []).map((u) => (
+              {(units ?? []).map((u: { id: string; name: string; symbol: string }) => (
                 <option key={u.id} value={u.id}>
                   {u.name} ({u.symbol})
                 </option>
@@ -268,7 +269,7 @@ export function RawMaterialEntriesPage() {
   const canManage = canManageEntries(user);
   const canCreate = canCreateEntries(user);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<PagedResult<RawMaterialEntry>>({
     queryKey: ['material-entries', routeId, page],
     queryFn: () => rawMaterialService.listEntries(routeId!, { page, limit: 20 }),
     enabled: Boolean(routeId),
@@ -308,7 +309,7 @@ export function RawMaterialEntriesPage() {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {data.data.map((entry) => (
+              {data.data.map((entry: RawMaterialEntry) => (
                 <EntryRow
                   key={entry.id}
                   entry={entry}
