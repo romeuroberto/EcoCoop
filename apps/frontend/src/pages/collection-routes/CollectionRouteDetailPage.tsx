@@ -124,6 +124,7 @@ export function CollectionRouteDetailPage() {
   }
 
   const canAccessMaterialEntries = route.status === 'EM_ANDAMENTO' || route.status === 'CONCLUIDA';
+  const pointsWithoutLocation = route.routePoints.length - mapPoints.length;
 
   return (
     <div className="space-y-6">
@@ -308,7 +309,20 @@ export function CollectionRouteDetailPage() {
                 </li>
               ))}
             </ol>
-            {mapPoints.length > 0 && <MapView points={mapPoints} height="440px" />}
+            <div className="space-y-2">
+              {pointsWithoutLocation > 0 && (
+                <p className="text-xs text-yellow-700">
+                  {pointsWithoutLocation} ponto(s) sem localização não aparecem no mapa.
+                </p>
+              )}
+              {mapPoints.length > 0 ? (
+                <MapView points={mapPoints} height="440px" showRouteLine />
+              ) : (
+                <div className="flex h-[220px] items-center justify-center rounded-lg border border-dashed border-gray-200 text-sm text-gray-400">
+                  Nenhum ponto com localização geocodificada.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
