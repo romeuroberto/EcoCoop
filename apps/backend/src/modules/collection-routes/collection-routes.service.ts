@@ -58,6 +58,9 @@ export interface ListCollectionRoutesQuery {
   driverId?: string;
   dateFrom?: string;
   dateTo?: string;
+  templateId?: string;
+  isException?: boolean;
+  hasTemplate?: boolean;
 }
 
 @Injectable()
@@ -94,6 +97,15 @@ export class CollectionRoutesService {
       if (query.dateTo) dateFilter['lte'] = new Date(query.dateTo);
       where['plannedDate'] = dateFilter;
     }
+    if (query.templateId) {
+      where['templateId'] = query.templateId;
+    }
+    if (query.isException !== undefined) {
+      where['isException'] = query.isException;
+    }
+    if (query.hasTemplate !== undefined) {
+      where['templateId'] = query.hasTemplate ? { not: null } : null;
+    }
 
     const [routes, total] = await Promise.all([
       this.prisma.collectionRoute.findMany({
@@ -105,6 +117,7 @@ export class CollectionRoutesService {
           vehicle: { select: { id: true, plate: true, model: true } },
           driver: { select: { id: true, email: true } },
           teamMembers: { select: { userId: true, user: { select: { email: true } } } },
+          template: { select: { id: true, name: true } },
           _count: { select: { routePoints: true } },
         },
       }),
@@ -119,6 +132,7 @@ export class CollectionRoutesService {
         teamMembers: teamMembers.map((tm) => ({ userId: tm.userId, email: tm.user.email })),
       };
     });
+
 
     return { data, total, page, limit };
   }
@@ -170,10 +184,50 @@ export class CollectionRoutesService {
   }
 
   async update(id: string, dto: UpdateCollectionRouteDto) {
-    await this.assertPlanejada(id);
+    const route = await this.prisma.collectionRoute.findUnique({
+      where: { id },
+      select: { id: true, status: true, templateId: true },
+    });
+    if (!route) {
+      throw new NotFoundException({
+        statusCode: 404,
+        message: 'Rota não encontrada',
+        code: 'COLLECTION_ROUTE_NOT_FOUND',
+      });
+    }
+
+    const isStructuralField = !!(dto.vehicleId || dto.driverId || dto.plannedDate);
+
+    if (route.status === RouteStatus.CONCLUIDA || route.status === RouteStatus.CANCELADA) {
+      throw new UnprocessableEntityException({
+        statusCode: 422,
+        message: 'Rota concluída ou cancelada não pode ser editada',
+        code: 'ROUTE_NOT_EDITABLE',
+      });
+    }
+
+    if (route.status === RouteStatus.EM_ANDAMENTO) {
+      if (!route.templateId) {
+        throw new ConflictException({
+          statusCode: 409,
+          message: 'Rota em andamento não pode ser editada',
+          code: 'ROUTE_NOT_EDITABLE',
+        });
+      }
+      // Template occurrence in EM_ANDAMENTO: only notes are editable
+      if (dto.vehicleId || dto.driverId || dto.name || dto.plannedDate) {
+        throw new UnprocessableEntityException({
+          statusCode: 422,
+          message: 'Edição de campos estruturais não permitida em rota em andamento',
+          code: 'STRUCTURAL_EDIT_BLOCKED',
+        });
+      }
+    }
 
     if (dto.vehicleId) await this.validateVehicle(dto.vehicleId);
     if (dto.driverId) await this.validateDriver(dto.driverId);
+
+    const setIsException = route.templateId && isStructuralField ? true : undefined;
 
     return this.prisma.collectionRoute.update({
       where: { id },
@@ -183,9 +237,41 @@ export class CollectionRoutesService {
         vehicleId: dto.vehicleId,
         driverId: dto.driverId,
         notes: dto.notes,
+        ...(setIsException !== undefined ? { isException: setIsException } : {}),
       },
       include: ROUTE_INCLUDE,
     });
+  }
+
+  async duplicate(id: string) {
+    const route = await this.prisma.collectionRoute.findUnique({
+      where: { id },
+      include: {
+        routePoints: { orderBy: { sequence: 'asc' } },
+      },
+    });
+    if (!route) {
+      throw new NotFoundException({
+        statusCode: 404,
+        message: 'Rota não encontrada',
+        code: 'COLLECTION_ROUTE_NOT_FOUND',
+      });
+    }
+
+    return {
+      draft: {
+        name: route.name,
+        plannedDate: null,
+        driverId: route.driverId,
+        vehicleId: route.vehicleId,
+        notes: route.notes,
+        points: route.routePoints.map((rp) => ({
+          collectionPointId: rp.collectionPointId,
+          sequence: rp.sequence,
+          notes: rp.notes,
+        })),
+      },
+    };
   }
 
   async addPoint(routeId: string, dto: AddRoutePointDto) {
@@ -231,6 +317,7 @@ export class CollectionRoutesService {
     await this.prisma.routePoint.create({
       data: { routeId, collectionPointId: dto.collectionPointId, sequence: nextSeq, notes: dto.notes },
     });
+    await this.markRecurringRouteAsException(routeId);
 
     return this.findOne(routeId);
   }
@@ -249,7 +336,13 @@ export class CollectionRoutesService {
       });
     }
 
-    await this.prisma.routePoint.delete({ where: { id: rp.id } });
+    await this.prisma.$transaction([
+      this.prisma.routePoint.delete({ where: { id: rp.id } }),
+      this.prisma.collectionRoute.updateMany({
+        where: { id: routeId, templateId: { not: null } },
+        data: { isException: true },
+      }),
+    ]);
     return this.findOne(routeId);
   }
 
@@ -291,6 +384,10 @@ export class CollectionRoutesService {
           where: { id: rp.id },
           data: { sequence: idx + 1 },
         });
+      }),
+      this.prisma.collectionRoute.updateMany({
+        where: { id: routeId, templateId: { not: null } },
+        data: { isException: true },
       }),
     ]);
 
@@ -381,10 +478,18 @@ export class CollectionRoutesService {
     return this.findOne(routeId);
   }
 
-  async cancelRoute(routeId: string, reason: string) {
+  async cancelRoute(routeId: string, reason: string, confirmInProgress?: boolean) {
     const route = await this.getRouteVersionForTransition(routeId);
     if (route.status !== RouteStatus.PLANEJADA && route.status !== RouteStatus.EM_ANDAMENTO) {
       throw new ConflictException(INVALID_ROUTE_TRANSITION);
+    }
+
+    if (route.status === RouteStatus.EM_ANDAMENTO && !confirmInProgress) {
+      throw new UnprocessableEntityException({
+        statusCode: 422,
+        message: 'Confirmação explícita necessária para cancelar rota em andamento',
+        code: 'CONFIRM_IN_PROGRESS_REQUIRED',
+      });
     }
 
     const count = await this.prisma.$executeRaw`
@@ -420,7 +525,7 @@ export class CollectionRoutesService {
   private async getRouteVersionForTransition(routeId: string) {
     const route = await this.prisma.collectionRoute.findUnique({
       where: { id: routeId },
-      select: { id: true, status: true, version: true },
+      select: { id: true, status: true, version: true, templateId: true },
     });
     if (!route) {
       throw new NotFoundException({
@@ -451,6 +556,13 @@ export class CollectionRoutesService {
         code: 'ROUTE_NOT_EDITABLE',
       });
     }
+  }
+
+  private async markRecurringRouteAsException(routeId: string) {
+    await this.prisma.collectionRoute.updateMany({
+      where: { id: routeId, templateId: { not: null } },
+      data: { isException: true },
+    });
   }
 
   private async assertEditableForTeam(routeId: string) {

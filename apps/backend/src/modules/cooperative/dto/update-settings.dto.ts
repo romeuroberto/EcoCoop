@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { ProfitSharingBase } from '@prisma/client';
 
 export class UpdateSettingsDto {
@@ -14,4 +14,10 @@ export class UpdateSettingsDto {
   @IsOptional()
   @IsEnum(ProfitSharingBase)
   defaultProfitSharingBase?: ProfitSharingBase;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  occurrenceHorizonWeeks?: number;
 }

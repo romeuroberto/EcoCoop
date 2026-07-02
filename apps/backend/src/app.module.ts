@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -22,10 +23,12 @@ import { CollectionPointsModule } from './modules/collection-points/collection-p
 import { CollectionRoutesModule } from './modules/collection-routes/collection-routes.module';
 import { RawMaterialEntriesModule } from './modules/raw-material-entries/raw-material-entries.module';
 import { RawMaterialBalanceModule } from './modules/raw-material-balance/raw-material-balance.module';
+import { RouteTemplatesModule } from './modules/route-templates/route-templates.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ScheduleModule.forRoot(),
     AuthModule,
     CooperativeModule,
     ProfilesModule,
@@ -43,6 +46,7 @@ import { RawMaterialBalanceModule } from './modules/raw-material-balance/raw-mat
     CollectionRoutesModule,
     RawMaterialEntriesModule,
     RawMaterialBalanceModule,
+    RouteTemplatesModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

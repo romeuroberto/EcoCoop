@@ -46,6 +46,9 @@ export class CollectionRoutesController {
     @Query('driverId') driverId?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
+    @Query('templateId') templateId?: string,
+    @Query('isException') isException?: string,
+    @Query('hasTemplate') hasTemplate?: string,
   ) {
     return this.service.list(
       {
@@ -56,6 +59,9 @@ export class CollectionRoutesController {
         driverId,
         dateFrom,
         dateTo,
+        templateId,
+        isException: isException !== undefined ? isException === 'true' : undefined,
+        hasTemplate: hasTemplate !== undefined ? hasTemplate === 'true' : undefined,
       },
       user,
     );
@@ -140,6 +146,13 @@ export class CollectionRoutesController {
   @RequirePermission('COLLECTION_ROUTES', 'MANAGE')
   @AuditAsUpdate()
   cancelRoute(@Param('id') routeId: string, @Body() dto: CancelCollectionRouteDto) {
-    return this.service.cancelRoute(routeId, dto.reason);
+    return this.service.cancelRoute(routeId, dto.reason, dto.confirmInProgress);
+  }
+
+  @Post(':id/duplicate')
+  @HttpCode(200)
+  @RequirePermission('COLLECTION_ROUTES', 'MANAGE')
+  duplicateRoute(@Param('id') routeId: string) {
+    return this.service.duplicate(routeId);
   }
 }
