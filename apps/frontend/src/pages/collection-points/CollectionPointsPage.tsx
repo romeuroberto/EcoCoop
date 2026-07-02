@@ -8,7 +8,6 @@ import {
   EmptyState,
   FilterBar,
   LoadingState,
-  PageHeader,
   Pagination,
 } from '../../components/ui';
 import { collectionPointsService, type CollectionPoint } from '../../services/collectionPoints.service';
@@ -39,19 +38,23 @@ export function CollectionPointsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Pontos de Coleta"
-        subtitle="Gerencie os pontos de coleta da cooperativa"
-        actions={
-          <Button onClick={() => navigate('/collection-points/new')}>
-            Novo ponto
-          </Button>
-        }
-      />
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Pontos de Coleta</h1>
+          <p className="mt-1 text-sm text-gray-600">Gerencie os pontos de coleta da cooperativa</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate('/collection-points/new')}
+          className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700"
+        >
+          Novo ponto
+        </button>
+      </div>
 
       {mapPoints.length > 0 && (
         <div className="mb-6">
-          <MapView points={mapPoints} height="280px" />
+          <MapView points={mapPoints} height="360px" />
         </div>
       )}
 
