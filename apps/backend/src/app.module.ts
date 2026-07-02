@@ -24,6 +24,9 @@ import { CollectionRoutesModule } from './modules/collection-routes/collection-r
 import { RawMaterialEntriesModule } from './modules/raw-material-entries/raw-material-entries.module';
 import { RawMaterialBalanceModule } from './modules/raw-material-balance/raw-material-balance.module';
 import { RouteTemplatesModule } from './modules/route-templates/route-templates.module';
+import { SortingOperationsModule } from './modules/sorting-operations/sorting-operations.module';
+import { ReadyStockModule } from './modules/ready-stock/ready-stock.module';
+import { ReadyStockAdjustmentsModule } from './modules/ready-stock-adjustments/ready-stock-adjustments.module';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { RouteTemplatesModule } from './modules/route-templates/route-templates.
     RawMaterialEntriesModule,
     RawMaterialBalanceModule,
     RouteTemplatesModule,
+    SortingOperationsModule,
+    ReadyStockModule,
+    ReadyStockAdjustmentsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

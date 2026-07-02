@@ -122,6 +122,20 @@ const RawMaterialBalancePage = lazy(() =>
   import('../pages/raw-material/RawMaterialBalancePage').then((m) => ({ default: m.RawMaterialBalancePage })),
 );
 
+// Feature 006 — Triagem e Estoque Pronto
+const SortingListPage = lazy(() =>
+  import('../pages/sorting/SortingListPage').then((m) => ({ default: m.SortingListPage })),
+);
+const SortingFormPage = lazy(() =>
+  import('../pages/sorting/SortingFormPage').then((m) => ({ default: m.SortingFormPage })),
+);
+const SortingDetailPage = lazy(() =>
+  import('../pages/sorting/SortingDetailPage').then((m) => ({ default: m.SortingDetailPage })),
+);
+const ReadyStockPage = lazy(() =>
+  import('../pages/ready-stock/ReadyStockPage').then((m) => ({ default: m.ReadyStockPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -206,6 +220,12 @@ export const router = createBrowserRouter([
 
           // Phase 3 — Raw Material Balance
           { path: 'raw-material-balance', element: S(RawMaterialBalancePage) },
+
+          // Feature 006 — Triagem e Estoque Pronto
+          { path: 'sorting', element: S(SortingListPage) },
+          { path: 'sorting/new', element: S(SortingFormPage) },
+          { path: 'sorting/:id', element: S(SortingDetailPage) },
+          { path: 'ready-stock', element: S(ReadyStockPage) },
         ],
       },
     ],
