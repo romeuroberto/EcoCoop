@@ -43,7 +43,9 @@ export function AdminLayout() {
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
 
         <main className="flex-1 overflow-auto bg-grafite-50 p-6">
-          <Outlet />
+          <div className="mx-auto w-full max-w-screen-2xl">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

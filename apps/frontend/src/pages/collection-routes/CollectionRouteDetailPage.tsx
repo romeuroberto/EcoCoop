@@ -126,7 +126,7 @@ export function CollectionRouteDetailPage() {
   const canAccessMaterialEntries = route.status === 'EM_ANDAMENTO' || route.status === 'CONCLUIDA';
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <button
@@ -180,8 +180,8 @@ export function CollectionRouteDetailPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl bg-white p-5 shadow-sm md:col-span-2">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)]">
+        <div className="rounded-xl bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-gray-700">Execução</h2>
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div>
@@ -291,7 +291,7 @@ export function CollectionRouteDetailPage() {
         {route.routePoints.length === 0 ? (
           <p className="text-sm text-gray-400">Nenhum ponto associado.</p>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(320px,0.75fr)_minmax(520px,1.25fr)]">
             <ol className="space-y-2">
               {route.routePoints.map((rp: RoutePoint, idx: number) => (
                 <li key={rp.id} className="flex gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
@@ -308,7 +308,7 @@ export function CollectionRouteDetailPage() {
                 </li>
               ))}
             </ol>
-            {mapPoints.length > 0 && <MapView points={mapPoints} height="320px" />}
+            {mapPoints.length > 0 && <MapView points={mapPoints} height="440px" />}
           </div>
         )}
       </div>
