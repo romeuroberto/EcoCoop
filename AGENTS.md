@@ -108,7 +108,8 @@ Ao concluir, informe:
 5. resultado real dos testes;
 6. falhas resumidas, se houver;
 7. pendências reais;
-8. próximos passos sugeridos.
+8. próximos passos sugeridos;
+9. texto/comando de commit recomendado sempre que houver alteração de código, documentação ou configuração.
 
 Não afirme que testes passaram se eles não foram executados.
 
@@ -277,6 +278,8 @@ Preferência:
 - um commit para ajuste de spec/tasks;
 - um commit para implementação do recorte;
 - um commit separado para ajustes visuais ou técnicos transversais.
+
+Sempre que realizar qualquer alteração no repositório, informe ao final o texto/comando de commit recomendado, seguindo Conventional Commits.
 
 ---
 
