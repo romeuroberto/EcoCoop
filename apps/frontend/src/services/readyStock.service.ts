@@ -61,6 +61,40 @@ export interface MovementsQuery {
   limit?: number;
 }
 
+export interface CreateAdjustmentBody {
+  subcategoryId: string;
+  unitId: string;
+  quantity: number;
+  justification: string;
+}
+
+export interface ReadyStockAdjustment {
+  id: string;
+  subcategory: ReadyStockSubcategory;
+  unit: ReadyStockUnit;
+  quantity: string;
+  justification: string;
+  user: { id: string; email: string };
+  createdAt: string;
+  stockEventId?: string;
+}
+
+export interface AdjustmentsListResponse {
+  data: ReadyStockAdjustment[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AdjustmentsQuery {
+  subcategoryId?: string;
+  userId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const readyStockService = {
   getBalance: (q: BalanceQuery = {}) =>
     api
@@ -75,5 +109,15 @@ export const readyStockService = {
   getMovements: (q: MovementsQuery = {}) =>
     api
       .get<ReadyStockMovementsResponse>('/ready-stock/movements', { params: q })
+      .then((r) => r.data),
+
+  createAdjustment: (body: CreateAdjustmentBody) =>
+    api
+      .post<ReadyStockAdjustment>('/ready-stock-adjustments', body)
+      .then((r) => r.data),
+
+  listAdjustments: (q: AdjustmentsQuery = {}) =>
+    api
+      .get<AdjustmentsListResponse>('/ready-stock-adjustments', { params: q })
       .then((r) => r.data),
 };

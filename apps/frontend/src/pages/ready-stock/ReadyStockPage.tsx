@@ -7,6 +7,8 @@ import {
   type ReadyStockEventType,
   type ReadyStockMovement,
 } from '../../services/readyStock.service';
+import { useAuthStore } from '../../store/auth.store';
+import { ReadyStockAdjustmentModal } from './ReadyStockAdjustmentModal';
 
 const TYPE_LABELS: Record<ReadyStockEventType, string> = {
   TRIAGEM_OUTPUT: 'Triagem',
@@ -22,10 +24,19 @@ const TYPE_CLASSES: Record<ReadyStockEventType, string> = {
 
 type ActiveTab = 'balance' | 'movements';
 
+const canCreateAdjustment = (user: ReturnType<typeof useAuthStore.getState>['user']) =>
+  Boolean(
+    user?.permissions.some(
+      (p) => p.module === 'READY_STOCK' && p.action === 'CREATE_ADJUSTMENT',
+    ),
+  );
+
 export function ReadyStockPage() {
+  const user = useAuthStore((s) => s.user);
   const [activeTab, setActiveTab] = useState<ActiveTab>('balance');
   const [typeFilter, setTypeFilter] = useState<ReadyStockEventType | ''>('');
   const [movementsPage, setMovementsPage] = useState(1);
+  const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
   const movementsLimit = 20;
 
   const balanceQuery = useQuery({
@@ -50,11 +61,26 @@ export function ReadyStockPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Estoque Pronto</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Saldo e histórico de movimentações de material pronto
-        </p>
+      {showAdjustmentModal && (
+        <ReadyStockAdjustmentModal onClose={() => setShowAdjustmentModal(false)} />
+      )}
+
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Estoque Pronto</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Saldo e histórico de movimentações de material pronto
+          </p>
+        </div>
+        {canCreateAdjustment(user) && (
+          <button
+            type="button"
+            onClick={() => setShowAdjustmentModal(true)}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            Novo ajuste
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
