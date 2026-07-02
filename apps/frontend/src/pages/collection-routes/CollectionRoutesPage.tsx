@@ -7,7 +7,6 @@ import {
   EmptyState,
   FilterBar,
   LoadingState,
-  PageHeader,
   Pagination,
 } from '../../components/ui';
 import {
@@ -34,12 +33,6 @@ const ROUTE_STATUS_TO_BADGE: Record<RouteStatus, BadgeVariant> = {
 };
 
 const ALL_STATUSES: RouteStatus[] = ['PLANEJADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'];
-
-const PlusIcon = () => (
-  <span className="text-base leading-none" aria-hidden="true">
-    +
-  </span>
-);
 
 export function CollectionRoutesPage() {
   const navigate = useNavigate();
@@ -86,19 +79,18 @@ export function CollectionRoutesPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Rotas de Coleta"
-        subtitle="Gerencie as rotas de coleta da cooperativa"
-      />
-
-      <div className="mb-4 flex justify-start">
-        <Button
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Rotas de Coleta</h1>
+          <p className="mt-1 text-sm text-gray-600">Gerencie as rotas de coleta da cooperativa</p>
+        </div>
+        <button
+          type="button"
           onClick={() => navigate('/collection-routes/new')}
-          leftIcon={<PlusIcon />}
-          className="shadow-sm shadow-petroleo-900/15"
+          className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700"
         >
           Nova rota
-        </Button>
+        </button>
       </div>
 
       <FilterBar>
