@@ -55,7 +55,7 @@ export function EpiTypeFormPage() {
   };
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Tipo de EPI' : 'Novo Tipo de EPI'}
       </h1>

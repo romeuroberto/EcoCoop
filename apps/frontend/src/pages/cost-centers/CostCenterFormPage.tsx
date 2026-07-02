@@ -60,7 +60,7 @@ export function CostCenterFormPage() {
   };
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Centro de Custo' : 'Novo Centro de Custo'}
       </h1>

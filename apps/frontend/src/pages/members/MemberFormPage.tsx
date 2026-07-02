@@ -81,7 +81,7 @@ export function MemberFormPage() {
   };
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Cooperado' : 'Novo Cooperado'}
       </h1>

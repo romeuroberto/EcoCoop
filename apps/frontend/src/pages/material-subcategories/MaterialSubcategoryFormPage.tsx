@@ -77,7 +77,7 @@ export function MaterialSubcategoryFormPage() {
   };
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Subcategoria' : 'Nova Subcategoria de Material'}
       </h1>

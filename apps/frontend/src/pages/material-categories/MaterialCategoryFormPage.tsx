@@ -46,7 +46,7 @@ export function MaterialCategoryFormPage() {
   };
 
   return (
-    <div className="max-w-xl">
+    <div className="max-w-xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Categoria' : 'Nova Categoria de Material'}
       </h1>

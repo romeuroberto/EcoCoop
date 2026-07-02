@@ -256,7 +256,7 @@ export function CollectionRouteFormPage() {
   const isNonStructuralEditable = !isFinished;
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
         <button onClick={() => navigate('/collection-routes')} className="text-gray-400 hover:text-gray-600 text-sm">
           ← Rotas de Coleta

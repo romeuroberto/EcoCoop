@@ -93,7 +93,7 @@ export function BuyerFormPage() {
   const docPlaceholder = form.documentType === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00';
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         {isEdit ? 'Editar Comprador' : 'Novo Comprador'}
       </h1>

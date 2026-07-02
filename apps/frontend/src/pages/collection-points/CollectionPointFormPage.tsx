@@ -86,7 +86,7 @@ export function CollectionPointFormPage() {
   const hasPreview = previewLat != null && previewLng != null && !isNaN(previewLat) && !isNaN(previewLng);
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
         <button onClick={() => navigate('/collection-points')} className="text-gray-500 hover:text-gray-700 text-sm">
           ← Voltar
