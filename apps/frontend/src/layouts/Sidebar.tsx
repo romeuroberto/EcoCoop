@@ -83,16 +83,22 @@ export function Sidebar({ isOpen, onClose, navLinks, hasAccess }: SidebarProps) 
                 to={link.to}
                 onClick={onClose}
                 className={[
-                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-petroleo-500 focus-visible:ring-inset',
                   isActive
-                    ? 'bg-petroleo-50 text-petroleo-800 shadow-sm'
+                    ? 'bg-petroleo-50 text-petroleo-900 shadow-[0_8px_20px_rgba(13,94,131,0.12)] ring-1 ring-petroleo-100'
                     : 'text-slate-700 hover:bg-slate-100 hover:text-slate-950',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
               >
+                {isActive && (
+                  <span
+                    className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-petroleo-600"
+                    aria-hidden="true"
+                  />
+                )}
                 {link.icon && <span className="w-4 h-4 shrink-0" aria-hidden="true">{link.icon}</span>}
-                {link.label}
+                <span className={isActive ? 'pl-1' : ''}>{link.label}</span>
               </Link>
             );
           })}

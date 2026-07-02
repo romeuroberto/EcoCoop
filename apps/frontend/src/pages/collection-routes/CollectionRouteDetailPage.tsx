@@ -5,7 +5,9 @@ import { MapView, type MapPoint } from '../../components/map/MapView';
 import {
   collectionRoutesService,
   type CollectionRoute,
+  type RoutePoint,
   type RouteStatus,
+  type RouteTeamMember,
 } from '../../services/collectionRoutes.service';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -52,9 +54,10 @@ export function CollectionRouteDetailPage() {
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [cancelReason, setCancelReason] = useState('');
+  const [confirmInProgress, setConfirmInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: route, isLoading } = useQuery({
+  const { data: route, isLoading } = useQuery<CollectionRoute>({
     queryKey: ['collection-route', id],
     queryFn: () => collectionRoutesService.getById(id!),
     enabled: Boolean(id),
@@ -78,19 +81,27 @@ export function CollectionRouteDetailPage() {
     onError: (err) => setError(getErrorMessage(err, 'Erro ao concluir rota')),
   });
 
+  const duplicateMut = useMutation({
+    mutationFn: () => collectionRoutesService.duplicate(id!),
+    onSuccess: (res) => navigate('/collection-routes/new', { state: { draft: res.draft } }),
+    onError: (err) => setError(getErrorMessage(err, 'Erro ao duplicar rota')),
+  });
+
   const cancelMut = useMutation({
-    mutationFn: () => collectionRoutesService.cancel(id!, cancelReason.trim()),
+    mutationFn: () =>
+      collectionRoutesService.cancelWithConfirm(id!, cancelReason.trim(), confirmInProgress || undefined),
     onSuccess: (updated) => {
       refreshRoute(updated);
       setCancelReason('');
+      setConfirmInProgress(false);
     },
     onError: (err) => setError(getErrorMessage(err, 'Erro ao cancelar rota')),
   });
 
   const mapPoints: MapPoint[] =
-    route?.routePoints
-      .filter((rp) => !rp.collectionPoint.locationPending && rp.collectionPoint.latitude != null)
-      .map((rp, idx) => ({
+    (route?.routePoints ?? [])
+      .filter((rp: RoutePoint) => !rp.collectionPoint.locationPending && rp.collectionPoint.latitude != null)
+      .map((rp: RoutePoint, idx: number) => ({
         id: rp.collectionPoint.id,
         lat: rp.collectionPoint.latitude!,
         lng: rp.collectionPoint.longitude!,
@@ -126,20 +137,41 @@ export function CollectionRouteDetailPage() {
           </button>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-800">{route.name}</h1>
-            <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[route.status]}`}>
-              {STATUS_LABELS[route.status]}
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${STATUS_COLORS[route.status as RouteStatus]}`}>
+              {STATUS_LABELS[route.status as RouteStatus]}
             </span>
+            {(route as CollectionRoute & { isException?: boolean }).isException && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
+                Exceção
+              </span>
+            )}
+            {(route as CollectionRoute & { templateId?: string | null; template?: { name: string } | null }).template?.name && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-petroleo-50 text-petroleo-700 border border-petroleo-200">
+                Modelo: {(route as CollectionRoute & { template?: { name: string } | null }).template!.name}
+              </span>
+            )}
           </div>
         </div>
 
-        {route.status === 'PLANEJADA' && canManageRoutes(route, user) && (
-          <button
-            onClick={() => navigate(`/collection-routes/${route.id}/edit`)}
-            className="rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-          >
-            Editar planejamento
-          </button>
-        )}
+        <div className="flex gap-2">
+          {route.status === 'PLANEJADA' && canManageRoutes(route, user) && (
+            <button
+              onClick={() => navigate(`/collection-routes/${route.id}/edit`)}
+              className="rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              Editar planejamento
+            </button>
+          )}
+          {canManageRoutes(route, user) && (
+            <button
+              onClick={() => duplicateMut.mutate()}
+              disabled={duplicateMut.isPending}
+              className="rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Duplicar
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -225,9 +257,24 @@ export function CollectionRouteDetailPage() {
                 className="w-full rounded-lg border px-3 py-2 text-sm"
                 placeholder="Justificativa obrigatória"
               />
+              {route.status === 'EM_ANDAMENTO' && (
+                <label className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={confirmInProgress}
+                    onChange={(e) => setConfirmInProgress(e.target.checked)}
+                    className="rounded"
+                  />
+                  Confirmo que desejo cancelar uma rota em andamento
+                </label>
+              )}
               <button
                 onClick={() => cancelMut.mutate()}
-                disabled={isMutating || cancelReason.trim().length === 0}
+                disabled={
+                  isMutating ||
+                  cancelReason.trim().length === 0 ||
+                  (route.status === 'EM_ANDAMENTO' && !confirmInProgress)
+                }
                 className="w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 Cancelar rota
@@ -246,7 +293,7 @@ export function CollectionRouteDetailPage() {
         ) : (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
             <ol className="space-y-2">
-              {route.routePoints.map((rp, idx) => (
+              {route.routePoints.map((rp: RoutePoint, idx: number) => (
                 <li key={rp.id} className="flex gap-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
                     {idx + 1}
@@ -272,7 +319,7 @@ export function CollectionRouteDetailPage() {
           <p className="text-sm text-gray-400">Nenhum membro auxiliar registrado.</p>
         ) : (
           <ul className="space-y-1 text-sm text-gray-700">
-            {route.teamMembers.map((member) => (
+            {route.teamMembers.map((member: RouteTeamMember) => (
               <li key={member.userId}>{member.email ?? member.user?.email ?? member.userId}</li>
             ))}
           </ul>
@@ -283,7 +330,7 @@ export function CollectionRouteDetailPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-gray-700">Material bruto</h2>
-            <p className="mt-1 text-sm text-gray-500">{MATERIAL_ENTRY_MESSAGES[route.status]}</p>
+            <p className="mt-1 text-sm text-gray-500">{MATERIAL_ENTRY_MESSAGES[route.status as RouteStatus]}</p>
           </div>
           <button
             onClick={() => navigate(`/collection-routes/${route.id}/material-entries`)}

@@ -101,6 +101,17 @@ const CollectionRouteDetailPage = lazy(() =>
   import('../pages/collection-routes/CollectionRouteDetailPage').then((m) => ({ default: m.CollectionRouteDetailPage })),
 );
 
+// Phase 3 — Route Templates
+const RouteTemplatesPage = lazy(() =>
+  import('../pages/route-templates/RouteTemplatesPage').then((m) => ({ default: m.RouteTemplatesPage })),
+);
+const RouteTemplateFormPage = lazy(() =>
+  import('../pages/route-templates/RouteTemplateFormPage').then((m) => ({ default: m.RouteTemplateFormPage })),
+);
+const RouteTemplateDetailPage = lazy(() =>
+  import('../pages/route-templates/RouteTemplateDetailPage').then((m) => ({ default: m.RouteTemplateDetailPage })),
+);
+
 // Phase 3 — Raw Material Entries
 const RawMaterialEntriesPage = lazy(() =>
   import('../pages/raw-material/RawMaterialEntriesPage').then((m) => ({ default: m.RawMaterialEntriesPage })),
@@ -186,6 +197,12 @@ export const router = createBrowserRouter([
           { path: 'collection-routes/:id', element: S(CollectionRouteDetailPage) },
           { path: 'collection-routes/:id/edit', element: S(CollectionRouteFormPage) },
           { path: 'collection-routes/:routeId/material-entries', element: S(RawMaterialEntriesPage) },
+
+          // Phase 5 — Route Templates
+          { path: 'route-templates', element: S(RouteTemplatesPage) },
+          { path: 'route-templates/new', element: S(RouteTemplateFormPage) },
+          { path: 'route-templates/:id', element: S(RouteTemplateDetailPage) },
+          { path: 'route-templates/:id/edit', element: S(RouteTemplateFormPage) },
 
           // Phase 3 — Raw Material Balance
           { path: 'raw-material-balance', element: S(RawMaterialBalancePage) },

@@ -49,11 +49,14 @@ export interface CollectionRoute {
   cancelReason: string | null;
   notes: string | null;
   version: number;
+  templateId: string | null;
+  isException: boolean;
   vehicle: RouteVehicle;
   driver: RouteDriver;
   teamMembers: RouteTeamMember[];
   routePoints: RoutePoint[];
   pointsCount?: number;
+  template?: { id: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +86,9 @@ export interface ListCollectionRoutesQuery {
   driverId?: string;
   dateFrom?: string;
   dateTo?: string;
+  templateId?: string;
+  isException?: boolean;
+  hasTemplate?: boolean;
 }
 
 export interface SuggestSequenceResult {
@@ -134,4 +140,12 @@ export const collectionRoutesService = {
 
   cancel: (id: string, reason: string) =>
     api.post<CollectionRoute>(`/collection-routes/${id}/cancel`, { reason }).then((r) => r.data),
+
+  cancelWithConfirm: (id: string, reason: string, confirmInProgress?: boolean) =>
+    api
+      .post<CollectionRoute>(`/collection-routes/${id}/cancel`, { reason, confirmInProgress })
+      .then((r) => r.data),
+
+  duplicate: (id: string) =>
+    api.post<{ draft: { name: string; plannedDate: null; driverId: string; vehicleId: string; notes: string | null; points: Array<{ collectionPointId: string; sequence: number }> } }>(`/collection-routes/${id}/duplicate`, {}).then((r) => r.data),
 };

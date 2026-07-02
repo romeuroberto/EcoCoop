@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { MapView, type MapPoint } from '../../components/map/MapView';
 import { collectionPointsService } from '../../services/collectionPoints.service';
 import {
@@ -8,7 +8,8 @@ import {
   type CollectionRoute,
   type RoutePoint,
 } from '../../services/collectionRoutes.service';
-import { vehiclesService } from '../../services/vehicles.service';
+import { vehiclesService, type Vehicle } from '../../services/vehicles.service';
+import type { CollectionPoint } from '../../services/collectionPoints.service';
 import { api } from '../../services/api.client';
 
 interface UserOption {
@@ -17,20 +18,45 @@ interface UserOption {
   profile: { type: string };
 }
 
+interface RouteDraft {
+  name: string;
+  driverId: string;
+  vehicleId: string;
+  notes: string | null;
+  points: Array<{ collectionPointId: string; sequence: number }>;
+}
+
 export function CollectionRouteFormPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const draft = (location.state as { draft?: RouteDraft } | null)?.draft;
   const qc = useQueryClient();
   const isEdit = Boolean(id) && id !== 'new';
 
-  const [name, setName] = useState('');
+  const [name, setName] = useState(draft?.name ?? '');
   const [plannedDate, setPlannedDate] = useState('');
-  const [vehicleId, setVehicleId] = useState('');
-  const [driverId, setDriverId] = useState('');
-  const [notes, setNotes] = useState('');
+  const [vehicleId, setVehicleId] = useState(draft?.vehicleId ?? '');
+  const [driverId, setDriverId] = useState(draft?.driverId ?? '');
+  const [notes, setNotes] = useState(draft?.notes ?? '');
   const [error, setError] = useState<string | null>(null);
   const [suggestWarning, setSuggestWarning] = useState<string | null>(null);
-  const [routePoints, setRoutePoints] = useState<RoutePoint[]>([]);
+  const [routePoints, setRoutePoints] = useState<RoutePoint[]>(
+    draft?.points?.map((p) => ({
+      id: p.collectionPointId,
+      sequence: p.sequence,
+      notes: null,
+      collectionPoint: {
+        id: p.collectionPointId,
+        name: p.collectionPointId,
+        address: '',
+        latitude: null,
+        longitude: null,
+        locationPending: false,
+        isActive: true,
+      },
+    })) ?? [],
+  );
 
   const { data: vehiclesData } = useQuery({
     queryKey: ['vehicles-active'],
@@ -50,7 +76,7 @@ export function CollectionRouteFormPage() {
     queryFn: () => collectionPointsService.list({ status: 'active', limit: 200 }),
   });
 
-  const { data: existingRoute } = useQuery({
+  const { data: existingRoute } = useQuery<CollectionRoute>({
     queryKey: ['collection-route', id],
     queryFn: () => collectionRoutesService.getById(id!),
     enabled: isEdit,
@@ -152,7 +178,7 @@ export function CollectionRouteFormPage() {
     if (isEdit) {
       addPointMut.mutate(cpId);
     } else {
-      const cp = pointsData?.data.find((p) => p.id === cpId);
+      const cp = pointsData?.data.find((p: CollectionPoint) => p.id === cpId);
       if (!cp) return;
       setRoutePoints((prev) => [
         ...prev,
@@ -211,7 +237,7 @@ export function CollectionRouteFormPage() {
     }));
 
   const usedPointIds = new Set(routePoints.map((rp) => rp.collectionPoint.id));
-  const availablePoints = (pointsData?.data ?? []).filter((p) => !usedPointIds.has(p.id));
+  const availablePoints = (pointsData?.data ?? []).filter((p: CollectionPoint) => !usedPointIds.has(p.id));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,7 +249,11 @@ export function CollectionRouteFormPage() {
     }
   };
 
-  const isPlanejada = !isEdit || existingRoute?.status === 'PLANEJADA';
+  const routeStatus = existingRoute?.status;
+  const isFinished = isEdit && (routeStatus === 'CONCLUIDA' || routeStatus === 'CANCELADA');
+  const isEmAndamento = isEdit && routeStatus === 'EM_ANDAMENTO';
+  const isStructuralEditable = !isEdit || routeStatus === 'PLANEJADA';
+  const isNonStructuralEditable = !isFinished;
 
   return (
     <div className="max-w-4xl">
@@ -236,6 +266,17 @@ export function CollectionRouteFormPage() {
           {isEdit ? 'Editar Rota' : 'Nova Rota'}
         </h1>
       </div>
+
+      {isFinished && (
+        <div className="mb-4 p-3 bg-grafite-50 text-grafite-600 text-sm rounded-lg border border-grafite-200">
+          Rota {routeStatus === 'CONCLUIDA' ? 'concluída' : 'cancelada'} — todos os campos estão bloqueados.
+        </div>
+      )}
+      {isEmAndamento && (
+        <div className="mb-4 p-3 bg-amber-50 text-amber-700 text-sm rounded-lg border border-amber-200">
+          Rota em andamento — motorista, veículo e pontos de coleta não podem ser alterados.
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
@@ -254,7 +295,7 @@ export function CollectionRouteFormPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              disabled={!isPlanejada}
+              disabled={!isNonStructuralEditable}
             />
           </div>
 
@@ -266,7 +307,7 @@ export function CollectionRouteFormPage() {
               value={plannedDate}
               onChange={(e) => setPlannedDate(e.target.value)}
               required
-              disabled={!isPlanejada}
+              disabled={!isStructuralEditable}
             />
           </div>
 
@@ -278,10 +319,10 @@ export function CollectionRouteFormPage() {
                 value={vehicleId}
                 onChange={(e) => setVehicleId(e.target.value)}
                 required
-                disabled={!isPlanejada}
+                disabled={!isStructuralEditable}
               >
                 <option value="">Selecionar...</option>
-                {(vehiclesData?.data ?? []).map((v) => (
+                {(vehiclesData?.data ?? []).map((v: Vehicle) => (
                   <option key={v.id} value={v.id}>
                     {v.plate} — {v.model}
                   </option>
@@ -296,10 +337,10 @@ export function CollectionRouteFormPage() {
                 value={driverId}
                 onChange={(e) => setDriverId(e.target.value)}
                 required
-                disabled={!isPlanejada}
+                disabled={!isStructuralEditable}
               >
                 <option value="">Selecionar...</option>
-                {(usersData ?? []).map((u) => (
+                {(usersData ?? []).map((u: UserOption) => (
                   <option key={u.id} value={u.id}>
                     {u.email}
                   </option>
@@ -315,7 +356,7 @@ export function CollectionRouteFormPage() {
               rows={2}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              disabled={!isPlanejada}
+              disabled={!isNonStructuralEditable}
             />
           </div>
         </div>
@@ -324,7 +365,7 @@ export function CollectionRouteFormPage() {
         <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-gray-700 text-sm">Pontos de coleta</h2>
-            {isEdit && isPlanejada && (
+            {isEdit && isStructuralEditable && (
               <button
                 type="button"
                 onClick={() => { setSuggestWarning(null); suggestMut.mutate(); }}
@@ -342,7 +383,7 @@ export function CollectionRouteFormPage() {
             </div>
           )}
 
-          {isPlanejada && (
+          {isStructuralEditable && (
             <div className="flex gap-2">
               <select
                 className="flex-1 border rounded-lg px-3 py-2 text-sm"
@@ -350,7 +391,7 @@ export function CollectionRouteFormPage() {
                 onChange={(e) => { if (e.target.value) { handleAddPoint(e.target.value); e.target.value = ''; } }}
               >
                 <option value="">Adicionar ponto...</option>
-                {availablePoints.map((p) => (
+                {availablePoints.map((p: CollectionPoint) => (
                   <option key={p.id} value={p.id}>
                     {p.name} — {p.address}
                   </option>
@@ -378,7 +419,7 @@ export function CollectionRouteFormPage() {
                       <span className="text-xs text-yellow-600">Localização pendente</span>
                     )}
                   </div>
-                  {isPlanejada && (
+                  {isStructuralEditable && (
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         type="button"
@@ -417,7 +458,7 @@ export function CollectionRouteFormPage() {
           )}
         </div>
 
-        {isPlanejada && (
+        {!isFinished && (
           <div className="flex gap-3">
             <button
               type="submit"

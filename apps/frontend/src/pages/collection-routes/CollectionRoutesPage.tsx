@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -15,6 +15,8 @@ import {
   type CollectionRoute,
   type RouteStatus,
 } from '../../services/collectionRoutes.service';
+import { routeTemplatesService } from '../../services/routeTemplates.service';
+import type { RouteTemplate } from '../../services/routeTemplates.service';
 import type { BadgeVariant } from '../../components/ui';
 
 const STATUS_LABELS: Record<RouteStatus, string> = {
@@ -33,22 +35,49 @@ const ROUTE_STATUS_TO_BADGE: Record<RouteStatus, BadgeVariant> = {
 
 const ALL_STATUSES: RouteStatus[] = ['PLANEJADA', 'EM_ANDAMENTO', 'CONCLUIDA', 'CANCELADA'];
 
+const PlusIcon = () => (
+  <span className="text-base leading-none" aria-hidden="true">
+    +
+  </span>
+);
+
 export function CollectionRoutesPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [hasTemplateFilter, setHasTemplateFilter] = useState<string>('all');
+  const [templateFilter, setTemplateFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
 
+  const { data: templatesData } = useQuery({
+    queryKey: ['route-templates', 'active-filter'],
+    queryFn: () => routeTemplatesService.list({ status: 'ATIVO', limit: 100 }),
+  });
+
   const { data, isLoading } = useQuery({
-    queryKey: ['collection-routes', search, statusFilter, page],
+    queryKey: ['collection-routes', search, statusFilter, hasTemplateFilter, templateFilter, page],
     queryFn: () =>
       collectionRoutesService.list({
         search,
         status: statusFilter,
+        templateId: templateFilter === 'all' ? undefined : templateFilter,
+        hasTemplate:
+          templateFilter !== 'all'
+            ? undefined
+            : hasTemplateFilter === 'all'
+              ? undefined
+              : hasTemplateFilter === 'yes',
         page,
         limit: 20,
       }),
+  });
+
+  const duplicateMut = useMutation({
+    mutationFn: (routeId: string) => collectionRoutesService.duplicate(routeId),
+    onSuccess: (res) => {
+      navigate('/collection-routes/new', { state: { draft: res.draft } });
+    },
   });
 
   void qc;
@@ -60,12 +89,17 @@ export function CollectionRoutesPage() {
       <PageHeader
         title="Rotas de Coleta"
         subtitle="Gerencie as rotas de coleta da cooperativa"
-        actions={
-          <Button onClick={() => navigate('/collection-routes/new')}>
-            Nova rota
-          </Button>
-        }
       />
+
+      <div className="mb-4 flex justify-start">
+        <Button
+          onClick={() => navigate('/collection-routes/new')}
+          leftIcon={<PlusIcon />}
+          className="shadow-sm shadow-petroleo-900/15"
+        >
+          Nova rota
+        </Button>
+      </div>
 
       <FilterBar>
         <input
@@ -82,6 +116,25 @@ export function CollectionRoutesPage() {
           <option value="all">Todos os status</option>
           {ALL_STATUSES.map((s) => (
             <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+          ))}
+        </select>
+        <select
+          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-petroleo-500"
+          value={hasTemplateFilter}
+          onChange={(e) => { setHasTemplateFilter(e.target.value); setTemplateFilter('all'); setPage(1); }}
+        >
+          <option value="all">Todas as rotas</option>
+          <option value="yes">Recorrentes</option>
+          <option value="no">Avulsas</option>
+        </select>
+        <select
+          className="border border-grafite-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-petroleo-500"
+          value={templateFilter}
+          onChange={(e) => { setTemplateFilter(e.target.value); setHasTemplateFilter(e.target.value === 'all' ? hasTemplateFilter : 'yes'); setPage(1); }}
+        >
+          <option value="all">Todos os modelos</option>
+          {templatesData?.data.map((template: RouteTemplate) => (
+            <option key={template.id} value={template.id}>{template.name}</option>
           ))}
         </select>
       </FilterBar>
@@ -109,6 +162,7 @@ export function CollectionRoutesPage() {
               <thead className="bg-grafite-50 text-grafite-500 text-xs uppercase">
                 <tr>
                   <th className="px-4 py-3 text-left">Nome</th>
+                  <th className="px-4 py-3 text-left">Tipo</th>
                   <th className="px-4 py-3 text-left">Data planejada</th>
                   <th className="px-4 py-3 text-left">Motorista</th>
                   <th className="px-4 py-3 text-left">Veículo</th>
@@ -121,6 +175,25 @@ export function CollectionRoutesPage() {
                 {data.data.map((route: CollectionRoute) => (
                   <tr key={route.id} className="hover:bg-grafite-50">
                     <td className="px-4 py-3 font-medium text-grafite-800">{route.name}</td>
+                    <td className="px-4 py-3">
+                      {route.templateId ? (
+                        <div className="flex flex-col gap-1">
+                          <span className={[
+                            'inline-flex w-fit items-center px-2 py-0.5 rounded-full text-xs font-medium border',
+                            route.isException
+                              ? 'bg-orange-50 text-orange-700 border-orange-200'
+                              : 'bg-petroleo-50 text-petroleo-700 border-petroleo-200',
+                          ].join(' ')}>
+                            {route.isException ? 'Exceção' : 'Recorrente'}
+                          </span>
+                          {route.template?.name && (
+                            <span className="text-xs text-grafite-500">{route.template.name}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-grafite-400 text-xs">Avulsa</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-grafite-600">
                       {new Date(route.plannedDate).toLocaleDateString('pt-BR')}
                     </td>
@@ -144,10 +217,19 @@ export function CollectionRoutesPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => navigate(`/collection-routes/${route.id}/edit`)}
+                          className="mr-1"
                         >
                           Editar
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => duplicateMut.mutate(route.id)}
+                        disabled={duplicateMut.isPending}
+                      >
+                        Duplicar
+                      </Button>
                     </td>
                   </tr>
                 ))}
