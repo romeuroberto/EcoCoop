@@ -1,4 +1,4 @@
-import { PrismaClient, ProfileType } from '@prisma/client';
+import { PrismaClient, ProfileType, RouteStatus, VehicleType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -30,6 +30,19 @@ const PHASE3_ADMIN_MANAGE_MODULES = [
 const PHASE3_MANAGER_MANAGE_MODULES = ['COLLECTION_POINTS', 'COLLECTION_ROUTES', 'ROUTE_TEMPLATES', 'RAW_MATERIAL_ENTRIES'];
 const PHASE3_MANAGER_READ_MODULES = ['RAW_MATERIAL_BALANCE'];
 
+// Feature 006 — Triagem e Estoque Pronto
+// READ + CREATE on SORTING: SORTER, MANAGER, ADMIN
+// CANCEL on SORTING + CREATE_ADJUSTMENT on READY_STOCK: MANAGER, ADMIN only
+const PHASE6_SORTER_PERMS = [
+  { module: 'SORTING', action: 'READ' },
+  { module: 'SORTING', action: 'CREATE' },
+  { module: 'READY_STOCK', action: 'READ' },
+];
+const PHASE6_MANAGER_EXTRA_PERMS = [
+  { module: 'SORTING', action: 'CANCEL' },
+  { module: 'READY_STOCK', action: 'CREATE_ADJUSTMENT' },
+];
+
 interface ProfileSeed {
   name: string;
   type: ProfileType;
@@ -44,6 +57,8 @@ const PROFILES: ProfileSeed[] = [
       ...PHASE1_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE2_ADMIN_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE3_ADMIN_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
+      ...PHASE6_SORTER_PERMS,
+      ...PHASE6_MANAGER_EXTRA_PERMS,
     ],
   },
   {
@@ -57,12 +72,14 @@ const PROFILES: ProfileSeed[] = [
       ...PHASE2_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
       ...PHASE3_MANAGER_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE3_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
+      ...PHASE6_SORTER_PERMS,
+      ...PHASE6_MANAGER_EXTRA_PERMS,
     ],
   },
   {
     name: 'Triador',
     type: ProfileType.SORTER,
-    permissions: [{ module: 'DASHBOARD', action: 'READ' }],
+    permissions: [{ module: 'DASHBOARD', action: 'READ' }, ...PHASE6_SORTER_PERMS],
   },
   {
     name: 'Motorista',
@@ -104,6 +121,69 @@ const DEFAULT_UNITS: UnitSeed[] = [
   { name: 'Mililitro', symbol: 'mL', baseSymbol: 'L', conversionFactor: 0.001 },
   { name: 'Metro cubico', symbol: 'm3' },
   { name: 'Unidade', symbol: 'un' },
+];
+
+const CRATEUS_ROUTE_POINTS = [
+  {
+    name: 'TEST-SEED Crateus 01 - Praca Gentil Cardoso',
+    address: 'Praca Gentil Cardoso, Centro, Crateus-CE',
+    latitude: -5.1787,
+    longitude: -40.6775,
+  },
+  {
+    name: 'TEST-SEED Crateus 02 - Igreja Matriz',
+    address: 'Rua Dom Pedro II, Centro, Crateus-CE',
+    latitude: -5.1779,
+    longitude: -40.6758,
+  },
+  {
+    name: 'TEST-SEED Crateus 03 - Mercado Central',
+    address: 'Rua Coronel Zeze, Centro, Crateus-CE',
+    latitude: -5.1806,
+    longitude: -40.6751,
+  },
+  {
+    name: 'TEST-SEED Crateus 04 - Rodoviaria',
+    address: 'Avenida Sargento Herminio, Crateus-CE',
+    latitude: -5.1819,
+    longitude: -40.6712,
+  },
+  {
+    name: 'TEST-SEED Crateus 05 - Bairro Sao Vicente',
+    address: 'Rua Sao Vicente, Crateus-CE',
+    latitude: -5.1851,
+    longitude: -40.6694,
+  },
+  {
+    name: 'TEST-SEED Crateus 06 - Bairro Fatima',
+    address: 'Rua Frei Vidal, Fatima, Crateus-CE',
+    latitude: -5.1883,
+    longitude: -40.6732,
+  },
+  {
+    name: 'TEST-SEED Crateus 07 - Bairro Venancios',
+    address: 'Rua Jose Sabino, Venancios, Crateus-CE',
+    latitude: -5.1872,
+    longitude: -40.6803,
+  },
+  {
+    name: 'TEST-SEED Crateus 08 - Bairro Cidade Nova',
+    address: 'Avenida Edilberto Frota, Cidade Nova, Crateus-CE',
+    latitude: -5.1835,
+    longitude: -40.6849,
+  },
+  {
+    name: 'TEST-SEED Crateus 09 - Bairro Planalto',
+    address: 'Rua Planalto, Crateus-CE',
+    latitude: -5.1768,
+    longitude: -40.6868,
+  },
+  {
+    name: 'TEST-SEED Crateus 10 - Universidade',
+    address: 'Avenida Geraldo Marques Barbosa, Crateus-CE',
+    latitude: -5.1729,
+    longitude: -40.6816,
+  },
 ];
 
 async function seedProfiles(): Promise<Record<ProfileType, string>> {
@@ -216,6 +296,104 @@ async function seedUnits() {
   }
 }
 
+async function seedCrateusRoute(profileMap: Record<ProfileType, string>) {
+  console.log('Seeding Crateus test route...');
+
+  const driverEmail = 'test.driver@ecocoop.local';
+  let driver = await prisma.user.findUnique({ where: { email: driverEmail } });
+  if (!driver) {
+    const hash = await bcrypt.hash('driver123', 10);
+    driver = await prisma.user.create({
+      data: { email: driverEmail, passwordHash: hash, profileId: profileMap[ProfileType.DRIVER] },
+    });
+    console.log(`  Created driver: ${driverEmail}`);
+  } else {
+    console.log(`  Driver exists: ${driverEmail}`);
+  }
+
+  const vehicle = await prisma.vehicle.upsert({
+    where: { plate: 'CRT0010' },
+    create: {
+      plate: 'CRT0010',
+      type: VehicleType.VAN,
+      model: 'TEST-SEED Van Crateus',
+      isActive: true,
+    },
+    update: {
+      type: VehicleType.VAN,
+      model: 'TEST-SEED Van Crateus',
+      isActive: true,
+    },
+  });
+  console.log(`  Vehicle ready: ${vehicle.plate}`);
+
+  const collectionPoints = [];
+  for (const point of CRATEUS_ROUTE_POINTS) {
+    const existing = await prisma.collectionPoint.findFirst({ where: { name: point.name } });
+    const saved = existing
+      ? await prisma.collectionPoint.update({
+          where: { id: existing.id },
+          data: {
+            address: point.address,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            locationPending: false,
+            isActive: true,
+          },
+        })
+      : await prisma.collectionPoint.create({
+          data: {
+            name: point.name,
+            address: point.address,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            locationPending: false,
+            isActive: true,
+          },
+        });
+
+    collectionPoints.push(saved);
+  }
+  console.log(`  Collection points ready: ${collectionPoints.length}`);
+
+  const routeName = 'TEST-SEED Rota Crateus com 10 pontos';
+  const plannedDate = new Date('2026-07-02T00:00:00.000Z');
+  const existingRoute = await prisma.collectionRoute.findFirst({ where: { name: routeName } });
+
+  const route = existingRoute
+    ? await prisma.collectionRoute.update({
+        where: { id: existingRoute.id },
+        data: {
+          plannedDate,
+          status: RouteStatus.PLANEJADA,
+          vehicleId: vehicle.id,
+          driverId: driver.id,
+          notes: 'Rota de teste para validar visualizacao de varios pontos no mapa.',
+          routePoints: { deleteMany: {} },
+        },
+      })
+    : await prisma.collectionRoute.create({
+        data: {
+          name: routeName,
+          plannedDate,
+          status: RouteStatus.PLANEJADA,
+          vehicleId: vehicle.id,
+          driverId: driver.id,
+          notes: 'Rota de teste para validar visualizacao de varios pontos no mapa.',
+        },
+      });
+
+  await prisma.routePoint.createMany({
+    data: collectionPoints.map((point, index) => ({
+      routeId: route.id,
+      collectionPointId: point.id,
+      sequence: index + 1,
+    })),
+  });
+
+  console.log(`  Route ready: ${routeName}`);
+}
+
 async function main() {
   console.log('Seeding database...');
 
@@ -258,6 +436,7 @@ async function main() {
 
   await seedMemberRoles();
   await seedUnits();
+  await seedCrateusRoute(profileMap);
 
   console.log('Seed complete.');
 }
