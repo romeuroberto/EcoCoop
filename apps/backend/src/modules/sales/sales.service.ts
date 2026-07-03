@@ -15,6 +15,133 @@ import { DeliverSaleDto } from './dto/deliver-sale.dto';
 export class SalesService {
   constructor(private prisma: PrismaService) {}
 
+  async findAll(query: {
+    buyerId?: string;
+    status?: string;
+    subcategoryId?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(100, Math.max(1, query.limit ?? 20));
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.SaleWhereInput = {};
+    if (query.buyerId) where.buyerId = query.buyerId;
+    if (query.status) where.status = query.status as Prisma.EnumSaleStatusFilter['equals'];
+    if (query.subcategoryId) {
+      where.items = { some: { subcategoryId: query.subcategoryId } };
+    }
+    if (query.from || query.to) {
+      where.createdAt = {};
+      if (query.from) where.createdAt.gte = new Date(query.from);
+      if (query.to) where.createdAt.lte = new Date(query.to);
+    }
+
+    const [sales, total] = await Promise.all([
+      this.prisma.sale.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          buyer: { select: { id: true, legalName: true } },
+          user: { select: { id: true, email: true } },
+          _count: { select: { items: true } },
+        },
+      }),
+      this.prisma.sale.count({ where }),
+    ]);
+
+    return {
+      data: sales.map((sale) => ({
+        id: sale.id,
+        buyer: sale.buyer,
+        status: sale.status,
+        totalAmount: sale.totalAmount.toFixed(2),
+        itemsCount: sale._count.items,
+        createdAt: sale.createdAt,
+        user: sale.user,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findOne(id: string) {
+    const sale = await this.prisma.sale.findUnique({
+      where: { id },
+      include: {
+        buyer: { select: { id: true, legalName: true, documentNumber: true } },
+        user: { select: { id: true, email: true } },
+        deliveredBy: { select: { id: true, email: true } },
+        cancelledBy: { select: { id: true, email: true } },
+        items: {
+          include: {
+            subcategory: { select: { id: true, name: true } },
+            unit: { select: { id: true, symbol: true } },
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        accountReceivable: true,
+      },
+    });
+
+    if (!sale) {
+      throw new NotFoundException({
+        code: 'SALE_NOT_FOUND',
+        message: 'Venda não encontrada',
+      });
+    }
+
+    return {
+      id: sale.id,
+      buyer: sale.buyer,
+      status: sale.status,
+      totalAmount: sale.totalAmount.toFixed(2),
+      notes: sale.notes,
+      createdAt: sale.createdAt,
+      deliveredAt: sale.deliveredAt?.toISOString() ?? null,
+      deliveredBy: sale.deliveredBy,
+      cancelReason: sale.cancelReason,
+      cancelledAt: sale.cancelledAt?.toISOString() ?? null,
+      cancelledBy: sale.cancelledBy,
+      user: sale.user,
+      items: sale.items.map((item) => ({
+        id: item.id,
+        subcategory: item.subcategory,
+        unit: item.unit,
+        quantity: item.quantity.toFixed(3),
+        unitPrice: item.unitPrice.toFixed(4),
+        subtotal: item.subtotal.toFixed(2),
+      })),
+      accountReceivable: sale.accountReceivable
+        ? {
+            id: sale.accountReceivable.id,
+            amount: sale.accountReceivable.amount.toFixed(2),
+            dueDate: sale.accountReceivable.dueDate.toISOString().slice(0, 10),
+            status: sale.accountReceivable.status,
+          }
+        : null,
+      timeline: [
+        { event: 'CREATED', at: sale.createdAt.toISOString(), by: sale.user },
+        {
+          event: 'DELIVERED',
+          at: sale.deliveredAt?.toISOString() ?? null,
+          by: sale.deliveredBy,
+        },
+        {
+          event: 'CANCELLED',
+          at: sale.cancelledAt?.toISOString() ?? null,
+          by: sale.cancelledBy,
+        },
+      ],
+    };
+  }
+
   async create(dto: CreateSaleDto, user: CurrentUserDto) {
     return this.prisma.$transaction(async (tx) => {
       const buyer = await tx.buyer.findUnique({

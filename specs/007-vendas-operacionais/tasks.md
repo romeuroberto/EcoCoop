@@ -127,14 +127,14 @@
 
 ### Testes — US4
 
-- [ ] T034 Adicionar casos de listagem/detalhe ao `apps/backend/test/integration/sales.spec.ts`: GET /sales sem filtro → lista paginada com campos corretos; filtro por buyerId → somente vendas daquele comprador; filtro por status → apenas o status solicitado; filtro por from/to → só vendas no período; GET /sales/:id → detalhe completo (buyer, items, AR, timeline com evento CREATED preenchido e DELIVERED/CANCELLED nulos); GET /sales/:id com id inválido → 404
+- [x] T034 Adicionar casos de listagem/detalhe ao `apps/backend/test/integration/sales.spec.ts`: GET /sales sem filtro → lista paginada com campos corretos; filtro por buyerId → somente vendas daquele comprador; filtro por status → apenas o status solicitado; filtro por from/to → só vendas no período; GET /sales/:id → detalhe completo (buyer, items, AR, timeline com evento CREATED preenchido e DELIVERED/CANCELLED nulos); GET /sales/:id com id inválido → 404
 
 ### Implementação — US4
 
-- [ ] T035 Implementar `SalesService.findAll()` em `apps/backend/src/modules/sales/sales.service.ts`: filtros opcionais (buyerId, status, subcategoryId via items, from/to em createdAt); paginação (page, limit); retornar `{ data, total, page, limit }` com campos: id, buyer, status, totalAmount, itemsCount, createdAt, user
-- [ ] T036 Implementar `SalesService.findOne()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar com include completo (buyer, items com subcategory e unit, user, deliveredBy, cancelledBy, accountReceivable); construir campo `timeline` derivado dos campos de status/data da Sale (CREATED sempre; DELIVERED quando `deliveredAt != null`; CANCELLED quando `cancelledAt != null`) conforme contrato de `GET /sales/:id`; 404 se não encontrada
-- [ ] T037 Implementar `SalesController.findAll()` `@Get()` e `SalesController.findOne()` `@Get(':id')` em `apps/backend/src/modules/sales/sales.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params (buyerId, status, subcategoryId, from, to, page, limit) para o service
-- [ ] T038 Completar `apps/frontend/src/pages/sales/SalesPage.tsx`: controles de filtro (seletor de comprador, seletor de status, campos de data de/até); paginação; link de cada linha para `SaleDetailPage` com id da venda; exibir itemsCount na linha
+- [x] T035 Implementar `SalesService.findAll()` em `apps/backend/src/modules/sales/sales.service.ts`: filtros opcionais (buyerId, status, subcategoryId via items, from/to em createdAt); paginação (page, limit); retornar `{ data, total, page, limit }` com campos: id, buyer, status, totalAmount, itemsCount, createdAt, user
+- [x] T036 Implementar `SalesService.findOne()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar com include completo (buyer, items com subcategory e unit, user, deliveredBy, cancelledBy, accountReceivable); construir campo `timeline` derivado dos campos de status/data da Sale (CREATED sempre; DELIVERED quando `deliveredAt != null`; CANCELLED quando `cancelledAt != null`) conforme contrato de `GET /sales/:id`; 404 se não encontrada
+- [x] T037 Implementar `SalesController.findAll()` `@Get()` e `SalesController.findOne()` `@Get(':id')` em `apps/backend/src/modules/sales/sales.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params (buyerId, status, subcategoryId, from, to, page, limit) para o service
+- [x] T038 Completar `apps/frontend/src/pages/sales/SalesPage.tsx`: controles de filtro (seletor de comprador, seletor de status, campos de data de/até); paginação; link de cada linha para `SaleDetailPage` com id da venda; exibir itemsCount na linha
 
 **Checkpoint**: Lista com filtros e detalhe funcionam via API e UI. Testes T034 passam.
 

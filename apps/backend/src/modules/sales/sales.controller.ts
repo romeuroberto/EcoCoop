@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Param, Patch, Post, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CurrentUserDto } from '@ecocoop/shared';
 import { AuditEntity } from '../../common/decorators/audit-entity.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -14,6 +24,34 @@ import { SalesService } from './sales.service';
 @UseInterceptors(AuditInterceptor)
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
+
+  @Get()
+  @RequirePermission('SALES', 'READ')
+  findAll(
+    @Query('buyerId') buyerId?: string,
+    @Query('status') status?: string,
+    @Query('subcategoryId') subcategoryId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.salesService.findAll({
+      buyerId,
+      status,
+      subcategoryId,
+      from,
+      to,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  @Get(':id')
+  @RequirePermission('SALES', 'READ')
+  findOne(@Param('id') id: string) {
+    return this.salesService.findOne(id);
+  }
 
   @Post()
   @RequirePermission('SALES', 'CREATE')

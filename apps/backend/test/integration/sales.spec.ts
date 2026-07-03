@@ -44,6 +44,17 @@ describe('Sales (integration)', () => {
       .set('Authorization', `Bearer ${managerToken}`)
       .send(body);
 
+  const listSales = (query: Record<string, string | number> = {}) =>
+    request(app.getHttpServer())
+      .get('/api/v1/sales')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .query(query);
+
+  const getSale = (id: string) =>
+    request(app.getHttpServer())
+      .get(`/api/v1/sales/${id}`)
+      .set('Authorization', `Bearer ${managerToken}`);
+
   const seedReadyStock = async (subcategory: string, quantity: number) => {
     await prisma.readyStockEvent.create({
       data: {
@@ -514,5 +525,161 @@ describe('Sales (integration)', () => {
 
     expect(secondCancel.status).toBe(409);
     expect(secondCancel.body.code).toBe('SALE_NOT_CANCELLABLE');
+  });
+
+  it('GET /sales — retorna lista paginada com campos básicos', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 4 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const res = await listSales({ page: 1, limit: 5 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(5);
+    expect(res.body.total).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    const sale = res.body.data.find((item: { id: string }) => item.id === createRes.body.id);
+    expect(sale).toMatchObject({
+      id: createRes.body.id,
+      buyer: { id: buyerId },
+      status: 'PENDENTE_ENTREGA',
+      totalAmount: '8.00',
+      itemsCount: 1,
+      user: { email: 'gestor@ecocoop.local' },
+    });
+    expect(sale.createdAt).toBeDefined();
+  });
+
+  it('GET /sales — filtra por buyerId, status, subcategoryId e período', async () => {
+    const pendingRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(pendingRes.status).toBe(201);
+    createdSaleIds.push(pendingRes.body.id as string);
+
+    const deliveredRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId: secondSubcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(deliveredRes.status).toBe(201);
+    createdSaleIds.push(deliveredRes.body.id as string);
+    await deliverSale(deliveredRes.body.id as string);
+
+    const cancelledRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(cancelledRes.status).toBe(201);
+    createdSaleIds.push(cancelledRes.body.id as string);
+    await cancelSale(cancelledRes.body.id as string, { cancelReason: 'Filtro de teste' });
+
+    const byBuyer = await listSales({ buyerId, limit: 100 });
+    expect(byBuyer.status).toBe(200);
+    expect(byBuyer.body.data.every((sale: { buyer: { id: string } }) => sale.buyer.id === buyerId)).toBe(true);
+
+    const byStatus = await listSales({ status: 'ENTREGUE', limit: 100 });
+    expect(byStatus.status).toBe(200);
+    expect(byStatus.body.data.some((sale: { id: string }) => sale.id === deliveredRes.body.id)).toBe(true);
+    expect(byStatus.body.data.every((sale: { status: string }) => sale.status === 'ENTREGUE')).toBe(true);
+
+    const bySubcategory = await listSales({ subcategoryId: secondSubcategoryId, limit: 100 });
+    expect(bySubcategory.status).toBe(200);
+    expect(bySubcategory.body.data.some((sale: { id: string }) => sale.id === deliveredRes.body.id)).toBe(true);
+    expect(bySubcategory.body.data.every((sale: { id: string }) => sale.id !== pendingRes.body.id)).toBe(true);
+
+    const byPeriod = await listSales({ from: '2000-01-01', to: '2100-01-01', limit: 100 });
+    expect(byPeriod.status).toBe(200);
+    expect(byPeriod.body.data.some((sale: { id: string }) => sale.id === pendingRes.body.id)).toBe(true);
+  });
+
+  it('GET /sales/:id — retorna detalhe completo com timeline pendente', async () => {
+    const createRes = await createSale({
+      buyerId,
+      notes: 'Detalhe pendente',
+      items: [{ subcategoryId, unitId, quantity: 3, unitPrice: 2 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const res = await getSale(createRes.body.id as string);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: createRes.body.id,
+      buyer: { id: buyerId, documentNumber: expect.any(String) },
+      status: 'PENDENTE_ENTREGA',
+      totalAmount: '6.00',
+      notes: 'Detalhe pendente',
+      deliveredAt: null,
+      deliveredBy: null,
+      cancelReason: null,
+      cancelledAt: null,
+      cancelledBy: null,
+      user: { email: 'gestor@ecocoop.local' },
+      accountReceivable: { amount: '6.00', status: 'A_RECEBER' },
+    });
+    expect(res.body.items).toHaveLength(1);
+    expect(res.body.items[0]).toMatchObject({
+      subcategory: { id: subcategoryId },
+      unit: { id: unitId },
+      quantity: '3.000',
+      unitPrice: '2.0000',
+      subtotal: '6.00',
+    });
+    expect(res.body.timeline).toEqual([
+      { event: 'CREATED', at: expect.any(String), by: { id: managerUserId, email: 'gestor@ecocoop.local' } },
+      { event: 'DELIVERED', at: null, by: null },
+      { event: 'CANCELLED', at: null, by: null },
+    ]);
+  });
+
+  it('GET /sales/:id — timeline reflete entrega e cancelamento quando ocorrerem', async () => {
+    const deliveredRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 2 }],
+    });
+    expect(deliveredRes.status).toBe(201);
+    createdSaleIds.push(deliveredRes.body.id as string);
+    await deliverSale(deliveredRes.body.id as string, { deliveredAt: '2026-08-21T10:00:00.000Z' });
+
+    const deliveredDetail = await getSale(deliveredRes.body.id as string);
+    expect(deliveredDetail.status).toBe(200);
+    expect(deliveredDetail.body.timeline[1]).toEqual({
+      event: 'DELIVERED',
+      at: '2026-08-21T10:00:00.000Z',
+      by: { id: managerUserId, email: 'gestor@ecocoop.local' },
+    });
+    expect(deliveredDetail.body.timeline[2]).toEqual({ event: 'CANCELLED', at: null, by: null });
+
+    const cancelledRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 2 }],
+    });
+    expect(cancelledRes.status).toBe(201);
+    createdSaleIds.push(cancelledRes.body.id as string);
+    await cancelSale(cancelledRes.body.id as string, { cancelReason: 'Timeline cancelada' });
+
+    const cancelledDetail = await getSale(cancelledRes.body.id as string);
+    expect(cancelledDetail.status).toBe(200);
+    expect(cancelledDetail.body.cancelReason).toBe('Timeline cancelada');
+    expect(cancelledDetail.body.accountReceivable.status).toBe('CANCELADA');
+    expect(cancelledDetail.body.timeline[1]).toEqual({ event: 'DELIVERED', at: null, by: null });
+    expect(cancelledDetail.body.timeline[2]).toMatchObject({
+      event: 'CANCELLED',
+      at: expect.any(String),
+      by: { id: managerUserId, email: 'gestor@ecocoop.local' },
+    });
+  });
+
+  it('GET /sales/:id — venda inexistente retorna 404 SALE_NOT_FOUND', async () => {
+    const res = await getSale('00000000-0000-4000-8000-000000000004');
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('SALE_NOT_FOUND');
   });
 });

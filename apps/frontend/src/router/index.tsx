@@ -140,6 +140,9 @@ const ReadyStockPage = lazy(() =>
 const SalesPage = lazy(() =>
   import('../pages/sales/SalesPage').then((m) => ({ default: m.SalesPage })),
 );
+const SaleDetailPage = lazy(() =>
+  import('../pages/sales/SaleDetailPage').then((m) => ({ default: m.SaleDetailPage })),
+);
 
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -234,6 +237,7 @@ export const router = createBrowserRouter([
 
           // Feature 007 — Vendas Operacionais
           { path: 'vendas', element: S(SalesPage) },
+          { path: 'vendas/:id', element: S(SaleDetailPage) },
         ],
       },
     ],
