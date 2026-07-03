@@ -55,6 +55,12 @@ describe('Sales (integration)', () => {
       .get(`/api/v1/sales/${id}`)
       .set('Authorization', `Bearer ${managerToken}`);
 
+  const listAccountsReceivable = (query: Record<string, string | number> = {}) =>
+    request(app.getHttpServer())
+      .get('/api/v1/accounts-receivable')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .query(query);
+
   const seedReadyStock = async (subcategory: string, quantity: number) => {
     await prisma.readyStockEvent.create({
       data: {
@@ -681,5 +687,107 @@ describe('Sales (integration)', () => {
 
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('SALE_NOT_FOUND');
+  });
+
+  it('GET /accounts-receivable — lista contas paginadas com dados da venda', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 5 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const res = await listAccountsReceivable({ page: 1, limit: 10 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.page).toBe(1);
+    expect(res.body.limit).toBe(10);
+    expect(res.body.total).toBeGreaterThanOrEqual(1);
+    const account = res.body.data.find((item: { saleId: string }) => item.saleId === createRes.body.id);
+    expect(account).toMatchObject({
+      saleId: createRes.body.id,
+      sale: { id: createRes.body.id, deliveredAt: null },
+      buyer: { id: buyerId },
+      amount: '10.00',
+      status: 'A_RECEBER',
+      createdAt: expect.any(String),
+    });
+    expect(account.id).toBeDefined();
+    expect(account.dueDate).toBeDefined();
+    expect(account.sale.createdAt).toBeDefined();
+  });
+
+  it('GET /accounts-receivable — filtra por buyerId, status e vencimento', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 3, unitPrice: 5 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const expectedDueDate = new Date(createRes.body.createdAt as string);
+    expectedDueDate.setDate(expectedDueDate.getDate() + 30);
+    const expectedDueDateString = expectedDueDate.toISOString().slice(0, 10);
+
+    const byBuyer = await listAccountsReceivable({ buyerId, limit: 100 });
+    expect(byBuyer.status).toBe(200);
+    expect(byBuyer.body.data.every((account: { buyer: { id: string } }) => account.buyer.id === buyerId)).toBe(true);
+
+    const byStatus = await listAccountsReceivable({ status: 'A_RECEBER', limit: 100 });
+    expect(byStatus.status).toBe(200);
+    expect(byStatus.body.data.some((account: { saleId: string }) => account.saleId === createRes.body.id)).toBe(true);
+    expect(byStatus.body.data.every((account: { status: string }) => account.status === 'A_RECEBER')).toBe(true);
+
+    const byDueDate = await listAccountsReceivable({
+      from: expectedDueDateString,
+      to: expectedDueDateString,
+      limit: 100,
+    });
+    expect(byDueDate.status).toBe(200);
+    expect(byDueDate.body.data.some((account: { saleId: string }) => account.saleId === createRes.body.id)).toBe(true);
+
+    const account = byBuyer.body.data.find((item: { saleId: string }) => item.saleId === createRes.body.id);
+    expect(account.dueDate).toBe(expectedDueDateString);
+  });
+
+  it('GET /accounts-receivable — venda entregue continua A_RECEBER e inclui deliveredAt', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 4 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const deliveredAt = '2026-08-22T11:00:00.000Z';
+    await deliverSale(createRes.body.id as string, { deliveredAt });
+
+    const res = await listAccountsReceivable({ buyerId, limit: 100 });
+
+    expect(res.status).toBe(200);
+    const account = res.body.data.find((item: { saleId: string }) => item.saleId === createRes.body.id);
+    expect(account).toMatchObject({
+      status: 'A_RECEBER',
+      sale: { deliveredAt },
+    });
+  });
+
+  it('GET /accounts-receivable — venda cancelada aparece com status CANCELADA', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 4 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+    await cancelSale(createRes.body.id as string, { cancelReason: 'Cancelamento AR' });
+
+    const res = await listAccountsReceivable({ status: 'CANCELADA', limit: 100 });
+
+    expect(res.status).toBe(200);
+    const account = res.body.data.find((item: { saleId: string }) => item.saleId === createRes.body.id);
+    expect(account).toMatchObject({
+      status: 'CANCELADA',
+      buyer: { id: buyerId },
+      sale: { id: createRes.body.id },
+    });
   });
 });

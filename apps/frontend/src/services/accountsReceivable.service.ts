@@ -5,6 +5,7 @@ export type AccountReceivableStatus = 'A_RECEBER' | 'CANCELADA';
 
 export interface AccountReceivable {
   id: string;
+  saleId: string;
   sale: {
     id: string;
     createdAt: string;
@@ -17,6 +18,7 @@ export interface AccountReceivable {
   amount: string;
   dueDate: string;
   status: AccountReceivableStatus;
+  createdAt: string;
 }
 
 export interface ListAccountsReceivableQuery {

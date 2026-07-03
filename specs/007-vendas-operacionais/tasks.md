@@ -148,13 +148,13 @@
 
 ### Testes — US5
 
-- [ ] T039 Adicionar casos de AR ao `apps/backend/test/integration/sales.spec.ts`: GET /accounts-receivable sem filtro → lista com amount, dueDate, status, buyer, sale (id, createdAt, deliveredAt); filtro por buyerId → somente AR daquele comprador; filtro por status A_RECEBER → somente pendentes; venda cancelada → AR com status CANCELADA; após entrega confirmada → sale.deliveredAt preenchido na resposta da AR; dueDate padrão = createdAt + 30 dias
+- [x] T039 Adicionar casos de AR ao `apps/backend/test/integration/sales.spec.ts`: GET /accounts-receivable sem filtro → lista com amount, dueDate, status, buyer, sale (id, createdAt, deliveredAt); filtro por buyerId → somente AR daquele comprador; filtro por status A_RECEBER → somente pendentes; venda cancelada → AR com status CANCELADA; após entrega confirmada → sale.deliveredAt preenchido na resposta da AR; dueDate padrão = createdAt + 30 dias
 
 ### Implementação — US5
 
-- [ ] T040 Implementar `AccountsReceivableService.findAll()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.service.ts`: filtros (buyerId, status, dueDate from/to); paginação; retornar `{ data, total, page, limit }` com campos: id, sale (id, createdAt, deliveredAt), buyer, amount, dueDate, status — incluir `sale.deliveredAt` conforme contrato `GET /accounts-receivable`
-- [ ] T041 Implementar `AccountsReceivableController.findAll()` `@Get()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params para o service
-- [ ] T042 [P] Adicionar seção "Conta a Receber" ao `apps/frontend/src/pages/sales/SaleDetailPage.tsx`: exibir `dueDate`, `amount` formatado em R$, badge de status (A_RECEBER | CANCELADA); usar dados já incluídos no endpoint `GET /sales/:id`
+- [x] T040 Implementar `AccountsReceivableService.findAll()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.service.ts`: filtros (buyerId, status, dueDate from/to); paginação; retornar `{ data, total, page, limit }` com campos: id, sale (id, createdAt, deliveredAt), buyer, amount, dueDate, status — incluir `sale.deliveredAt` conforme contrato `GET /accounts-receivable`
+- [x] T041 Implementar `AccountsReceivableController.findAll()` `@Get()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.controller.ts` com `@RequirePermission('ACCOUNTS_RECEIVABLE', 'READ')`; mapear query params para o service
+- [x] T042 [P] Adicionar seção "Conta a Receber" ao `apps/frontend/src/pages/sales/SaleDetailPage.tsx`: exibir `dueDate`, `amount` formatado em R$, badge de status (A_RECEBER | CANCELADA); usar dados já incluídos no endpoint `GET /sales/:id`
 
 **Checkpoint**: AR visível no detalhe da venda e listável via endpoint. Testes T039 passam.
 
