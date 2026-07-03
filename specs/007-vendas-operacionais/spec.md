@@ -126,6 +126,7 @@ Ao registrar ou confirmar uma venda, o sistema gera automaticamente um registro 
 - **FR-014**: O sistema DEVE exibir o detalhe completo de cada venda: comprador, itens, valores, status, datas e histórico de eventos.
 - **FR-015**: O sistema DEVE registrar todos os eventos de venda (criação, entrega, cancelamento, estorno) em log de auditoria com usuário e timestamp.
 - **FR-016**: Todas as permissões de criação, confirmação de entrega e cancelamento de venda DEVEM ser verificadas no backend.
+- **FR-017**: O sistema NÃO DEVE bloquear a criação de venda quando o preço unitário de um item for zero, porém DEVE retornar o aviso `ZERO_PRICE_ITEM` no campo `warnings` da resposta, permitindo que a interface exiba alerta não bloqueante ao operador.
 
 ### Key Entities
 
@@ -146,7 +147,7 @@ Ao registrar ou confirmar uma venda, o sistema gera automaticamente um registro 
 - **SC-002**: 100% das tentativas de venda com saldo insuficiente são bloqueadas; nenhum saldo é alterado em caso de rejeição.
 - **SC-003**: Cada venda gera exatamente um evento de movimentação de estoque pronto por item, e cada cancelamento gera exatamente um evento de estorno por item.
 - **SC-004**: O histórico de vendas retorna resultados para filtros de comprador e período em menos de 2 segundos para bases com até 10.000 registros.
-- **SC-005**: 100% das vendas confirmadas resultam em uma conta a receber criada automaticamente e vinculada corretamente.
+- **SC-005**: 100% das vendas registradas resultam em uma conta a receber criada automaticamente e vinculada corretamente.
 - **SC-006**: Toda ação de criação, entrega e cancelamento é auditável: quem fez, quando e qual foi o estado anterior e posterior.
 - **SC-007**: Não é possível criar, alterar ou cancelar uma venda sem a permissão correspondente — verificada no backend.
 

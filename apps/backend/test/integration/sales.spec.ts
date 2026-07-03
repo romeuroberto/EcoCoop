@@ -20,6 +20,7 @@ describe('Sales (integration)', () => {
   let subcategoryId: string;
   let secondSubcategoryId: string;
   let unitId: string;
+  let differentUnitId: string | null = null;
   const createdSaleIds: string[] = [];
 
   const login = async (email: string, password: string) => {
@@ -43,7 +44,7 @@ describe('Sales (integration)', () => {
 
   const cancelSale = (id: string, body: object = {}, token = managerToken) =>
     request(app.getHttpServer())
-      .delete(`/api/v1/sales/${id}`)
+      .patch(`/api/v1/sales/${id}/cancel`)
       .set('Authorization', `Bearer ${token}`)
       .send(body);
 
@@ -136,6 +137,10 @@ describe('Sales (integration)', () => {
     const category = await prisma.materialCategory.findFirstOrThrow();
     const unit = await prisma.unitOfMeasure.findFirstOrThrow({ where: { isActive: true } });
     unitId = unit.id;
+    const differentUnit = await prisma.unitOfMeasure.findFirst({
+      where: { isActive: true, id: { not: unitId } },
+    });
+    differentUnitId = differentUnit?.id ?? null;
 
     const suffix = Date.now();
     const subcategory = await prisma.materialSubcategory.create({
@@ -290,7 +295,7 @@ describe('Sales (integration)', () => {
     expect(events.map((event) => Number(event.quantity)).sort((a, b) => a - b)).toEqual([-12, -10]);
   });
 
-  it('POST /sales — permite unitPrice igual a zero', async () => {
+  it('POST /sales — permite unitPrice igual a zero e retorna warnings: [ZERO_PRICE_ITEM]', async () => {
     const res = await createSale({
       buyerId,
       items: [{ subcategoryId, unitId, quantity: 1, unitPrice: 0 }],
@@ -301,6 +306,36 @@ describe('Sales (integration)', () => {
     expect(res.body.items[0].unitPrice).toBe('0.0000');
     expect(res.body.items[0].subtotal).toBe('0.00');
     expect(res.body.totalAmount).toBe('0.00');
+    expect(res.body.warnings).toEqual(['ZERO_PRICE_ITEM']);
+  });
+
+  it('POST /sales — sem preço zero retorna warnings vazio', async () => {
+    const res = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 1, unitPrice: 5 }],
+    });
+
+    expect(res.status).toBe(201);
+    createdSaleIds.push(res.body.id as string);
+    expect(res.body.warnings).toEqual([]);
+  });
+
+  it('POST /sales — unitId incompatível com defaultUnitId retorna 422 UNIT_MISMATCH', async () => {
+    if (!differentUnitId) {
+      console.warn('Skipping UNIT_MISMATCH test: no second active unit found in database');
+      return;
+    }
+
+    const res = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId: differentUnitId, quantity: 5, unitPrice: 1 }],
+    });
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('UNIT_MISMATCH');
+    expect(res.body.details.subcategoryId).toBe(subcategoryId);
+    expect(res.body.details.expectedUnitId).toBe(unitId);
+    expect(res.body.details.receivedUnitId).toBe(differentUnitId);
   });
 
   it('POST /sales — buyer inexistente retorna 404 BUYER_NOT_FOUND', async () => {
@@ -440,7 +475,7 @@ describe('Sales (integration)', () => {
     expect(res.body.code).toBe('SALE_NOT_DELIVERABLE');
   });
 
-  it('DELETE /sales/:id — cancela venda, estorna estoque e cancela conta a receber', async () => {
+  it('PATCH /sales/:id/cancel — cancela venda, estorna estoque e cancela conta a receber', async () => {
     const createRes = await createSale({
       buyerId,
       items: [
@@ -493,7 +528,7 @@ describe('Sales (integration)', () => {
     await expect(prisma.accountReceivable.findUnique({ where: { saleId } })).resolves.toBeDefined();
   });
 
-  it('DELETE /sales/:id — motivo ausente ou em branco retorna 422 CANCEL_REASON_REQUIRED', async () => {
+  it('PATCH /sales/:id/cancel — motivo ausente ou em branco retorna 422 CANCEL_REASON_REQUIRED', async () => {
     const createRes = await createSale({
       buyerId,
       items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
@@ -512,7 +547,7 @@ describe('Sales (integration)', () => {
     expect(blankReason.body.code).toBe('CANCEL_REASON_REQUIRED');
   });
 
-  it('DELETE /sales/:id — venda inexistente retorna 404 SALE_NOT_FOUND', async () => {
+  it('PATCH /sales/:id/cancel — venda inexistente retorna 404 SALE_NOT_FOUND', async () => {
     const res = await cancelSale('00000000-0000-4000-8000-000000000003', {
       cancelReason: 'Teste',
     });
@@ -521,7 +556,7 @@ describe('Sales (integration)', () => {
     expect(res.body.code).toBe('SALE_NOT_FOUND');
   });
 
-  it('DELETE /sales/:id — venda ENTREGUE retorna 409 SALE_NOT_CANCELLABLE', async () => {
+  it('PATCH /sales/:id/cancel — venda ENTREGUE retorna 409 SALE_NOT_CANCELLABLE', async () => {
     const createRes = await createSale({
       buyerId,
       items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
@@ -538,7 +573,7 @@ describe('Sales (integration)', () => {
     expect(res.body.code).toBe('SALE_NOT_CANCELLABLE');
   });
 
-  it('DELETE /sales/:id — venda já CANCELADA retorna 409 SALE_NOT_CANCELLABLE', async () => {
+  it('PATCH /sales/:id/cancel — venda já CANCELADA retorna 409 SALE_NOT_CANCELLABLE', async () => {
     const createRes = await createSale({
       buyerId,
       items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
@@ -877,6 +912,22 @@ describe('Sales (integration)', () => {
       cancelReason: 'Validação RBAC manager',
     });
     expect(managerCancel.status).toBe(200);
+  });
+
+  it('RBAC — GET /accounts-receivable requer ACCOUNTS_RECEIVABLE/READ; SORTER e DRIVER recebem 403', async () => {
+    const managerRes = await request(app.getHttpServer())
+      .get('/api/v1/accounts-receivable')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .query({ limit: 1 });
+    expect(managerRes.status).toBe(200);
+
+    for (const token of [sorterToken, driverToken]) {
+      const forbiddenRes = await request(app.getHttpServer())
+        .get('/api/v1/accounts-receivable')
+        .set('Authorization', `Bearer ${token}`)
+        .query({ limit: 1 });
+      expect(forbiddenRes.status).toBe(403);
+    }
   });
 
   it('AuditLog — registra criação, entrega e cancelamento de venda', async () => {

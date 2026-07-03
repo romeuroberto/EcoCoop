@@ -169,7 +169,7 @@ export class SalesService {
       const [subcategories, units] = await Promise.all([
         tx.materialSubcategory.findMany({
           where: { id: { in: subcategoryIds } },
-          select: { id: true, name: true },
+          select: { id: true, name: true, defaultUnitId: true },
         }),
         tx.unitOfMeasure.findMany({
           where: { id: { in: unitIds } },
@@ -192,6 +192,19 @@ export class SalesService {
           throw new NotFoundException({
             code: 'UNIT_NOT_FOUND',
             message: 'Unidade não encontrada',
+          });
+        }
+
+        const subcategory = subcategoryMap.get(item.subcategoryId)!;
+        if (subcategory.defaultUnitId !== item.unitId) {
+          throw new UnprocessableEntityException({
+            code: 'UNIT_MISMATCH',
+            message: 'A unidade informada não corresponde à unidade padrão do material',
+            details: {
+              subcategoryId: item.subcategoryId,
+              expectedUnitId: subcategory.defaultUnitId,
+              receivedUnitId: item.unitId,
+            },
           });
         }
       }
@@ -283,7 +296,9 @@ export class SalesService {
         },
       });
 
-      return this.findCreatedSale(tx, sale.id);
+      const createdSale = await this.findCreatedSale(tx, sale.id);
+      const warnings = dto.items.some((item) => item.unitPrice === 0) ? ['ZERO_PRICE_ITEM'] : [];
+      return { ...createdSale, warnings };
     });
   }
 

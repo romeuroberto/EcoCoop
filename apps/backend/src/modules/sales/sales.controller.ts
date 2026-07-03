@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -70,7 +69,7 @@ export class SalesController {
     return this.salesService.deliver(id, dto, user);
   }
 
-  @Delete(':id')
+  @Patch(':id/cancel')
   @RequirePermission('SALES', 'CANCEL')
   @AuditAsStateChange()
   cancel(

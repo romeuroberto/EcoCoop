@@ -83,6 +83,7 @@ export interface CreatedSale {
   user: SaleUser;
   items: SaleItem[];
   accountReceivable: AccountReceivableSummary | null;
+  warnings: string[];
   deliveredAt?: string | null;
   deliveredBy?: SaleUser | null;
   cancelReason?: string | null;
@@ -144,5 +145,5 @@ export const salesService = {
     api.patch<SaleStatusChangeResponse>(`/sales/${id}/deliver`, body).then((r) => r.data),
 
   cancelSale: (id: string, body: CancelSaleBody) =>
-    api.delete<SaleStatusChangeResponse>(`/sales/${id}`, { data: body }).then((r) => r.data),
+    api.patch<SaleStatusChangeResponse>(`/sales/${id}/cancel`, body).then((r) => r.data),
 };

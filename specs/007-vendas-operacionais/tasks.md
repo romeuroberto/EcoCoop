@@ -70,7 +70,7 @@
 
 ### Implementação — US1
 
-- [x] T021 Implementar `SalesService.create()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — verificar buyer ativo, verificar saldo de estoque pronto por item (via aggregate), criar `Sale` + `SaleItem[]` + `ReadyStockEvent(VENDA, qty negativa)` por item + `AccountReceivable`; calcular subtotal e totalAmount server-side; retornar Sale completa com buyer, items e accountReceivable
+- [x] T021 Implementar `SalesService.create()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — verificar buyer ativo, validar que `unitId` de cada item corresponde ao `defaultUnitId` da subcategoria (422 `UNIT_MISMATCH` se divergir), verificar saldo de estoque pronto por item (via aggregate), criar `Sale` + `SaleItem[]` + `ReadyStockEvent(VENDA, qty negativa)` por item + `AccountReceivable`; calcular subtotal e totalAmount server-side; retornar Sale completa com buyer, items, accountReceivable e `warnings: ['ZERO_PRICE_ITEM']` se qualquer item tiver unitPrice = 0
 - [x] T022 Implementar `SalesController.create()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Post()`, `@RequirePermission('SALES', 'CREATE')`, `@AuditEntity('sale')`, `@UseInterceptors(AuditInterceptor)`, receber `@Body() CreateSaleDto` e `@CurrentUser() user`
 - [x] T024 Implementar `apps/frontend/src/pages/sales/SaleFormModal.tsx`: seletor de comprador (autocomplete sobre lista de buyers ativos), linhas dinâmicas de item (subcategoria, unidade, quantidade, preço unitário, subtotal calculado), valor total calculado, botão Confirmar e Cancelar; exibir aviso visual (não bloqueante) quando `unitPrice` de qualquer item for 0; chamar `salesService.createSale`; invalidar query `['sales']` ao fechar com sucesso
 - [x] T025 Implementar `apps/frontend/src/pages/sales/SalesPage.tsx`: estado vazio com mensagem, botão "Nova Venda" (visível apenas com permissão `SALES/CREATE`), lista básica local pós-criação com colunas comprador, data, valor total e status badge; abrir `SaleFormModal` ao clicar
@@ -103,7 +103,7 @@
 
 **Goal**: Cancelamento de venda restaura saldo pronto via ESTORNO_VENDA e marca AR como CANCELADA.
 
-**Independent Test**: DELETE /api/v1/sales/:id com cancelReason → saldo pronto restaurado, AR cancelado, status CANCELADA.
+**Independent Test**: PATCH /api/v1/sales/:id/cancel com cancelReason → saldo pronto restaurado, AR cancelado, status CANCELADA.
 
 ### Testes — US3
 
@@ -112,7 +112,7 @@
 ### Implementação — US3
 
 - [x] T031 Implementar `SalesService.cancel()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — buscar venda com items (404 se não encontrada), checar status = PENDENTE_ENTREGA (409 se não), checar cancelReason não vazio (422 se não), criar `ReadyStockEvent(ESTORNO_VENDA, qty positiva)` por item, atualizar `AccountReceivable.status = CANCELADA`, atualizar `Sale.status = CANCELADA` com cancelReason, cancelledAt, cancelledById; retornar resumo
-- [x] T032 Implementar `SalesController.cancel()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Delete(':id')`, `@RequirePermission('SALES', 'CANCEL')`, receber `@Param('id')`, `@Body() CancelSaleDto` e `@CurrentUser()`
+- [x] T032 Implementar `SalesController.cancel()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Patch(':id/cancel')`, `@RequirePermission('SALES', 'CANCEL')`, receber `@Param('id')`, `@Body() CancelSaleDto` e `@CurrentUser()`
 - [x] T033 Adicionar ação de cancelamento no frontend da US3: visível apenas quando status=PENDENTE_ENTREGA e usuário tem permissão CANCEL; ao clicar, solicitar confirmação e motivo obrigatório; ao confirmar, chamar `salesService.cancelSale`, invalidar queries e atualizar estado local sem refresh manual
 
 **Checkpoint**: Cancelamento restaura estoque e cancela AR. Testes T030 passam. Botão de cancelamento funciona na UI.
@@ -134,7 +134,7 @@
 - [x] T035 Implementar `SalesService.findAll()` em `apps/backend/src/modules/sales/sales.service.ts`: filtros opcionais (buyerId, status, subcategoryId via items, from/to em createdAt); paginação (page, limit); retornar `{ data, total, page, limit }` com campos: id, buyer, status, totalAmount, itemsCount, createdAt, user
 - [x] T036 Implementar `SalesService.findOne()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar com include completo (buyer, items com subcategory e unit, user, deliveredBy, cancelledBy, accountReceivable); construir campo `timeline` derivado dos campos de status/data da Sale (CREATED sempre; DELIVERED quando `deliveredAt != null`; CANCELLED quando `cancelledAt != null`) conforme contrato de `GET /sales/:id`; 404 se não encontrada
 - [x] T037 Implementar `SalesController.findAll()` `@Get()` e `SalesController.findOne()` `@Get(':id')` em `apps/backend/src/modules/sales/sales.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params (buyerId, status, subcategoryId, from, to, page, limit) para o service
-- [x] T038 Completar `apps/frontend/src/pages/sales/SalesPage.tsx`: controles de filtro (seletor de comprador, seletor de status, campos de data de/até); paginação; link de cada linha para `SaleDetailPage` com id da venda; exibir itemsCount na linha
+- [x] T038 Criar `apps/frontend/src/pages/sales/SaleDetailPage.tsx` (rota `/vendas/:id`, fetch via `salesService.getSale`, layout com dados da venda, itens, conta a receber e timeline) e completar `apps/frontend/src/pages/sales/SalesPage.tsx`: controles de filtro (seletor de comprador, seletor de status, seletor de material/subcategoria, campos de data de/até); paginação; link de cada linha para `SaleDetailPage` com id da venda; exibir itemsCount na linha
 
 **Checkpoint**: Lista com filtros e detalhe funcionam via API e UI. Testes T034 passam.
 
@@ -164,7 +164,7 @@
 
 **Purpose**: RBAC, auditoria, testes finais e validação manual.
 
-- [x] T043 Adicionar bloco de testes RBAC ao `apps/backend/test/integration/sales.spec.ts`: SORTER pode `GET /sales` e `GET /sales/:id` (200); SORTER recebe 403 em `POST /sales`, `PATCH /sales/:id/deliver`, `DELETE /sales/:id`; DRIVER mesmo comportamento que SORTER; MANAGER pode todas as ações
+- [x] T043 Adicionar bloco de testes RBAC ao `apps/backend/test/integration/sales.spec.ts`: SORTER pode `GET /sales` e `GET /sales/:id` (200); SORTER recebe 403 em `POST /sales`, `PATCH /sales/:id/deliver`, `PATCH /sales/:id/cancel` e `GET /accounts-receivable`; DRIVER mesmo comportamento que SORTER; MANAGER pode todas as ações
 - [x] T044 [P] Verificar que `AuditLog` registra eventos para criação de venda (action CREATE), confirmação de entrega (STATE_CHANGE) e cancelamento (STATE_CHANGE): adicionar asserções nos testes existentes ou em describe block separado em `apps/backend/test/integration/sales.spec.ts`
 - [x] T045 Executar suíte completa de testes de integração de vendas: `cd apps/backend && npm test -- --testPathPattern=sales`; corrigir eventuais falhas antes de prosseguir
 - [x] T046 Executar validação manual dos 6 cenários do `specs/007-vendas-operacionais/quickstart.md` contra o servidor local; registrar resultado (pass/fail) como comentário no final do arquivo quickstart.md

@@ -65,9 +65,12 @@ Register a new sale and immediately consume ready stock.
     "amount": "125.00",
     "dueDate": "2026-08-02",
     "status": "A_RECEBER"
-  }
+  },
+  "warnings": []
 }
 ```
+
+> **`warnings`** is an array of string codes. Present when `unitPrice = 0` for any item: `["ZERO_PRICE_ITEM"]`. Empty array when no warnings.
 
 ### Error Responses
 
@@ -77,6 +80,7 @@ Register a new sale and immediately consume ready stock.
 | 404 | `BUYER_NOT_FOUND` | buyerId doesn't exist |
 | 409 | `BUYER_INACTIVE` | Buyer is not active |
 | 409 | `INSUFFICIENT_READY_STOCK` | Balance < requested quantity for an item (includes which subcategoryId) |
+| 422 | `UNIT_MISMATCH` | unitId does not match the material's defaultUnitId (includes subcategoryId, expectedUnitId) |
 
 ---
 
@@ -220,7 +224,7 @@ Confirm physical delivery of the sale.
 
 ---
 
-## DELETE /sales/:id
+## PATCH /sales/:id/cancel
 
 **Permission**: `SALES` / `CANCEL`
 
@@ -258,7 +262,7 @@ Cancel a sale and reverse all ready stock events.
 
 ## GET /accounts-receivable
 
-**Permission**: `SALES` / `READ`  *(or future FINANCE / READ)*
+**Permission**: `ACCOUNTS_RECEIVABLE` / `READ`
 
 List accounts receivable with filters.
 
