@@ -25,14 +25,14 @@
 
 **Purpose**: Schema changes that block all user story implementation. All tasks are sequential — same file.
 
-- [ ] T001 Add SAIDA_TRIAGEM and ESTORNO_TRIAGEM values to RawMaterialStockEventType enum in apps/backend/prisma/schema.prisma
-- [ ] T002 Add new enums SortingOperationStatus, SortingRejectType, ReadyStockEventType in apps/backend/prisma/schema.prisma
-- [ ] T003 Add sortingOperationId nullable FK field and @relation("BrutoSortingEvents") to RawMaterialStockEvent model in apps/backend/prisma/schema.prisma
-- [ ] T004 Add SortingOperation model with all fields (subcategoryId, unitId, processedQuantity, status, cancelReason, cancelledById, cancelledAt, userId, createdAt), relations (outputs, rejects, rawStockEvents, readyStockEvents), and indexes in apps/backend/prisma/schema.prisma
-- [ ] T005 Add SortingOutput model (sortingOperationId, subcategoryId, unitId, quantity, createdAt, readyStockEvent relation) and SortingReject model (sortingOperationId, type, subcategoryId nullable, unitId, quantity, description nullable) with all indexes in apps/backend/prisma/schema.prisma
-- [ ] T006 Add ReadyStockEvent model (type, subcategoryId, unitId, quantity, sortingOperationId, sortingOutputId unique, adjustmentId unique, userId, createdAt) and ReadyStockAdjustment model (subcategoryId, unitId, quantity, justification, userId, createdAt, stockEvent relation) with all indexes in apps/backend/prisma/schema.prisma
-- [ ] T007 Run Prisma migration: `cd apps/backend && npx prisma migrate dev --name triagem-estoque-pronto` and verify generated migration SQL covers all 6 new models and 2 enum additions
-- [ ] T008 Add RBAC permissions seed for SORTING (READ: SORTER+MANAGER+ADMIN, CREATE: SORTER+MANAGER+ADMIN, CANCEL: MANAGER+ADMIN) and READY_STOCK (READ: SORTER+MANAGER+ADMIN, CREATE_ADJUSTMENT: MANAGER+ADMIN) modules in apps/backend/prisma/seed.ts
+- [x] T001 Add SAIDA_TRIAGEM and ESTORNO_TRIAGEM values to RawMaterialStockEventType enum in apps/backend/prisma/schema.prisma
+- [x] T002 Add new enums SortingOperationStatus, SortingRejectType, ReadyStockEventType in apps/backend/prisma/schema.prisma
+- [x] T003 Add sortingOperationId nullable FK field and @relation("BrutoSortingEvents") to RawMaterialStockEvent model in apps/backend/prisma/schema.prisma
+- [x] T004 Add SortingOperation model with all fields (subcategoryId, unitId, processedQuantity, status, cancelReason, cancelledById, cancelledAt, userId, createdAt), relations (outputs, rejects, rawStockEvents, readyStockEvents), and indexes in apps/backend/prisma/schema.prisma
+- [x] T005 Add SortingOutput model (sortingOperationId, subcategoryId, unitId, quantity, createdAt, readyStockEvent relation) and SortingReject model (sortingOperationId, type, subcategoryId nullable, unitId, quantity, description nullable) with all indexes in apps/backend/prisma/schema.prisma
+- [x] T006 Add ReadyStockEvent model (type, subcategoryId, unitId, quantity, sortingOperationId, sortingOutputId unique, adjustmentId unique, userId, createdAt) and ReadyStockAdjustment model (subcategoryId, unitId, quantity, justification, userId, createdAt, stockEvent relation) with all indexes in apps/backend/prisma/schema.prisma
+- [x] T007 Run Prisma migration: `cd apps/backend && npx prisma migrate dev --name triagem-estoque-pronto` and verify generated migration SQL covers all 6 new models and 2 enum additions
+- [x] T008 Add RBAC permissions seed for SORTING (READ: SORTER+MANAGER+ADMIN, CREATE: SORTER+MANAGER+ADMIN, CANCEL: MANAGER+ADMIN) and READY_STOCK (READ: SORTER+MANAGER+ADMIN, CREATE_ADJUSTMENT: MANAGER+ADMIN) modules in apps/backend/prisma/seed.ts
 
 **Checkpoint**: Schema migrated, RBAC seeded — user story implementation can now begin
 
@@ -44,11 +44,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T009 Create apps/backend/src/modules/sorting-operations/ with sorting-operations.module.ts (NestJS @Module decorator, PrismaModule import), sorting-operations.service.ts (empty @Injectable class), sorting-operations.controller.ts (empty @Controller('sorting-operations') class)
-- [ ] T010 [P] Create apps/backend/src/modules/ready-stock/ with ready-stock.module.ts, ready-stock.service.ts, ready-stock.controller.ts stubs following same pattern as T009
-- [ ] T011 [P] Create apps/backend/src/modules/ready-stock-adjustments/ with ready-stock-adjustments.module.ts, ready-stock-adjustments.service.ts (dto/ subfolder), ready-stock-adjustments.controller.ts stubs
-- [ ] T012 Register SortingOperationsModule, ReadyStockModule, ReadyStockAdjustmentsModule in imports array of apps/backend/src/app.module.ts
-- [ ] T013 Add React Router routes for /sorting (SortingListPage), /sorting/new (SortingFormPage), /sorting/:id (SortingDetailPage), /ready-stock (ReadyStockPage) in apps/frontend/src/App.tsx (or equivalent router config file — check existing routing pattern)
+- [x] T009 Create apps/backend/src/modules/sorting-operations/ with sorting-operations.module.ts (NestJS @Module decorator, PrismaModule import), sorting-operations.service.ts (empty @Injectable class), sorting-operations.controller.ts (empty @Controller('sorting-operations') class)
+- [x] T010 [P] Create apps/backend/src/modules/ready-stock/ with ready-stock.module.ts, ready-stock.service.ts, ready-stock.controller.ts stubs following same pattern as T009
+- [x] T011 [P] Create apps/backend/src/modules/ready-stock-adjustments/ with ready-stock-adjustments.module.ts, ready-stock-adjustments.service.ts (dto/ subfolder), ready-stock-adjustments.controller.ts stubs
+- [x] T012 Register SortingOperationsModule, ReadyStockModule, ReadyStockAdjustmentsModule in imports array of apps/backend/src/app.module.ts
+- [x] T013 Add React Router routes for /sorting (SortingListPage), /sorting/new (SortingFormPage), /sorting/:id (SortingDetailPage), /ready-stock (ReadyStockPage) in apps/frontend/src/App.tsx (or equivalent router config file — check existing routing pattern)
 
 **Checkpoint**: All modules registered, router configured — stories can proceed in parallel
 
@@ -64,18 +64,18 @@
 
 > Write these tests FIRST. They will fail until implementation is complete.
 
-- [ ] T014 Write integration test file apps/backend/test/integration/sorting-operations.spec.ts covering: POST with sufficient stock → 201 + correct balances; POST with insufficient stock → 409 INSUFFICIENT_RAW_STOCK; POST with sum exceeding processedQuantity → 422 OUTPUTS_SUM_EXCEEDS_PROCESSED; POST where sum < processedQuantity → PERDA_INERENTE auto-created; GET /sorting-operations with pagination and filters; GET /sorting-operations/:id with full output/reject detail
+- [x] T014 Write integration test file apps/backend/test/integration/sorting-operations.spec.ts covering: POST with sufficient stock → 201 + correct balances; POST with insufficient stock → 409 INSUFFICIENT_RAW_STOCK; POST with sum exceeding processedQuantity → 422 OUTPUTS_SUM_EXCEEDS_PROCESSED; POST where sum < processedQuantity → PERDA_INERENTE auto-created; GET /sorting-operations with pagination and filters; GET /sorting-operations/:id with full output/reject detail
 
 ### Implementation for US1
 
-- [ ] T015 [P] Create apps/backend/src/modules/sorting-operations/dto/create-sorting-operation.dto.ts with @IsUUID, @IsPositive, @ValidateNested, @Type decorators for subcategoryId, unitId, processedQuantity; outputs[]: @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) — ao menos 1 output obrigatório per contract; rejects[]: @IsOptional() @IsArray() @ValidateNested({ each: true }) — lista opcional, pode ser vazia; nested DTOs: CreateSortingOutputDto, CreateSortingRejectDto com @IsNotEmpty() em description quando subcategoryId ausente
-- [ ] T016 Implement SortingOperationsService in apps/backend/src/modules/sorting-operations/sorting-operations.service.ts: create() using prisma.$transaction — read raw balance within tx, throw 409 if insufficient, validate sum ≤ processedQuantity, create SortingOperation + SortingOutputs + SortingRejects + PERDA_INERENTE if gap exists + RawMaterialStockEvent(SAIDA_TRIAGEM, negative qty) + ReadyStockEvent(TRIAGEM_OUTPUT) per output; also implement findAll() with pagination/filters and findOne() with full includes
-- [ ] T017 Implement SortingOperationsController in apps/backend/src/modules/sorting-operations/sorting-operations.controller.ts: POST /, GET /, GET /:id with @RequirePermission(SORTING, CREATE/READ), @AuditEntity('sortingOperation'), JWT guard, and response serialization matching contract in contracts/sorting-operations.md
-- [ ] T018 [P] Create apps/frontend/src/pages/sorting/SortingListPage.tsx: table/list of sorting operations with filters (subcategory, status, date range), pagination, loading skeleton, empty state, link to detail page
-- [ ] T019 [P] Create apps/frontend/src/pages/sorting/SortingDetailPage.tsx: display SortingOperation detail — subcategory, processedQuantity, outputs[] table, rejects[] table (showing PERDA_INERENTE distinctly), user, timestamp, status badge; loading and not-found states
-- [ ] T020 Create apps/frontend/src/pages/sorting/SortingFormPage.tsx: form with material bruto selector (autocomplete/select), processedQuantity field, dynamic outputs[] array (add/remove rows: subcategory + quantity), optional rejects[] array (add/remove rows: type + subcategory optional + quantity + description), form validation, submit calls sortingService.createSortingOperation(); on success navigate to SortingDetailPage (or list) with the newly created id — dados já atualizados via navegação, sem polling/WebSocket (SC-002)
-- [ ] T021 Create apps/frontend/src/services/sorting.service.ts implementing createSortingOperation(dto), listSortingOperations(filters), getSortingOperation(id) with API calls to /sorting-operations endpoints
-- [ ] T022 Run US1 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts` — all create and read scenarios must pass
+- [x] T015 [P] Create apps/backend/src/modules/sorting-operations/dto/create-sorting-operation.dto.ts with @IsUUID, @IsPositive, @ValidateNested, @Type decorators for subcategoryId, unitId, processedQuantity; outputs[]: @IsArray() @ArrayMinSize(1) @ValidateNested({ each: true }) — ao menos 1 output obrigatório per contract; rejects[]: @IsOptional() @IsArray() @ValidateNested({ each: true }) — lista opcional, pode ser vazia; nested DTOs: CreateSortingOutputDto, CreateSortingRejectDto com @IsNotEmpty() em description quando subcategoryId ausente
+- [x] T016 Implement SortingOperationsService in apps/backend/src/modules/sorting-operations/sorting-operations.service.ts: create() using prisma.$transaction — read raw balance within tx, throw 409 if insufficient, validate sum ≤ processedQuantity, create SortingOperation + SortingOutputs + SortingRejects + PERDA_INERENTE if gap exists + RawMaterialStockEvent(SAIDA_TRIAGEM, negative qty) + ReadyStockEvent(TRIAGEM_OUTPUT) per output; also implement findAll() with pagination/filters and findOne() with full includes
+- [x] T017 Implement SortingOperationsController in apps/backend/src/modules/sorting-operations/sorting-operations.controller.ts: POST /, GET /, GET /:id with @RequirePermission(SORTING, CREATE/READ), @AuditEntity('sortingOperation'), JWT guard, and response serialization matching contract in contracts/sorting-operations.md
+- [x] T018 [P] Create apps/frontend/src/pages/sorting/SortingListPage.tsx: table/list of sorting operations with filters (subcategory, status, date range), pagination, loading skeleton, empty state, link to detail page
+- [x] T019 [P] Create apps/frontend/src/pages/sorting/SortingDetailPage.tsx: display SortingOperation detail — subcategory, processedQuantity, outputs[] table, rejects[] table (showing PERDA_INERENTE distinctly), user, timestamp, status badge; loading and not-found states
+- [x] T020 Create apps/frontend/src/pages/sorting/SortingFormPage.tsx: form with material bruto selector (autocomplete/select), processedQuantity field, dynamic outputs[] array (add/remove rows: subcategory + quantity), optional rejects[] array (add/remove rows: type + subcategory optional + quantity + description), form validation, submit calls sortingService.createSortingOperation(); on success navigate to SortingDetailPage (or list) with the newly created id — dados já atualizados via navegação, sem polling/WebSocket (SC-002)
+- [x] T021 Create apps/frontend/src/services/sorting.service.ts implementing createSortingOperation(dto), listSortingOperations(filters), getSortingOperation(id) with API calls to /sorting-operations endpoints
+- [x] T022 Run US1 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts` — all create and read scenarios must pass
 
 **Checkpoint**: US1 fully functional — triagem creates, debits raw stock, credits ready stock, PERDA_INERENTE auto-created
 
@@ -91,15 +91,15 @@
 
 > Write these tests FIRST. They will fail until implementation is complete.
 
-- [ ] T023 Write integration test file apps/backend/test/integration/ready-stock.spec.ts covering: GET /ready-stock returns aggregated balances after sorting operation; GET /ready-stock/movements returns paginated events with type/subcategory/date filters; empty state when no events registered; SORTER can read (200), unauthenticated gets 401
+- [x] T023 Write integration test file apps/backend/test/integration/ready-stock.spec.ts covering: GET /ready-stock returns aggregated balances after sorting operation; GET /ready-stock/movements returns paginated events with type/subcategory/date filters; empty state when no events registered; SORTER can read (200), unauthenticated gets 401
 
 ### Implementation for US2
 
-- [ ] T024 Implement ReadyStockService in apps/backend/src/modules/ready-stock/ready-stock.service.ts: getBalance() using prisma.readyStockEvent.groupBy(['subcategoryId','unitId'], _sum:{quantity:true}) with subcategory/unit includes and optional filters; getMovements() with pagination, type/subcategory/unit/date filters and user include
-- [ ] T025 Implement ReadyStockController in apps/backend/src/modules/ready-stock/ready-stock.controller.ts: GET /ready-stock and GET /ready-stock/movements with @RequirePermission(READY_STOCK, READ), query param parsing, response matching contract in contracts/ready-stock.md
-- [ ] T026 [P] Create apps/frontend/src/pages/ready-stock/ReadyStockPage.tsx: balance table (subcategory, unit, balance, eventCount) with subcategory/unit filters, collapsible/tabbed movements history section with type/date filters, type badges (TRIAGEM_OUTPUT/AJUSTE/ESTORNO), loading and empty states, button to open ReadyStockAdjustmentModal (to be implemented in US3)
-- [ ] T027 [P] Add getReadyStockBalance(filters), getReadyStockMovements(filters) to apps/frontend/src/services/readyStock.service.ts
-- [ ] T028 Run US2 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/ready-stock.spec.ts`
+- [x] T024 Implement ReadyStockService in apps/backend/src/modules/ready-stock/ready-stock.service.ts: getBalance() using prisma.readyStockEvent.groupBy(['subcategoryId','unitId'], _sum:{quantity:true}) with subcategory/unit includes and optional filters; getMovements() with pagination, type/subcategory/unit/date filters and user include
+- [x] T025 Implement ReadyStockController in apps/backend/src/modules/ready-stock/ready-stock.controller.ts: GET /ready-stock and GET /ready-stock/movements with @RequirePermission(READY_STOCK, READ), query param parsing, response matching contract in contracts/ready-stock.md
+- [x] T026 [P] Create apps/frontend/src/pages/ready-stock/ReadyStockPage.tsx: balance table (subcategory, unit, balance, eventCount) with subcategory/unit filters, collapsible/tabbed movements history section with type/date filters, type badges (TRIAGEM_OUTPUT/AJUSTE/ESTORNO), loading and empty states, button to open ReadyStockAdjustmentModal (to be implemented in US3)
+- [x] T027 [P] Add getReadyStockBalance(filters), getReadyStockMovements(filters) to apps/frontend/src/services/readyStock.service.ts
+- [x] T028 Run US2 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/ready-stock.spec.ts`
 
 **Checkpoint**: US2 fully functional — manager can view stock balances and movement history independently
 
@@ -115,16 +115,16 @@
 
 > Write these tests FIRST. They will fail until implementation is complete.
 
-- [ ] T029 Write integration test file apps/backend/test/integration/ready-stock-adjustments.spec.ts covering: POST without justification → 422 JUSTIFICATION_REQUIRED; POST with quantity=0 → 422 QUANTITY_CANNOT_BE_ZERO; POST where balance would go negative → 409 ADJUSTMENT_WOULD_CAUSE_NEGATIVE_BALANCE; valid negative adjustment → 201, balance updated, ReadyStockEvent(AJUSTE) created; valid positive adjustment → 201; SORTER role → 403; GET /ready-stock-adjustments → paginated list
+- [x] T029 Write integration test file apps/backend/test/integration/ready-stock-adjustments.spec.ts covering: POST without justification → 422 JUSTIFICATION_REQUIRED; POST with quantity=0 → 422 QUANTITY_CANNOT_BE_ZERO; POST where balance would go negative → 409 ADJUSTMENT_WOULD_CAUSE_NEGATIVE_BALANCE; valid negative adjustment → 201, balance updated, ReadyStockEvent(AJUSTE) created; valid positive adjustment → 201; SORTER role → 403; GET /ready-stock-adjustments → paginated list
 
 ### Implementation for US3
 
-- [ ] T030 [P] Create apps/backend/src/modules/ready-stock-adjustments/dto/create-ready-stock-adjustment.dto.ts with @IsUUID (subcategoryId, unitId), @IsNotEmpty (justification), @IsNumber + custom validator for quantity≠0
-- [ ] T031 Implement ReadyStockAdjustmentsService in apps/backend/src/modules/ready-stock-adjustments/ready-stock-adjustments.service.ts: create() using prisma.$transaction — read current balance, throw 409 if quantity<0 and balance+quantity<0, create ReadyStockAdjustment + ReadyStockEvent(AJUSTE, signed quantity); findAll() with pagination/filters
-- [ ] T032 Implement ReadyStockAdjustmentsController in apps/backend/src/modules/ready-stock-adjustments/ready-stock-adjustments.controller.ts: POST /ready-stock-adjustments and GET /ready-stock-adjustments with @RequirePermission(READY_STOCK, CREATE_ADJUSTMENT / READ), @AuditEntity('readyStockAdjustment'), response matching contract in contracts/ready-stock.md
-- [ ] T033 [P] Create apps/frontend/src/pages/ready-stock/ReadyStockAdjustmentModal.tsx: modal form with subcategory selector, unit display, quantity input (signed — negative for deductions), required justification textarea, validation (no empty justification, no zero quantity), submit calls readyStockService.createAdjustment(), closes modal and refreshes balance on success
-- [ ] T034 [P] Add createAdjustment(dto), listAdjustments(filters) to apps/frontend/src/services/readyStock.service.ts; wire ReadyStockAdjustmentModal into ReadyStockPage button (from US2)
-- [ ] T035 Run US3 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/ready-stock-adjustments.spec.ts`
+- [x] T030 [P] Create apps/backend/src/modules/ready-stock-adjustments/dto/create-ready-stock-adjustment.dto.ts with @IsUUID (subcategoryId, unitId), @IsNotEmpty (justification), @IsNumber + custom validator for quantity≠0
+- [x] T031 Implement ReadyStockAdjustmentsService in apps/backend/src/modules/ready-stock-adjustments/ready-stock-adjustments.service.ts: create() using prisma.$transaction — read current balance, throw 409 if quantity<0 and balance+quantity<0, create ReadyStockAdjustment + ReadyStockEvent(AJUSTE, signed quantity); findAll() with pagination/filters
+- [x] T032 Implement ReadyStockAdjustmentsController in apps/backend/src/modules/ready-stock-adjustments/ready-stock-adjustments.controller.ts: POST /ready-stock-adjustments and GET /ready-stock-adjustments with @RequirePermission(READY_STOCK, CREATE_ADJUSTMENT / READ), @AuditEntity('readyStockAdjustment'), response matching contract in contracts/ready-stock.md
+- [x] T033 [P] Create apps/frontend/src/pages/ready-stock/ReadyStockAdjustmentModal.tsx: modal form with subcategory selector, unit display, quantity input (signed — negative for deductions), required justification textarea, validation (no empty justification, no zero quantity), submit calls readyStockService.createAdjustment(), closes modal and refreshes balance on success
+- [x] T034 [P] Add createAdjustment(dto), listAdjustments(filters) to apps/frontend/src/services/readyStock.service.ts; wire ReadyStockAdjustmentModal into ReadyStockPage button (from US2)
+- [x] T035 Run US3 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/ready-stock-adjustments.spec.ts`
 
 **Checkpoint**: US3 fully functional — audited adjustments update balance and appear in movement history
 
@@ -140,16 +140,16 @@
 
 > Write these tests FIRST, appended to existing spec file. They will fail until implementation is complete.
 
-- [ ] T036 Add cancel scenarios to apps/backend/test/integration/sorting-operations.spec.ts: DELETE /:id with valid cancelReason → 200, status CANCELADA, raw stock event ESTORNO_TRIAGEM created, ready stock ESTORNO events created; DELETE /:id when reversal causes negative ready stock → 409 CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK; DELETE /:id on already-cancelled operation → 409 SORTING_ALREADY_CANCELLED; SORTER role on DELETE → 403; cancelledBy/cancelledAt/cancelReason present in GET /:id after cancel
+- [x] T036 Add cancel scenarios to apps/backend/test/integration/sorting-operations.spec.ts: DELETE /:id with valid cancelReason → 200, status CANCELADA, raw stock event ESTORNO_TRIAGEM created, ready stock ESTORNO events created; DELETE /:id when reversal causes negative ready stock → 409 CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK; DELETE /:id on already-cancelled operation → 409 SORTING_ALREADY_CANCELLED; SORTER role on DELETE → 403; cancelledBy/cancelledAt/cancelReason present in GET /:id after cancel
 
 ### Implementation for US4
 
-- [ ] T037 [P] Create apps/backend/src/modules/sorting-operations/dto/cancel-sorting-operation.dto.ts with cancelReason field: @IsString(), @IsNotEmpty()
-- [ ] T038 Implement SortingOperationsService.cancel() in apps/backend/src/modules/sorting-operations/sorting-operations.service.ts: prisma.$transaction — load operation with outputs, throw 409 if status≠CONCLUIDA or SORTING_ALREADY_CANCELLED, for each SortingOutput compute current ready balance and throw 409 if balance-output.quantity<0, create ReadyStockEvent(ESTORNO, -output.quantity) per output, create RawMaterialStockEvent(ESTORNO_TRIAGEM, +processedQuantity), update SortingOperation status to CANCELADA with cancelReason, cancelledById (from JWT user), cancelledAt=now()
-- [ ] T039 Add DELETE /sorting-operations/:id endpoint to SortingOperationsController in apps/backend/src/modules/sorting-operations/sorting-operations.controller.ts with @RequirePermission(SORTING, CANCEL) and @Body() cancelDto, response matching cancel contract in contracts/sorting-operations.md
-- [ ] T040 Add cancel flow to apps/frontend/src/pages/sorting/SortingDetailPage.tsx: show "Cancelar Triagem" button only when status=CONCLUIDA and user has SORTING:CANCEL permission (MANAGER/ADMIN); confirmation dialog with required cancelReason textarea; on confirm calls sortingService.cancelSortingOperation(); on success redirect to list or refresh showing CANCELADA status with cancelReason/cancelledBy/cancelledAt
-- [ ] T041 Add cancelSortingOperation(id, cancelReason) to apps/frontend/src/services/sorting.service.ts calling DELETE /sorting-operations/:id
-- [ ] T042 Run US4 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts`
+- [x] T037 [P] Create apps/backend/src/modules/sorting-operations/dto/cancel-sorting-operation.dto.ts with cancelReason field: @IsString(), @IsNotEmpty()
+- [x] T038 Implement SortingOperationsService.cancel() in apps/backend/src/modules/sorting-operations/sorting-operations.service.ts: prisma.$transaction — load operation with outputs, throw 409 if status≠CONCLUIDA or SORTING_ALREADY_CANCELLED, for each SortingOutput compute current ready balance and throw 409 if balance-output.quantity<0, create ReadyStockEvent(ESTORNO, -output.quantity) per output, create RawMaterialStockEvent(ESTORNO_TRIAGEM, +processedQuantity), update SortingOperation status to CANCELADA with cancelReason, cancelledById (from JWT user), cancelledAt=now()
+- [x] T039 Add DELETE /sorting-operations/:id endpoint to SortingOperationsController in apps/backend/src/modules/sorting-operations/sorting-operations.controller.ts with @RequirePermission(SORTING, CANCEL) and @Body() cancelDto, response matching cancel contract in contracts/sorting-operations.md
+- [x] T040 Add cancel flow to apps/frontend/src/pages/sorting/SortingDetailPage.tsx: show "Cancelar Triagem" button only when status=CONCLUIDA and user has SORTING:CANCEL permission (MANAGER/ADMIN); confirmation dialog with required cancelReason textarea; on confirm calls sortingService.cancelSortingOperation(); on success redirect to list or refresh showing CANCELADA status with cancelReason/cancelledBy/cancelledAt
+- [x] T041 Add cancelSortingOperation(id, cancelReason) to apps/frontend/src/services/sorting.service.ts calling DELETE /sorting-operations/:id
+- [x] T042 Run US4 integration tests checkpoint: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts`
 
 **Checkpoint**: All 4 user stories independently functional and testable
 
@@ -159,9 +159,9 @@
 
 **Purpose**: Type safety validation, UX completeness, and end-to-end verification
 
-- [ ] T043 [P] Run type checks across both apps: `npx -w apps/backend tsc --noEmit` and `npx -w apps/frontend tsc --noEmit` — zero errors required
-- [ ] T044 [P] Audit all 5 frontend pages/components (SortingListPage, SortingFormPage, SortingDetailPage, ReadyStockPage, ReadyStockAdjustmentModal) for: loading skeleton/spinner on async operations, error boundary or error message on API failure, explicit empty state when list is empty (FR-018)
-- [ ] T045 Run full integration suite for the feature: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts test/integration/ready-stock.spec.ts test/integration/ready-stock-adjustments.spec.ts`
+- [x] T043 [P] Run type checks across both apps: `npx -w apps/backend tsc --noEmit` and `npx -w apps/frontend tsc --noEmit` — zero errors required
+- [x] T044 [P] Audit all 5 frontend pages/components (SortingListPage, SortingFormPage, SortingDetailPage, ReadyStockPage, ReadyStockAdjustmentModal) for: loading skeleton/spinner on async operations, error boundary or error message on API failure, explicit empty state when list is empty (FR-018)
+- [x] T045 Run full integration suite for the feature: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts test/integration/ready-stock.spec.ts test/integration/ready-stock-adjustments.spec.ts`
 - [ ] T046 Execute all 7 quickstart.md validation scenarios from specs/006-triagem-estoque-pronto/quickstart.md end-to-end with running backend and frontend
 
 ---
