@@ -169,3 +169,16 @@ Tests live at: `apps/backend/test/integration/sales.spec.ts`
 6. Open sale detail → click "Confirmar Entrega" → verify status changes to "Entregue".
 7. Create another sale → click "Cancelar" with reason → verify status "Cancelada" and stock restored.
 8. Login as SORTER → verify no "Nova Venda" button visible and create action returns 403.
+
+---
+
+## Validation Result — 2026-07-03
+
+Backend local validado em `http://127.0.0.1:3002/api/v1` após build da aplicação.
+
+- Scenario 1: PASS — venda registrada, estoque reduzido e AccountReceivable criada com status A_RECEBER.
+- Scenario 2: PASS — venda acima do saldo bloqueada com 409 INSUFFICIENT_READY_STOCK e saldo preservado.
+- Scenario 3: PASS — entrega confirmada com status ENTREGUE; segunda confirmação bloqueada com 409 SALE_NOT_DELIVERABLE.
+- Scenario 4: PASS — cancelamento marcou venda como CANCELADA, estornou estoque, cancelou AccountReceivable e bloqueou segundo cancelamento com 409 SALE_NOT_CANCELLABLE.
+- Scenario 5: PASS — SORTER conseguiu listar vendas e recebeu 403 em criação/cancelamento.
+- Scenario 6: PASS — comprador inativo bloqueado com 409 BUYER_INACTIVE.

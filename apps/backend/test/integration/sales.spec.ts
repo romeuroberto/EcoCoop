@@ -10,8 +10,11 @@ describe('Sales (integration)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let managerToken: string;
+  let sorterToken: string;
+  let driverToken: string;
   let managerUserId: string;
   let sorterUserId: string;
+  let driverUserId: string;
   let buyerId: string;
   let inactiveBuyerId: string;
   let subcategoryId: string;
@@ -26,34 +29,34 @@ describe('Sales (integration)', () => {
     return (res.body as { accessToken: string }).accessToken;
   };
 
-  const createSale = (body: object) =>
+  const createSale = (body: object, token = managerToken) =>
     request(app.getHttpServer())
       .post('/api/v1/sales')
-      .set('Authorization', `Bearer ${managerToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send(body);
 
-  const deliverSale = (id: string, body: object = {}) =>
+  const deliverSale = (id: string, body: object = {}, token = managerToken) =>
     request(app.getHttpServer())
       .patch(`/api/v1/sales/${id}/deliver`)
-      .set('Authorization', `Bearer ${managerToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send(body);
 
-  const cancelSale = (id: string, body: object = {}) =>
+  const cancelSale = (id: string, body: object = {}, token = managerToken) =>
     request(app.getHttpServer())
       .delete(`/api/v1/sales/${id}`)
-      .set('Authorization', `Bearer ${managerToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .send(body);
 
-  const listSales = (query: Record<string, string | number> = {}) =>
+  const listSales = (query: Record<string, string | number> = {}, token = managerToken) =>
     request(app.getHttpServer())
       .get('/api/v1/sales')
-      .set('Authorization', `Bearer ${managerToken}`)
+      .set('Authorization', `Bearer ${token}`)
       .query(query);
 
-  const getSale = (id: string) =>
+  const getSale = (id: string, token = managerToken) =>
     request(app.getHttpServer())
       .get(`/api/v1/sales/${id}`)
-      .set('Authorization', `Bearer ${managerToken}`);
+      .set('Authorization', `Bearer ${token}`);
 
   const listAccountsReceivable = (query: Record<string, string | number> = {}) =>
     request(app.getHttpServer())
@@ -103,6 +106,9 @@ describe('Sales (integration)', () => {
     const sorterProfile = await prisma.profile.findFirstOrThrow({
       where: { type: 'SORTER', isCustom: false },
     });
+    const driverProfile = await prisma.profile.findFirstOrThrow({
+      where: { type: 'DRIVER', isCustom: false },
+    });
     const sorter = await prisma.user.upsert({
       where: { email: 'sorter-sales-test@ecocoop.local' },
       create: {
@@ -113,6 +119,19 @@ describe('Sales (integration)', () => {
       update: {},
     });
     sorterUserId = sorter.id;
+    sorterToken = await login('sorter-sales-test@ecocoop.local', 'pwd123');
+
+    const driver = await prisma.user.upsert({
+      where: { email: 'driver-sales-test@ecocoop.local' },
+      create: {
+        email: 'driver-sales-test@ecocoop.local',
+        passwordHash: hash,
+        profileId: driverProfile.id,
+      },
+      update: {},
+    });
+    driverUserId = driver.id;
+    driverToken = await login('driver-sales-test@ecocoop.local', 'pwd123');
 
     const category = await prisma.materialCategory.findFirstOrThrow();
     const unit = await prisma.unitOfMeasure.findFirstOrThrow({ where: { isActive: true } });
@@ -191,8 +210,12 @@ describe('Sales (integration)', () => {
     await prisma.materialSubcategory.deleteMany({
       where: { id: { in: [subcategoryId, secondSubcategoryId].filter(Boolean) } },
     });
-    await prisma.auditLog.deleteMany({ where: { userId: sorterUserId } });
-    await prisma.user.deleteMany({ where: { id: sorterUserId } });
+    await prisma.auditLog.deleteMany({
+      where: { userId: { in: [sorterUserId, driverUserId].filter(Boolean) } },
+    });
+    await prisma.user.deleteMany({
+      where: { id: { in: [sorterUserId, driverUserId].filter(Boolean) } },
+    });
     await app.close();
   });
 
@@ -697,11 +720,11 @@ describe('Sales (integration)', () => {
     expect(createRes.status).toBe(201);
     createdSaleIds.push(createRes.body.id as string);
 
-    const res = await listAccountsReceivable({ page: 1, limit: 10 });
+    const res = await listAccountsReceivable({ buyerId, page: 1, limit: 100 });
 
     expect(res.status).toBe(200);
     expect(res.body.page).toBe(1);
-    expect(res.body.limit).toBe(10);
+    expect(res.body.limit).toBe(100);
     expect(res.body.total).toBeGreaterThanOrEqual(1);
     const account = res.body.data.find((item: { saleId: string }) => item.saleId === createRes.body.id);
     expect(account).toMatchObject({
@@ -789,5 +812,122 @@ describe('Sales (integration)', () => {
       buyer: { id: buyerId },
       sale: { id: createRes.body.id },
     });
+  });
+
+  it('RBAC — SORTER e DRIVER apenas leem vendas; MANAGER executa ações de venda', async () => {
+    const baseSaleRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 3 }],
+    });
+    expect(baseSaleRes.status).toBe(201);
+    createdSaleIds.push(baseSaleRes.body.id as string);
+    const baseSaleId = baseSaleRes.body.id as string;
+
+    for (const token of [sorterToken, driverToken]) {
+      const listRes = await listSales({}, token);
+      expect(listRes.status).toBe(200);
+
+      const detailRes = await getSale(baseSaleId, token);
+      expect(detailRes.status).toBe(200);
+
+      const createForbidden = await createSale(
+        {
+          buyerId,
+          items: [{ subcategoryId, unitId, quantity: 1, unitPrice: 1 }],
+        },
+        token,
+      );
+      expect(createForbidden.status).toBe(403);
+
+      const deliverForbidden = await deliverSale(baseSaleId, {}, token);
+      expect(deliverForbidden.status).toBe(403);
+
+      const cancelForbidden = await cancelSale(
+        baseSaleId,
+        { cancelReason: 'Tentativa sem permissão' },
+        token,
+      );
+      expect(cancelForbidden.status).toBe(403);
+    }
+
+    const managerCreate = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 3 }],
+    });
+    expect(managerCreate.status).toBe(201);
+    createdSaleIds.push(managerCreate.body.id as string);
+
+    const managerList = await listSales({ limit: 5 });
+    expect(managerList.status).toBe(200);
+
+    const managerDetail = await getSale(managerCreate.body.id as string);
+    expect(managerDetail.status).toBe(200);
+
+    const managerDeliver = await deliverSale(managerCreate.body.id as string);
+    expect(managerDeliver.status).toBe(200);
+
+    const cancellableSale = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 3 }],
+    });
+    expect(cancellableSale.status).toBe(201);
+    createdSaleIds.push(cancellableSale.body.id as string);
+
+    const managerCancel = await cancelSale(cancellableSale.body.id as string, {
+      cancelReason: 'Validação RBAC manager',
+    });
+    expect(managerCancel.status).toBe(200);
+  });
+
+  it('AuditLog — registra criação, entrega e cancelamento de venda', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 5 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+    const createdSaleId = createRes.body.id as string;
+
+    const createLog = await prisma.auditLog.findFirst({
+      where: { entityType: 'sale', entityId: createdSaleId, action: 'CREATE' },
+    });
+    expect(createLog).toBeDefined();
+    expect(createLog?.userId).toBe(managerUserId);
+    expect(createLog?.previousState).toBeNull();
+    expect(createLog?.newState).toBeDefined();
+
+    const deliverRes = await deliverSale(createdSaleId, { deliveredAt: '2026-08-23T10:00:00.000Z' });
+    expect(deliverRes.status).toBe(200);
+
+    const deliverLog = await prisma.auditLog.findFirst({
+      where: { entityType: 'sale', entityId: createdSaleId, action: 'STATE_CHANGE' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(deliverLog).toBeDefined();
+    expect(deliverLog?.userId).toBe(managerUserId);
+    expect(deliverLog?.previousState).toBeDefined();
+    expect(deliverLog?.newState).toBeDefined();
+
+    const cancelCreateRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 5 }],
+    });
+    expect(cancelCreateRes.status).toBe(201);
+    createdSaleIds.push(cancelCreateRes.body.id as string);
+    const cancelledSaleId = cancelCreateRes.body.id as string;
+
+    const cancelRes = await cancelSale(cancelledSaleId, {
+      cancelReason: 'Auditoria de cancelamento',
+    });
+    expect(cancelRes.status).toBe(200);
+
+    const cancelLog = await prisma.auditLog.findFirst({
+      where: { entityType: 'sale', entityId: cancelledSaleId, action: 'STATE_CHANGE' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(cancelLog).toBeDefined();
+    expect(cancelLog?.userId).toBe(managerUserId);
+    expect(cancelLog?.previousState).toBeDefined();
+    expect(cancelLog?.newState).toBeDefined();
   });
 });

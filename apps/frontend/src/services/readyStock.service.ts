@@ -24,7 +24,7 @@ export interface ReadyStockBalanceResponse {
   calculatedAt: string;
 }
 
-export type ReadyStockEventType = 'TRIAGEM_OUTPUT' | 'AJUSTE' | 'ESTORNO';
+export type ReadyStockEventType = 'TRIAGEM_OUTPUT' | 'AJUSTE' | 'ESTORNO' | 'VENDA' | 'ESTORNO_VENDA';
 
 export interface ReadyStockMovement {
   id: string;
@@ -34,6 +34,7 @@ export interface ReadyStockMovement {
   quantity: string;
   sortingOperationId: string | null;
   adjustmentId: string | null;
+  saleId: string | null;
   user: { id: string; email: string };
   createdAt: string;
 }

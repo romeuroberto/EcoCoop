@@ -164,10 +164,10 @@
 
 **Purpose**: RBAC, auditoria, testes finais e validação manual.
 
-- [ ] T043 Adicionar bloco de testes RBAC ao `apps/backend/test/integration/sales.spec.ts`: SORTER pode `GET /sales` e `GET /sales/:id` (200); SORTER recebe 403 em `POST /sales`, `PATCH /sales/:id/deliver`, `DELETE /sales/:id`; DRIVER mesmo comportamento que SORTER; MANAGER pode todas as ações
-- [ ] T044 [P] Verificar que `AuditLog` registra eventos para criação de venda (action CREATE), confirmação de entrega (STATE_CHANGE) e cancelamento (STATE_CHANGE): adicionar asserções nos testes existentes ou em describe block separado em `apps/backend/test/integration/sales.spec.ts`
-- [ ] T045 Executar suíte completa de testes de integração de vendas: `cd apps/backend && npm test -- --testPathPattern=sales`; corrigir eventuais falhas antes de prosseguir
-- [ ] T046 Executar validação manual dos 6 cenários do `specs/007-vendas-operacionais/quickstart.md` contra o servidor local; registrar resultado (pass/fail) como comentário no final do arquivo quickstart.md
+- [x] T043 Adicionar bloco de testes RBAC ao `apps/backend/test/integration/sales.spec.ts`: SORTER pode `GET /sales` e `GET /sales/:id` (200); SORTER recebe 403 em `POST /sales`, `PATCH /sales/:id/deliver`, `DELETE /sales/:id`; DRIVER mesmo comportamento que SORTER; MANAGER pode todas as ações
+- [x] T044 [P] Verificar que `AuditLog` registra eventos para criação de venda (action CREATE), confirmação de entrega (STATE_CHANGE) e cancelamento (STATE_CHANGE): adicionar asserções nos testes existentes ou em describe block separado em `apps/backend/test/integration/sales.spec.ts`
+- [x] T045 Executar suíte completa de testes de integração de vendas: `cd apps/backend && npm test -- --testPathPattern=sales`; corrigir eventuais falhas antes de prosseguir
+- [x] T046 Executar validação manual dos 6 cenários do `specs/007-vendas-operacionais/quickstart.md` contra o servidor local; registrar resultado (pass/fail) como comentário no final do arquivo quickstart.md
 
 **Checkpoint**: Todos os testes passam; RBAC validado; audit logs presentes; validação manual completa.
 

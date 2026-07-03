@@ -92,7 +92,7 @@ export class ReadyStockService {
     const where: Prisma.ReadyStockEventWhereInput = {};
     if (query.subcategoryId) where.subcategoryId = query.subcategoryId;
     if (query.unitId) where.unitId = query.unitId;
-    if (query.type) where.type = query.type as 'TRIAGEM_OUTPUT' | 'AJUSTE' | 'ESTORNO';
+    if (query.type) where.type = query.type as Prisma.ReadyStockEventWhereInput['type'];
     if (query.from || query.to) {
       where.createdAt = {};
       if (query.from) where.createdAt.gte = new Date(query.from);
@@ -123,6 +123,7 @@ export class ReadyStockService {
         quantity: new Prisma.Decimal(e.quantity).toFixed(3),
         sortingOperationId: e.sortingOperationId ?? null,
         adjustmentId: e.adjustmentId ?? null,
+        saleId: e.saleId ?? null,
         user: e.user,
         createdAt: e.createdAt,
       })),

@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CurrentUserDto } from '@ecocoop/shared';
-import { AuditEntity } from '../../common/decorators/audit-entity.decorator';
+import { AuditAsStateChange, AuditEntity } from '../../common/decorators/audit-entity.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequirePermission } from '../../common/decorators/require-permission.decorator';
 import { AuditInterceptor } from '../../common/interceptors/audit.interceptor';
@@ -61,6 +61,7 @@ export class SalesController {
 
   @Patch(':id/deliver')
   @RequirePermission('SALES', 'DELIVER')
+  @AuditAsStateChange()
   deliver(
     @Param('id') id: string,
     @Body() dto: DeliverSaleDto,
@@ -71,6 +72,7 @@ export class SalesController {
 
   @Delete(':id')
   @RequirePermission('SALES', 'CANCEL')
+  @AuditAsStateChange()
   cancel(
     @Param('id') id: string,
     @Body() dto: CancelSaleDto,

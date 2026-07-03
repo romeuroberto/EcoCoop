@@ -14,12 +14,16 @@ const TYPE_LABELS: Record<ReadyStockEventType, string> = {
   TRIAGEM_OUTPUT: 'Triagem',
   AJUSTE: 'Ajuste',
   ESTORNO: 'Estorno',
+  VENDA: 'Venda',
+  ESTORNO_VENDA: 'Estorno de venda',
 };
 
 const TYPE_CLASSES: Record<ReadyStockEventType, string> = {
   TRIAGEM_OUTPUT: 'bg-ecocoop-50 text-ecocoop-700 border border-ecocoop-200',
   AJUSTE: 'bg-amber-50 text-amber-700 border border-amber-200',
   ESTORNO: 'bg-red-50 text-red-700 border border-red-200',
+  VENDA: 'bg-blue-50 text-blue-700 border border-blue-200',
+  ESTORNO_VENDA: 'bg-purple-50 text-purple-700 border border-purple-200',
 };
 
 type ActiveTab = 'balance' | 'movements';
@@ -189,6 +193,8 @@ export function ReadyStockPage() {
               <option value="TRIAGEM_OUTPUT">Triagem</option>
               <option value="AJUSTE">Ajuste</option>
               <option value="ESTORNO">Estorno</option>
+              <option value="VENDA">Venda</option>
+              <option value="ESTORNO_VENDA">Estorno de venda</option>
             </select>
           </div>
 
