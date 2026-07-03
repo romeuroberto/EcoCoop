@@ -65,13 +65,13 @@
 
 > **Escrever e confirmar falha ANTES da implementação**
 
-- [ ] T020 Criar `apps/backend/test/integration/sales.spec.ts` com `beforeAll` (setup de app NestJS, prisma, login de usuários: admin, manager, sorter), seed de buyer ativo, subcategoria, unidade e saldo pronto (via SortingOperation direta no prisma); escrever casos: sucesso 1 item, sucesso múltiplos itens (verificar totalAmount = soma subtotais)
-- [ ] T023 Adicionar casos de erro ao `apps/backend/test/integration/sales.spec.ts` (ainda sem implementação — devem falhar): buyer inexistente → 404, buyer inativo → 409 `BUYER_INACTIVE`, saldo insuficiente 1 item → 409 `INSUFFICIENT_READY_STOCK`, saldo insuficiente em 1 de 2 itens → 409 (nenhum saldo alterado)
+- [x] T020 Criar `apps/backend/test/integration/sales.spec.ts` com `beforeAll` (setup de app NestJS, prisma, login de usuários: admin, manager, sorter), seed de buyer ativo, subcategoria, unidade e saldo pronto (via SortingOperation direta no prisma); escrever casos: sucesso 1 item, sucesso múltiplos itens (verificar totalAmount = soma subtotais)
+- [x] T023 Adicionar casos de erro ao `apps/backend/test/integration/sales.spec.ts` (ainda sem implementação — devem falhar): buyer inexistente → 404, buyer inativo → 409 `BUYER_INACTIVE`, saldo insuficiente 1 item → 409 `INSUFFICIENT_READY_STOCK`, saldo insuficiente em 1 de 2 itens → 409 (nenhum saldo alterado)
 
 ### Implementação — US1
 
-- [ ] T021 Implementar `SalesService.create()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — verificar buyer ativo, verificar saldo de estoque pronto por item (via aggregate), criar `Sale` + `SaleItem[]` + `ReadyStockEvent(VENDA, qty negativa)` por item + `AccountReceivable`; calcular subtotal e totalAmount server-side; retornar Sale completa com buyer, items e accountReceivable
-- [ ] T022 Implementar `SalesController.create()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Post()`, `@RequirePermission('SALES', 'CREATE')`, `@AuditEntity('sale')`, `@UseInterceptors(AuditInterceptor)`, receber `@Body() CreateSaleDto` e `@CurrentUser() user`
+- [x] T021 Implementar `SalesService.create()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — verificar buyer ativo, verificar saldo de estoque pronto por item (via aggregate), criar `Sale` + `SaleItem[]` + `ReadyStockEvent(VENDA, qty negativa)` por item + `AccountReceivable`; calcular subtotal e totalAmount server-side; retornar Sale completa com buyer, items e accountReceivable
+- [x] T022 Implementar `SalesController.create()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Post()`, `@RequirePermission('SALES', 'CREATE')`, `@AuditEntity('sale')`, `@UseInterceptors(AuditInterceptor)`, receber `@Body() CreateSaleDto` e `@CurrentUser() user`
 - [ ] T024 Implementar `apps/frontend/src/pages/sales/SaleFormModal.tsx`: seletor de comprador (autocomplete sobre lista de buyers ativos), linhas dinâmicas de item (subcategoria, unidade, quantidade, preço unitário, subtotal calculado), valor total calculado, botão Confirmar e Cancelar; exibir aviso visual (não bloqueante) quando `unitPrice` de qualquer item for 0; chamar `salesService.createSale`; invalidar query `['sales']` ao fechar com sucesso
 - [ ] T025 Implementar `apps/frontend/src/pages/sales/SalesPage.tsx`: estado vazio com mensagem, botão "Nova Venda" (visível apenas com permissão `SALES/CREATE`), lista básica com colunas comprador, data, valor total e status badge; abrir `SaleFormModal` ao clicar; chamar `salesService.listSales`
 
