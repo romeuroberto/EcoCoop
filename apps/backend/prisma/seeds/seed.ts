@@ -46,10 +46,13 @@ const PHASE6_MANAGER_EXTRA_PERMS = [
 // Feature 007 — Vendas Operacionais
 const PHASE7_SALES_READ_PERMS = [
   { module: 'SALES', action: 'READ' },
+];
+const PHASE7_ACCOUNTS_RECEIVABLE_READ_PERMS = [
   { module: 'ACCOUNTS_RECEIVABLE', action: 'READ' },
 ];
 const PHASE7_SALES_MANAGE_PERMS = [
   ...PHASE7_SALES_READ_PERMS,
+  ...PHASE7_ACCOUNTS_RECEIVABLE_READ_PERMS,
   { module: 'SALES', action: 'CREATE' },
   { module: 'SALES', action: 'DELIVER' },
   { module: 'SALES', action: 'CANCEL' },
@@ -238,6 +241,18 @@ async function seedProfiles(): Promise<Record<ProfileType, string>> {
   }
 
   return profileMap;
+}
+
+async function removeRestrictedSalesPermissions(profileMap: Record<ProfileType, string>) {
+  await prisma.profilePermission.deleteMany({
+    where: {
+      module: 'ACCOUNTS_RECEIVABLE',
+      action: 'READ',
+      profileId: {
+        in: [profileMap[ProfileType.SORTER], profileMap[ProfileType.DRIVER]],
+      },
+    },
+  });
 }
 
 async function seedMemberRoles() {
@@ -432,6 +447,7 @@ async function main() {
 
   console.log('Seeding profiles...');
   const profileMap = await seedProfiles();
+  await removeRestrictedSalesPermissions(profileMap);
 
   console.log('Seeding users...');
   const users = [

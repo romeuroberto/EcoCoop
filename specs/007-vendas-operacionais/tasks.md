@@ -43,7 +43,7 @@
 
 **⚠️ CRÍTICO**: Esta fase deve ser concluída antes de qualquer história de usuário.
 
-- [x] T013 Adicionar permissões `SALES` (CREATE, READ, DELIVER, CANCEL) e `ACCOUNTS_RECEIVABLE` (READ) para os perfis ADMIN e MANAGER (todas as ações), SORTER e DRIVER (somente READ) em `apps/backend/prisma/seeds/seed.ts`; executar `cd apps/backend && npx prisma db seed`
+- [x] T013 Adicionar permissões `SALES` (CREATE, READ, DELIVER, CANCEL) e `ACCOUNTS_RECEIVABLE` (READ) para os perfis ADMIN e MANAGER; adicionar somente `SALES` (READ) para SORTER e DRIVER em `apps/backend/prisma/seeds/seed.ts`; executar `cd apps/backend && npx prisma db seed`
 - [x] T014 [P] Criar `CreateSaleDto` com validações class-validator (`buyerId` UUID, `items` array não-vazio, `quantity` > 0, `unitPrice` >= 0, `dueDate` ISO date opcional) em `apps/backend/src/modules/sales/dto/create-sale.dto.ts`
 - [x] T015 [P] Criar `DeliverSaleDto` com campo opcional `deliveredAt` (ISO datetime) em `apps/backend/src/modules/sales/dto/deliver-sale.dto.ts`
 - [x] T016 [P] Criar `CancelSaleDto` com campo `cancelReason` (string, requerido) em `apps/backend/src/modules/sales/dto/cancel-sale.dto.ts`
