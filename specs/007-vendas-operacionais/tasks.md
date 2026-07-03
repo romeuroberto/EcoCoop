@@ -20,18 +20,18 @@
 
 **Purpose**: Criar todos os modelos Prisma, gerar migração, e criar esqueletos dos módulos NestJS. Bloqueia tudo.
 
-- [ ] T001 Extender enum `ReadyStockEventType` com `VENDA` e `ESTORNO_VENDA` em `apps/backend/prisma/schema.prisma`
-- [ ] T002 Adicionar enum `SaleStatus` (PENDENTE_ENTREGA, ENTREGUE, CANCELADA) em `apps/backend/prisma/schema.prisma`
-- [ ] T003 Adicionar enum `AccountReceivableStatus` (A_RECEBER, CANCELADA) em `apps/backend/prisma/schema.prisma`
-- [ ] T004 Adicionar model `Sale` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
-- [ ] T005 Adicionar model `SaleItem` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
-- [ ] T006 Adicionar model `AccountReceivable` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
-- [ ] T007 Adicionar campos `saleId` e `saleItemId` (nullable FKs) ao model `ReadyStockEvent` e relação `saleReadyEvents` ao model `Sale` em `apps/backend/prisma/schema.prisma`
-- [ ] T008 [P] Adicionar relações de `Sale`/`SaleItem`/`AccountReceivable` nos models `User`, `Buyer`, `MaterialSubcategory` e `UnitOfMeasure` em `apps/backend/prisma/schema.prisma`
-- [ ] T009 Gerar e aplicar migração Prisma: `cd apps/backend && npx prisma migrate dev --name add-sales`
-- [ ] T010 Criar esqueleto do módulo NestJS `sales`: arquivos `apps/backend/src/modules/sales/sales.module.ts`, `sales.service.ts` e `sales.controller.ts` (stubs vazios com classes e decorators)
-- [ ] T011 [P] Criar esqueleto do módulo NestJS `accounts-receivable`: arquivos `apps/backend/src/modules/accounts-receivable/accounts-receivable.module.ts`, `accounts-receivable.service.ts` e `accounts-receivable.controller.ts` (stubs vazios)
-- [ ] T012 Registrar `SalesModule` e `AccountsReceivableModule` no `apps/backend/src/app.module.ts`
+- [x] T001 Extender enum `ReadyStockEventType` com `VENDA` e `ESTORNO_VENDA` em `apps/backend/prisma/schema.prisma`
+- [x] T002 Adicionar enum `SaleStatus` (PENDENTE_ENTREGA, ENTREGUE, CANCELADA) em `apps/backend/prisma/schema.prisma`
+- [x] T003 Adicionar enum `AccountReceivableStatus` (A_RECEBER, CANCELADA) em `apps/backend/prisma/schema.prisma`
+- [x] T004 Adicionar model `Sale` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
+- [x] T005 Adicionar model `SaleItem` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
+- [x] T006 Adicionar model `AccountReceivable` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
+- [x] T007 Adicionar campos `saleId` e `saleItemId` (nullable FKs) ao model `ReadyStockEvent` e relação `saleReadyEvents` ao model `Sale` em `apps/backend/prisma/schema.prisma`
+- [x] T008 [P] Adicionar relações de `Sale`/`SaleItem`/`AccountReceivable` nos models `User`, `Buyer`, `MaterialSubcategory` e `UnitOfMeasure` em `apps/backend/prisma/schema.prisma`
+- [x] T009 Gerar e aplicar migração Prisma: `cd apps/backend && npx prisma migrate dev --name add-sales`
+- [x] T010 Criar esqueleto do módulo NestJS `sales`: arquivos `apps/backend/src/modules/sales/sales.module.ts`, `sales.service.ts` e `sales.controller.ts` (stubs vazios com classes e decorators)
+- [x] T011 [P] Criar esqueleto do módulo NestJS `accounts-receivable`: arquivos `apps/backend/src/modules/accounts-receivable/accounts-receivable.module.ts`, `accounts-receivable.service.ts` e `accounts-receivable.controller.ts` (stubs vazios)
+- [x] T012 Registrar `SalesModule` e `AccountsReceivableModule` no `apps/backend/src/app.module.ts`
 
 **Checkpoint**: `npx prisma studio` mostra os novos models; `npm run build` no backend compila sem erros.
 

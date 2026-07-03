@@ -27,6 +27,8 @@ import { RouteTemplatesModule } from './modules/route-templates/route-templates.
 import { SortingOperationsModule } from './modules/sorting-operations/sorting-operations.module';
 import { ReadyStockModule } from './modules/ready-stock/ready-stock.module';
 import { ReadyStockAdjustmentsModule } from './modules/ready-stock-adjustments/ready-stock-adjustments.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { AccountsReceivableModule } from './modules/accounts-receivable/accounts-receivable.module';
 
 @Module({
   imports: [
@@ -53,6 +55,8 @@ import { ReadyStockAdjustmentsModule } from './modules/ready-stock-adjustments/r
     SortingOperationsModule,
     ReadyStockModule,
     ReadyStockAdjustmentsModule,
+    SalesModule,
+    AccountsReceivableModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },

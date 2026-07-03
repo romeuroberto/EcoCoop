@@ -118,6 +118,9 @@ model User {
   sortingCancellations  SortingOperation[]      @relation("SortingCancelledBy")
   readyStockEvents      ReadyStockEvent[]       @relation("ReadyStockEventUser")
   readyStockAdjustments ReadyStockAdjustment[]  @relation("ReadyStockAdjustmentUser")
+  salesCreated          Sale[]                  @relation("SaleCreatedBy")
+  salesDelivered        Sale[]                  @relation("SaleDeliveredBy")
+  salesCancelled        Sale[]                  @relation("SaleCancelledBy")
 }
 
 model AuditLog {
@@ -198,6 +201,7 @@ model MaterialSubcategory {
   sortingRejects        SortingReject[]         @relation("SortingRejectSubcategory")
   readyStockEvents      ReadyStockEvent[]       @relation("ReadyStockEventSubcategory")
   readyStockAdjustments ReadyStockAdjustment[]  @relation("ReadyStockAdjustmentSubcategory")
+  saleItems             SaleItem[]              @relation("SaleItemSubcategory")
 
   @@unique([categoryId, name])
   @@index([categoryId, isActive])
@@ -223,6 +227,7 @@ model UnitOfMeasure {
   sortingRejects        SortingReject[]         @relation("SortingRejectUnit")
   readyStockEvents      ReadyStockEvent[]       @relation("ReadyStockEventUnit")
   readyStockAdjustments ReadyStockAdjustment[]  @relation("ReadyStockAdjustmentUnit")
+  saleItems             SaleItem[]              @relation("SaleItemUnit")
 }
 
 model Buyer {
@@ -244,6 +249,8 @@ model Buyer {
   user              User?        @relation("BuyerUser", fields: [userId], references: [id])
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  sales             Sale[]
+  accountsReceivable AccountReceivable[] @relation("BuyerReceivables")
 
   @@index([isActive])
 }
@@ -354,6 +361,19 @@ enum ReadyStockEventType {
   TRIAGEM_OUTPUT
   AJUSTE
   ESTORNO
+  VENDA
+  ESTORNO_VENDA
+}
+
+enum SaleStatus {
+  PENDENTE_ENTREGA
+  ENTREGUE
+  CANCELADA
+}
+
+enum AccountReceivableStatus {
+  A_RECEBER
+  CANCELADA
 }
 
 model CollectionPoint {
@@ -555,6 +575,10 @@ model ReadyStockEvent {
   sortingOutput      SortingOutput?       @relation("OutputReadyEvent", fields: [sortingOutputId], references: [id])
   adjustmentId       String?              @unique
   adjustment         ReadyStockAdjustment? @relation(fields: [adjustmentId], references: [id])
+  saleId             String?
+  sale               Sale?                @relation("SaleReadyEvents", fields: [saleId], references: [id])
+  saleItemId         String?              @unique
+  saleItem           SaleItem?            @relation("SaleItemReadyEvent", fields: [saleItemId], references: [id])
   userId             String
   user               User                 @relation("ReadyStockEventUser", fields: [userId], references: [id])
   createdAt          DateTime             @default(now())
@@ -562,6 +586,7 @@ model ReadyStockEvent {
   @@index([subcategoryId, unitId])
   @@index([type])
   @@index([sortingOperationId])
+  @@index([saleId])
   @@index([createdAt])
 }
 
@@ -582,4 +607,71 @@ model ReadyStockAdjustment {
   @@index([subcategoryId, unitId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ─── Feature 007: Vendas Operacionais ───────────────────────────────────────
+
+model Sale {
+  id            String     @id @default(uuid())
+  buyerId       String
+  buyer         Buyer      @relation(fields: [buyerId], references: [id])
+  status        SaleStatus @default(PENDENTE_ENTREGA)
+  totalAmount   Decimal    @db.Decimal(14, 2)
+  notes         String?
+  deliveredAt   DateTime?
+  deliveredById String?
+  deliveredBy   User?      @relation("SaleDeliveredBy", fields: [deliveredById], references: [id])
+  cancelReason  String?
+  cancelledAt   DateTime?
+  cancelledById String?
+  cancelledBy   User?      @relation("SaleCancelledBy", fields: [cancelledById], references: [id])
+  userId        String
+  user          User       @relation("SaleCreatedBy", fields: [userId], references: [id])
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  items             SaleItem[]
+  readyStockEvents  ReadyStockEvent[]   @relation("SaleReadyEvents")
+  accountReceivable AccountReceivable?
+
+  @@index([buyerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model SaleItem {
+  id            String              @id @default(uuid())
+  saleId        String
+  sale          Sale                @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  subcategoryId String
+  subcategory   MaterialSubcategory @relation("SaleItemSubcategory", fields: [subcategoryId], references: [id])
+  unitId        String
+  unit          UnitOfMeasure       @relation("SaleItemUnit", fields: [unitId], references: [id])
+  quantity      Decimal             @db.Decimal(12, 3)
+  unitPrice     Decimal             @db.Decimal(14, 4)
+  subtotal      Decimal             @db.Decimal(14, 2)
+  createdAt     DateTime            @default(now())
+
+  readyStockEvent ReadyStockEvent? @relation("SaleItemReadyEvent")
+
+  @@index([saleId])
+  @@index([subcategoryId, unitId])
+}
+
+model AccountReceivable {
+  id        String                  @id @default(uuid())
+  saleId    String                  @unique
+  sale      Sale                    @relation(fields: [saleId], references: [id])
+  buyerId   String
+  buyer     Buyer                   @relation("BuyerReceivables", fields: [buyerId], references: [id])
+  amount    Decimal                 @db.Decimal(14, 2)
+  dueDate   DateTime                @db.Date
+  status    AccountReceivableStatus @default(A_RECEBER)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+
+  @@index([buyerId])
+  @@index([status])
+  @@index([dueDate])
 }
