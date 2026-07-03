@@ -120,9 +120,12 @@ export function DashboardPage() {
         <ActiveCard icon="⚖️" label="Saldo Bruto" description="Consulta do saldo bruto de materiais" to="/raw-material-balance" />
       </Group>
 
+      <Group title="Triagem e Estoque Pronto">
+        <ActiveCard icon="🔬" label="Triagem" description="Registrar e consultar operações de triagem" to="/sorting" />
+        <ActiveCard icon="📦" label="Estoque Pronto" description="Consultar saldo e movimentações de estoque pronto" to="/ready-stock" />
+      </Group>
+
       <Group title="Em breve">
-        <DisabledCard icon="🔬" label="Triagem" />
-        <DisabledCard icon="📦" label="Estoque pronto" />
         <DisabledCard icon="🗑️" label="Rejeito" />
         <DisabledCard icon="💰" label="Vendas operacionais" />
         <DisabledCard icon="📊" label="Financeiro" />
