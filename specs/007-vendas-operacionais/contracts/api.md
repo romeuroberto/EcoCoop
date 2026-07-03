@@ -125,7 +125,7 @@ List sales with filters and pagination.
 
 **Permission**: `SALES` / `READ`
 
-Get full sale detail including all items and account receivable.
+Get full sale detail including all items, account receivable, and event timeline.
 
 ### Response `200 OK`
 
@@ -158,8 +158,24 @@ Get full sale detail including all items and account receivable.
     "amount": "125.00",
     "dueDate": "2026-08-02",
     "status": "A_RECEBER"
-  }
+  },
+  "timeline": [
+    { "event": "CREATED",   "at": "2026-07-03T10:00:00Z", "by": { "id": "uuid", "email": "gestor@ecocoop.local" } },
+    { "event": "DELIVERED", "at": null,                   "by": null },
+    { "event": "CANCELLED", "at": null,                   "by": null }
+  ]
 }
+```
+
+> **Timeline derivation** (no new table): the service constructs `timeline` from existing `Sale` fields:
+>
+> | Event | Condition | `at` | `by` |
+> |-------|-----------|------|------|
+> | `CREATED` | always | `createdAt` | `user` |
+> | `DELIVERED` | `deliveredAt != null` | `deliveredAt` | `deliveredBy` |
+> | `CANCELLED` | `cancelledAt != null` | `cancelledAt` | `cancelledBy` |
+>
+> Only events that have already occurred are non-null. The list always includes all three objects so consumers can render a fixed-position timeline; null `at`/`by` means the event has not yet occurred.
 ```
 
 ### Error Responses
@@ -264,7 +280,7 @@ List accounts receivable with filters.
   "data": [
     {
       "id": "uuid",
-      "sale": { "id": "uuid", "createdAt": "2026-07-03T10:00:00Z" },
+      "sale": { "id": "uuid", "createdAt": "2026-07-03T10:00:00Z", "deliveredAt": null },
       "buyer": { "id": "uuid", "legalName": "Recicla SP" },
       "amount": "125.00",
       "dueDate": "2026-08-02",

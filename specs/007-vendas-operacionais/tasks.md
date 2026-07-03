@@ -21,8 +21,8 @@
 **Purpose**: Criar todos os modelos Prisma, gerar migração, e criar esqueletos dos módulos NestJS. Bloqueia tudo.
 
 - [ ] T001 Extender enum `ReadyStockEventType` com `VENDA` e `ESTORNO_VENDA` em `apps/backend/prisma/schema.prisma`
-- [ ] T002 [P] Adicionar enum `SaleStatus` (PENDENTE_ENTREGA, ENTREGUE, CANCELADA) em `apps/backend/prisma/schema.prisma`
-- [ ] T003 [P] Adicionar enum `AccountReceivableStatus` (A_RECEBER, CANCELADA) em `apps/backend/prisma/schema.prisma`
+- [ ] T002 Adicionar enum `SaleStatus` (PENDENTE_ENTREGA, ENTREGUE, CANCELADA) em `apps/backend/prisma/schema.prisma`
+- [ ] T003 Adicionar enum `AccountReceivableStatus` (A_RECEBER, CANCELADA) em `apps/backend/prisma/schema.prisma`
 - [ ] T004 Adicionar model `Sale` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
 - [ ] T005 Adicionar model `SaleItem` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
 - [ ] T006 Adicionar model `AccountReceivable` (conforme data-model.md) em `apps/backend/prisma/schema.prisma`
@@ -66,13 +66,13 @@
 > **Escrever e confirmar falha ANTES da implementação**
 
 - [ ] T020 Criar `apps/backend/test/integration/sales.spec.ts` com `beforeAll` (setup de app NestJS, prisma, login de usuários: admin, manager, sorter), seed de buyer ativo, subcategoria, unidade e saldo pronto (via SortingOperation direta no prisma); escrever casos: sucesso 1 item, sucesso múltiplos itens (verificar totalAmount = soma subtotais)
+- [ ] T023 Adicionar casos de erro ao `apps/backend/test/integration/sales.spec.ts` (ainda sem implementação — devem falhar): buyer inexistente → 404, buyer inativo → 409 `BUYER_INACTIVE`, saldo insuficiente 1 item → 409 `INSUFFICIENT_READY_STOCK`, saldo insuficiente em 1 de 2 itens → 409 (nenhum saldo alterado)
 
 ### Implementação — US1
 
 - [ ] T021 Implementar `SalesService.create()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — verificar buyer ativo, verificar saldo de estoque pronto por item (via aggregate), criar `Sale` + `SaleItem[]` + `ReadyStockEvent(VENDA, qty negativa)` por item + `AccountReceivable`; calcular subtotal e totalAmount server-side; retornar Sale completa com buyer, items e accountReceivable
 - [ ] T022 Implementar `SalesController.create()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Post()`, `@RequirePermission('SALES', 'CREATE')`, `@AuditEntity('sale')`, `@UseInterceptors(AuditInterceptor)`, receber `@Body() CreateSaleDto` e `@CurrentUser() user`
-- [ ] T023 [P] Adicionar casos de erro ao `apps/backend/test/integration/sales.spec.ts`: buyer inexistente → 404, buyer inativo → 409 `BUYER_INACTIVE`, saldo insuficiente 1 item → 409 `INSUFFICIENT_READY_STOCK`, saldo insuficiente em 1 de 2 itens → 409 (nenhum saldo alterado)
-- [ ] T024 Implementar `apps/frontend/src/pages/sales/SaleFormModal.tsx`: seletor de comprador (autocomplete sobre lista de buyers ativos), linhas dinâmicas de item (subcategoria, unidade, quantidade, preço unitário, subtotal calculado), valor total calculado, botão Confirmar e Cancelar; chamar `salesService.createSale`; invalidar query `['sales']` ao fechar com sucesso
+- [ ] T024 Implementar `apps/frontend/src/pages/sales/SaleFormModal.tsx`: seletor de comprador (autocomplete sobre lista de buyers ativos), linhas dinâmicas de item (subcategoria, unidade, quantidade, preço unitário, subtotal calculado), valor total calculado, botão Confirmar e Cancelar; exibir aviso visual (não bloqueante) quando `unitPrice` de qualquer item for 0; chamar `salesService.createSale`; invalidar query `['sales']` ao fechar com sucesso
 - [ ] T025 Implementar `apps/frontend/src/pages/sales/SalesPage.tsx`: estado vazio com mensagem, botão "Nova Venda" (visível apenas com permissão `SALES/CREATE`), lista básica com colunas comprador, data, valor total e status badge; abrir `SaleFormModal` ao clicar; chamar `salesService.listSales`
 
 **Checkpoint**: `POST /api/v1/sales` cria a venda, debita saldo e gera AR. Testes T020 e T023 passam. Frontend exibe modal e lista a venda criada.
@@ -127,12 +127,12 @@
 
 ### Testes — US4
 
-- [ ] T034 Adicionar casos de listagem/detalhe ao `apps/backend/test/integration/sales.spec.ts`: GET /sales sem filtro → lista paginada com campos corretos; filtro por buyerId → somente vendas daquele comprador; filtro por status → apenas o status solicitado; filtro por from/to → só vendas no período; GET /sales/:id → detalhe completo (buyer, items, AR); GET /sales/:id com id inválido → 404
+- [ ] T034 Adicionar casos de listagem/detalhe ao `apps/backend/test/integration/sales.spec.ts`: GET /sales sem filtro → lista paginada com campos corretos; filtro por buyerId → somente vendas daquele comprador; filtro por status → apenas o status solicitado; filtro por from/to → só vendas no período; GET /sales/:id → detalhe completo (buyer, items, AR, timeline com evento CREATED preenchido e DELIVERED/CANCELLED nulos); GET /sales/:id com id inválido → 404
 
 ### Implementação — US4
 
 - [ ] T035 Implementar `SalesService.findAll()` em `apps/backend/src/modules/sales/sales.service.ts`: filtros opcionais (buyerId, status, subcategoryId via items, from/to em createdAt); paginação (page, limit); retornar `{ data, total, page, limit }` com campos: id, buyer, status, totalAmount, itemsCount, createdAt, user
-- [ ] T036 Implementar `SalesService.findOne()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar com include completo (buyer, items com subcategory e unit, user, deliveredBy, cancelledBy, accountReceivable); 404 se não encontrada
+- [ ] T036 Implementar `SalesService.findOne()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar com include completo (buyer, items com subcategory e unit, user, deliveredBy, cancelledBy, accountReceivable); construir campo `timeline` derivado dos campos de status/data da Sale (CREATED sempre; DELIVERED quando `deliveredAt != null`; CANCELLED quando `cancelledAt != null`) conforme contrato de `GET /sales/:id`; 404 se não encontrada
 - [ ] T037 Implementar `SalesController.findAll()` `@Get()` e `SalesController.findOne()` `@Get(':id')` em `apps/backend/src/modules/sales/sales.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params (buyerId, status, subcategoryId, from, to, page, limit) para o service
 - [ ] T038 Completar `apps/frontend/src/pages/sales/SalesPage.tsx`: controles de filtro (seletor de comprador, seletor de status, campos de data de/até); paginação; link de cada linha para `SaleDetailPage` com id da venda; exibir itemsCount na linha
 
@@ -148,11 +148,11 @@
 
 ### Testes — US5
 
-- [ ] T039 Adicionar casos de AR ao `apps/backend/test/integration/sales.spec.ts`: GET /accounts-receivable sem filtro → lista com amount, dueDate, status, buyer, sale reference; filtro por buyerId → somente AR daquele comprador; filtro por status A_RECEBER → somente pendentes; venda cancelada → AR correspondente com status CANCELADA; dueDate padrão = createdAt + 30 dias
+- [ ] T039 Adicionar casos de AR ao `apps/backend/test/integration/sales.spec.ts`: GET /accounts-receivable sem filtro → lista com amount, dueDate, status, buyer, sale (id, createdAt, deliveredAt); filtro por buyerId → somente AR daquele comprador; filtro por status A_RECEBER → somente pendentes; venda cancelada → AR com status CANCELADA; após entrega confirmada → sale.deliveredAt preenchido na resposta da AR; dueDate padrão = createdAt + 30 dias
 
 ### Implementação — US5
 
-- [ ] T040 Implementar `AccountsReceivableService.findAll()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.service.ts`: filtros (buyerId, status, dueDate from/to); paginação; retornar `{ data, total, page, limit }` com campos: id, sale (id, createdAt), buyer, amount, dueDate, status
+- [ ] T040 Implementar `AccountsReceivableService.findAll()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.service.ts`: filtros (buyerId, status, dueDate from/to); paginação; retornar `{ data, total, page, limit }` com campos: id, sale (id, createdAt, deliveredAt), buyer, amount, dueDate, status — incluir `sale.deliveredAt` conforme contrato `GET /accounts-receivable`
 - [ ] T041 Implementar `AccountsReceivableController.findAll()` `@Get()` em `apps/backend/src/modules/accounts-receivable/accounts-receivable.controller.ts` com `@RequirePermission('SALES', 'READ')`; mapear query params para o service
 - [ ] T042 [P] Adicionar seção "Conta a Receber" ao `apps/frontend/src/pages/sales/SaleDetailPage.tsx`: exibir `dueDate`, `amount` formatado em R$, badge de status (A_RECEBER | CANCELADA); usar dados já incluídos no endpoint `GET /sales/:id`
 
@@ -202,8 +202,8 @@
 
 ### Parallel Opportunities
 
-- T002 e T003 (enums) paralelos com T001
-- T008 (relações nos models existentes) paralelo com T004–T007
+- T001, T002, T003 (enums) sequenciais — mesmo arquivo schema.prisma
+- T008 (relações nos models existentes) pode ser feito no mesmo bloco de edição que T004–T007
 - T010 e T011 (módulos NestJS) paralelos entre si
 - T014, T015, T016 (DTOs) paralelos entre si
 - T017 e T018 (services de frontend) paralelos entre si
@@ -214,14 +214,14 @@
 ## Parallel Example: Phase 1
 
 ```bash
-# T001 + T002 + T003 podem rodar ao mesmo tempo (mesmo arquivo, seções distintas do schema):
+# T001, T002, T003 editam o mesmo arquivo (schema.prisma) — executar em sequência:
 Task T001: "Extender enum ReadyStockEventType com VENDA e ESTORNO_VENDA"
 Task T002: "Adicionar enum SaleStatus"
 Task T003: "Adicionar enum AccountReceivableStatus"
 
 # Após T001–T003, T004–T008 em sequência (dependência de declaração no schema):
 Task T004 → T005 → T006 → T007
-Task T008: relações nos models existentes (paralelo com T004–T007 se em editor diferente)
+Task T008: relações nos models existentes (pode ser feito junto com T004–T007 no mesmo bloco de edição)
 ```
 
 ## Parallel Example: Phase 2
