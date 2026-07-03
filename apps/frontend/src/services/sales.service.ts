@@ -68,6 +68,18 @@ export interface SaleDetail {
   timeline: Array<{ event: 'CREATED' | 'DELIVERED' | 'CANCELLED'; at: string | null; by: SaleUser | null }>;
 }
 
+export interface CreatedSale {
+  id: string;
+  buyer: SaleBuyer;
+  status: SaleStatus;
+  totalAmount: string;
+  notes: string | null;
+  createdAt: string;
+  user: SaleUser;
+  items: SaleItem[];
+  accountReceivable: AccountReceivableSummary | null;
+}
+
 export interface CreateSaleBody {
   buyerId: string;
   notes?: string;
@@ -110,7 +122,7 @@ export interface SaleStatusChangeResponse {
 
 export const salesService = {
   createSale: (body: CreateSaleBody) =>
-    api.post<SaleDetail>('/sales', body).then((r) => r.data),
+    api.post<CreatedSale>('/sales', body).then((r) => r.data),
 
   listSales: (q: ListSalesQuery = {}) =>
     api.get<PagedResult<SaleListItem>>('/sales', { params: q }).then((r) => r.data),
