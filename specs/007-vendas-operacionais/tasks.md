@@ -43,13 +43,13 @@
 
 **⚠️ CRÍTICO**: Esta fase deve ser concluída antes de qualquer história de usuário.
 
-- [ ] T013 Adicionar permissões `SALES` (CREATE, READ, DELIVER, CANCEL) e `ACCOUNTS_RECEIVABLE` (READ) para os perfis ADMIN e MANAGER (todas as ações), SORTER e DRIVER (somente READ) em `apps/backend/prisma/seeds/seed.ts`; executar `cd apps/backend && npx prisma db seed`
-- [ ] T014 [P] Criar `CreateSaleDto` com validações class-validator (`buyerId` UUID, `items` array não-vazio, `quantity` > 0, `unitPrice` >= 0, `dueDate` ISO date opcional) em `apps/backend/src/modules/sales/dto/create-sale.dto.ts`
-- [ ] T015 [P] Criar `DeliverSaleDto` com campo opcional `deliveredAt` (ISO datetime) em `apps/backend/src/modules/sales/dto/deliver-sale.dto.ts`
-- [ ] T016 [P] Criar `CancelSaleDto` com campo `cancelReason` (string, requerido) em `apps/backend/src/modules/sales/dto/cancel-sale.dto.ts`
-- [ ] T017 [P] Criar `apps/frontend/src/services/sales.service.ts` com funções tipadas: `createSale`, `listSales`, `getSale`, `deliverSale`, `cancelSale` usando o cliente Axios existente
-- [ ] T018 [P] Criar `apps/frontend/src/services/accountsReceivable.service.ts` com função `listAccountsReceivable` usando o cliente Axios existente
-- [ ] T019 Adicionar rota `/vendas` no router do frontend (`apps/frontend/src/router/`) e entrada "Vendas" na barra de navegação lateral
+- [x] T013 Adicionar permissões `SALES` (CREATE, READ, DELIVER, CANCEL) e `ACCOUNTS_RECEIVABLE` (READ) para os perfis ADMIN e MANAGER (todas as ações), SORTER e DRIVER (somente READ) em `apps/backend/prisma/seeds/seed.ts`; executar `cd apps/backend && npx prisma db seed`
+- [x] T014 [P] Criar `CreateSaleDto` com validações class-validator (`buyerId` UUID, `items` array não-vazio, `quantity` > 0, `unitPrice` >= 0, `dueDate` ISO date opcional) em `apps/backend/src/modules/sales/dto/create-sale.dto.ts`
+- [x] T015 [P] Criar `DeliverSaleDto` com campo opcional `deliveredAt` (ISO datetime) em `apps/backend/src/modules/sales/dto/deliver-sale.dto.ts`
+- [x] T016 [P] Criar `CancelSaleDto` com campo `cancelReason` (string, requerido) em `apps/backend/src/modules/sales/dto/cancel-sale.dto.ts`
+- [x] T017 [P] Criar `apps/frontend/src/services/sales.service.ts` com funções tipadas: `createSale`, `listSales`, `getSale`, `deliverSale`, `cancelSale` usando o cliente Axios existente
+- [x] T018 [P] Criar `apps/frontend/src/services/accountsReceivable.service.ts` com função `listAccountsReceivable` usando o cliente Axios existente
+- [x] T019 Adicionar rota `/vendas` no router do frontend (`apps/frontend/src/router/`) e entrada "Vendas" na barra de navegação lateral
 
 **Checkpoint**: Build do frontend sem erros de TypeScript; seed executado com sucesso; rota `/vendas` acessível (mesmo que mostre página vazia).
 

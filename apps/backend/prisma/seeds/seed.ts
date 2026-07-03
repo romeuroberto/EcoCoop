@@ -43,6 +43,18 @@ const PHASE6_MANAGER_EXTRA_PERMS = [
   { module: 'READY_STOCK', action: 'CREATE_ADJUSTMENT' },
 ];
 
+// Feature 007 — Vendas Operacionais
+const PHASE7_SALES_READ_PERMS = [
+  { module: 'SALES', action: 'READ' },
+  { module: 'ACCOUNTS_RECEIVABLE', action: 'READ' },
+];
+const PHASE7_SALES_MANAGE_PERMS = [
+  ...PHASE7_SALES_READ_PERMS,
+  { module: 'SALES', action: 'CREATE' },
+  { module: 'SALES', action: 'DELIVER' },
+  { module: 'SALES', action: 'CANCEL' },
+];
+
 interface ProfileSeed {
   name: string;
   type: ProfileType;
@@ -59,6 +71,7 @@ const PROFILES: ProfileSeed[] = [
       ...PHASE3_ADMIN_MANAGE_MODULES.map((m) => ({ module: m, action: 'MANAGE' })),
       ...PHASE6_SORTER_PERMS,
       ...PHASE6_MANAGER_EXTRA_PERMS,
+      ...PHASE7_SALES_MANAGE_PERMS,
     ],
   },
   {
@@ -74,12 +87,17 @@ const PROFILES: ProfileSeed[] = [
       ...PHASE3_MANAGER_READ_MODULES.map((m) => ({ module: m, action: 'READ' })),
       ...PHASE6_SORTER_PERMS,
       ...PHASE6_MANAGER_EXTRA_PERMS,
+      ...PHASE7_SALES_MANAGE_PERMS,
     ],
   },
   {
     name: 'Triador',
     type: ProfileType.SORTER,
-    permissions: [{ module: 'DASHBOARD', action: 'READ' }, ...PHASE6_SORTER_PERMS],
+    permissions: [
+      { module: 'DASHBOARD', action: 'READ' },
+      ...PHASE6_SORTER_PERMS,
+      ...PHASE7_SALES_READ_PERMS,
+    ],
   },
   {
     name: 'Motorista',
@@ -89,6 +107,7 @@ const PROFILES: ProfileSeed[] = [
       { module: 'COLLECTION_ROUTES', action: 'READ' },
       { module: 'COLLECTION_ROUTES', action: 'EXECUTE' },
       { module: 'RAW_MATERIAL_ENTRIES', action: 'CREATE' },
+      ...PHASE7_SALES_READ_PERMS,
     ],
   },
   {

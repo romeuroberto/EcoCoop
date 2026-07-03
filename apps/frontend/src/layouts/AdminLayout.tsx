@@ -23,6 +23,7 @@ const navLinks: NavLink[] = [
   { to: '/raw-material-balance', label: 'Saldo Bruto', module: 'RAW_MATERIAL_BALANCE' },
   { to: '/sorting', label: 'Triagens', module: 'SORTING' },
   { to: '/ready-stock', label: 'Estoque Pronto', module: 'READY_STOCK' },
+  { to: '/vendas', label: 'Vendas', module: 'SALES' },
 ];
 
 export function AdminLayout() {

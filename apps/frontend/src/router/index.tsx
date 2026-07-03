@@ -136,6 +136,11 @@ const ReadyStockPage = lazy(() =>
   import('../pages/ready-stock/ReadyStockPage').then((m) => ({ default: m.ReadyStockPage })),
 );
 
+// Feature 007 — Vendas Operacionais
+const SalesPage = lazy(() =>
+  import('../pages/sales/SalesPage').then((m) => ({ default: m.SalesPage })),
+);
+
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin h-8 w-8 border-4 border-brand-500 border-t-transparent rounded-full" />
@@ -226,6 +231,9 @@ export const router = createBrowserRouter([
           { path: 'sorting/new', element: S(SortingFormPage) },
           { path: 'sorting/:id', element: S(SortingDetailPage) },
           { path: 'ready-stock', element: S(ReadyStockPage) },
+
+          // Feature 007 — Vendas Operacionais
+          { path: 'vendas', element: S(SalesPage) },
         ],
       },
     ],
