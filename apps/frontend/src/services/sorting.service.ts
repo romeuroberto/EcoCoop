@@ -91,6 +91,14 @@ export interface ListSortingQuery {
   limit?: number;
 }
 
+export interface CancelSortingOperationResponse {
+  id: string;
+  status: 'CANCELADA';
+  cancelReason: string;
+  cancelledBy: { id: string; email: string } | null;
+  cancelledAt: string;
+}
+
 export const sortingService = {
   create: (body: CreateSortingOperationBody) =>
     api.post<SortingOperation>('/sorting-operations', body).then((r) => r.data),
@@ -102,4 +110,11 @@ export const sortingService = {
 
   getById: (id: string) =>
     api.get<SortingOperation>(`/sorting-operations/${id}`).then((r) => r.data),
+
+  cancel: (id: string, cancelReason: string) =>
+    api
+      .delete<CancelSortingOperationResponse>(`/sorting-operations/${id}`, {
+        data: { cancelReason },
+      })
+      .then((r) => r.data),
 };

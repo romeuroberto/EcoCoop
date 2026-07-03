@@ -8,11 +8,13 @@ import { Prisma } from '@prisma/client';
 import { CurrentUserDto } from '@ecocoop/shared';
 import { PrismaService } from '../../common/prisma.service';
 import type { CreateSortingOperationDto } from './dto/create-sorting-operation.dto';
+import type { CancelSortingOperationDto } from './dto/cancel-sorting-operation.dto';
 
 const OPERATION_INCLUDE = {
   subcategory: { select: { id: true, name: true } },
   unit: { select: { id: true, name: true, symbol: true } },
   user: { select: { id: true, email: true } },
+  cancelledBy: { select: { id: true, email: true } },
   outputs: {
     include: {
       subcategory: { select: { id: true, name: true } },
@@ -223,5 +225,99 @@ export class SortingOperationsService {
       });
     }
     return operation;
+  }
+
+  async cancel(id: string, dto: CancelSortingOperationDto, user: CurrentUserDto) {
+    if (!dto.cancelReason?.trim()) {
+      throw new UnprocessableEntityException({
+        code: 'CANCEL_REASON_REQUIRED',
+        message: 'O motivo do cancelamento é obrigatório',
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const operation = await tx.sortingOperation.findUnique({
+        where: { id },
+        include: { outputs: true },
+      });
+
+      if (!operation) {
+        throw new NotFoundException({
+          code: 'SORTING_OPERATION_NOT_FOUND',
+          message: 'Triagem não encontrada',
+        });
+      }
+
+      if (operation.status === 'CANCELADA') {
+        throw new ConflictException({
+          code: 'SORTING_ALREADY_CANCELLED',
+          message: 'Esta triagem já foi cancelada',
+        });
+      }
+
+      // Verify each output reversal won't cause negative ready stock
+      for (const output of operation.outputs) {
+        const balanceResult = await tx.readyStockEvent.aggregate({
+          where: { subcategoryId: output.subcategoryId, unitId: output.unitId },
+          _sum: { quantity: true },
+        });
+        const balance = new Prisma.Decimal(balanceResult._sum.quantity ?? 0);
+        const outputQty = new Prisma.Decimal(output.quantity);
+
+        if (balance.sub(outputQty).isNegative()) {
+          throw new ConflictException({
+            code: 'CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK',
+            message: 'O cancelamento resultaria em saldo pronto negativo',
+          });
+        }
+      }
+
+      // Create one ESTORNO ReadyStockEvent per output (negative quantity)
+      for (const output of operation.outputs) {
+        await tx.readyStockEvent.create({
+          data: {
+            type: 'ESTORNO',
+            subcategoryId: output.subcategoryId,
+            unitId: output.unitId,
+            quantity: new Prisma.Decimal(output.quantity).mul(-1),
+            sortingOperationId: operation.id,
+            userId: user.id,
+          },
+        });
+      }
+
+      // Restore raw stock via ESTORNO_TRIAGEM event (positive quantity)
+      await tx.rawMaterialStockEvent.create({
+        data: {
+          type: 'ESTORNO_TRIAGEM',
+          subcategoryId: operation.subcategoryId,
+          unitId: operation.unitId,
+          quantity: operation.processedQuantity,
+          sortingOperationId: operation.id,
+          userId: user.id,
+        },
+      });
+
+      const cancelled = await tx.sortingOperation.update({
+        where: { id },
+        data: {
+          status: 'CANCELADA',
+          cancelReason: dto.cancelReason!.trim(),
+          cancelledById: user.id,
+          cancelledAt: new Date(),
+        },
+        include: {
+          cancelledBy: { select: { id: true, email: true } },
+        },
+      });
+
+      return {
+        id: cancelled.id,
+        status: cancelled.status,
+        cancelReason: cancelled.cancelReason,
+        cancelledBy: cancelled.cancelledBy,
+        cancelledAt: cancelled.cancelledAt,
+      };
+    });
   }
 }

@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingState } from '../../components/ui';
 import {
@@ -6,6 +7,7 @@ import {
   type SortingOutput,
   type SortingReject,
 } from '../../services/sorting.service';
+import { useAuthStore } from '../../store/auth.store';
 
 const STATUS_LABELS: Record<string, string> = {
   CONCLUIDA: 'Concluída',
@@ -29,15 +31,63 @@ const REJECT_TYPE_CLASSES: Record<string, string> = {
   PERDA_INERENTE: 'bg-grafite-100 text-grafite-600 italic',
 };
 
+const CANCEL_ERROR_MESSAGES: Record<string, string> = {
+  SORTING_ALREADY_CANCELLED: 'Esta triagem já foi cancelada.',
+  CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK:
+    'Não é possível cancelar: o estorno causaria saldo pronto negativo.',
+  CANCEL_REASON_REQUIRED: 'O motivo do cancelamento é obrigatório.',
+  SORTING_OPERATION_NOT_FOUND: 'Triagem não encontrada.',
+};
+
+function getCancelError(err: unknown): string {
+  const data = (err as { response?: { data?: { code?: string; message?: string } } })
+    ?.response?.data;
+  if (data?.code && CANCEL_ERROR_MESSAGES[data.code]) return CANCEL_ERROR_MESSAGES[data.code];
+  return data?.message ?? 'Erro ao cancelar a triagem. Tente novamente.';
+}
+
+const canCancelSorting = (user: ReturnType<typeof useAuthStore.getState>['user']) =>
+  Boolean(user?.permissions.some((p) => p.module === 'SORTING' && p.action === 'CANCEL'));
+
 export function SortingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const { data: op, isLoading, error } = useQuery({
     queryKey: ['sorting-operation', id],
     queryFn: () => sortingService.getById(id!),
     enabled: Boolean(id),
   });
+
+  const cancelMut = useMutation({
+    mutationFn: () => sortingService.cancel(id!, cancelReason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sorting-operation', id] });
+      qc.invalidateQueries({ queryKey: ['sorting-operations'] });
+      qc.invalidateQueries({ queryKey: ['ready-stock-balance'] });
+      qc.invalidateQueries({ queryKey: ['ready-stock-movements'] });
+      setShowCancelForm(false);
+      setCancelReason('');
+      setCancelError(null);
+    },
+    onError: (err) => setCancelError(getCancelError(err)),
+  });
+
+  const handleCancelSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCancelError(null);
+    if (!cancelReason.trim()) {
+      setCancelError('O motivo do cancelamento é obrigatório.');
+      return;
+    }
+    cancelMut.mutate();
+  };
 
   if (isLoading) {
     return <LoadingState message="Carregando triagem..." />;
@@ -64,6 +114,9 @@ export function SortingDetailPage() {
 
   if (!op) return null;
 
+  const isConcluida = op.status === 'CONCLUIDA';
+  const showCancelButton = isConcluida && canCancelSorting(user);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -86,9 +139,19 @@ export function SortingDetailPage() {
             </span>
           </div>
         </div>
+
+        {showCancelButton && !showCancelForm && (
+          <button
+            type="button"
+            onClick={() => setShowCancelForm(true)}
+            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+          >
+            Cancelar triagem
+          </button>
+        )}
       </div>
 
-      {/* Cancel notice */}
+      {/* Cancel notice (after successful cancel) */}
       {op.status === 'CANCELADA' && op.cancelReason && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <span className="font-medium">Motivo do cancelamento:</span> {op.cancelReason}
@@ -99,6 +162,58 @@ export function SortingDetailPage() {
                 ` em ${new Date(op.cancelledAt).toLocaleString('pt-BR')}`}
             </span>
           )}
+        </div>
+      )}
+
+      {/* Cancel form (inline confirmation) */}
+      {showCancelForm && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+          <h3 className="text-sm font-semibold text-red-800 mb-1">Confirmar cancelamento</h3>
+          <p className="text-xs text-red-600 mb-4">
+            O cancelamento é irreversível. Os saldos bruto e pronto serão estornados via evento.
+          </p>
+
+          {cancelError && (
+            <div className="mb-3 rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-700">
+              {cancelError}
+            </div>
+          )}
+
+          <form onSubmit={handleCancelSubmit} className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-red-700 mb-1">
+                Motivo do cancelamento *
+              </label>
+              <textarea
+                className="w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                rows={3}
+                placeholder="Descreva o motivo do cancelamento..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                disabled={cancelMut.isPending}
+                className="rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {cancelMut.isPending ? 'Cancelando...' : 'Confirmar cancelamento'}
+              </button>
+              <button
+                type="button"
+                disabled={cancelMut.isPending}
+                onClick={() => {
+                  setShowCancelForm(false);
+                  setCancelReason('');
+                  setCancelError(null);
+                }}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Voltar
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

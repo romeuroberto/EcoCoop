@@ -378,4 +378,189 @@ describe('SortingOperations (integration)', () => {
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('SORTING_OPERATION_NOT_FOUND');
   });
+
+  // ─── DELETE (cancel) ─────────────────────────────────────────────────────────
+
+  it('DELETE — cancelReason vazio → 422 CANCEL_REASON_REQUIRED', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ cancelReason: '' });
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('CANCEL_REASON_REQUIRED');
+  });
+
+  it('DELETE — cancelReason ausente → 422 CANCEL_REASON_REQUIRED', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({});
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('CANCEL_REASON_REQUIRED');
+  });
+
+  it('DELETE — SORTER sem permissão SORTING:CANCEL → 403', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${sorterToken}`)
+      .send({ cancelReason: 'Teste SORTER' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('DELETE — DRIVER sem permissão → 403', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${driverToken}`)
+      .send({ cancelReason: 'Teste DRIVER' });
+
+    expect(res.status).toBe(403);
+  });
+
+  it('DELETE — não autenticado → 401', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .send({ cancelReason: 'Teste sem auth' });
+
+    expect(res.status).toBe(401);
+  });
+
+  it('DELETE — cancelamento bem-sucedido → 200, status CANCELADA, eventos de estorno criados', async () => {
+    // Use the first created operation (90 kg raw, 80 kg output)
+    const opId = createdSortingOpIds[0];
+
+    // Capture raw balance before cancel
+    const rawBefore = await prisma.rawMaterialStockEvent.aggregate({
+      where: { subcategoryId: rawSubcategoryId, unitId },
+      _sum: { quantity: true },
+    });
+    const rawBalanceBefore = parseFloat(String(rawBefore._sum.quantity ?? 0));
+
+    // Capture ready balance before cancel
+    const readyBefore = await prisma.readyStockEvent.aggregate({
+      where: { subcategoryId: readySubcategoryId, unitId },
+      _sum: { quantity: true },
+    });
+    const readyBalanceBefore = parseFloat(String(readyBefore._sum.quantity ?? 0));
+
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ cancelReason: 'Erro de pesagem — material incorreto' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('CANCELADA');
+    expect(res.body.cancelReason).toBe('Erro de pesagem — material incorreto');
+    expect(res.body.cancelledBy).toBeDefined();
+    expect(res.body.cancelledBy.email).toBeDefined();
+    expect(res.body.cancelledAt).toBeDefined();
+
+    // Verify ESTORNO_TRIAGEM event was created (restores raw stock)
+    const rawAfter = await prisma.rawMaterialStockEvent.aggregate({
+      where: { subcategoryId: rawSubcategoryId, unitId },
+      _sum: { quantity: true },
+    });
+    const rawBalanceAfter = parseFloat(String(rawAfter._sum.quantity ?? 0));
+    // 90 kg was consumed, now restored: rawBalanceAfter = rawBalanceBefore + 90
+    expect(rawBalanceAfter).toBeCloseTo(rawBalanceBefore + 90, 3);
+
+    // Verify ESTORNO ReadyStockEvent was created (reduces ready stock)
+    const readyAfter = await prisma.readyStockEvent.aggregate({
+      where: { subcategoryId: readySubcategoryId, unitId },
+      _sum: { quantity: true },
+    });
+    const readyBalanceAfter = parseFloat(String(readyAfter._sum.quantity ?? 0));
+    // 80 kg was in ready stock from this op, now reversed: readyBalanceAfter = readyBalanceBefore - 80
+    expect(readyBalanceAfter).toBeCloseTo(readyBalanceBefore - 80, 3);
+  });
+
+  it('GET /sorting-operations/:id — após cancelamento, exibe CANCELADA com cancelReason/cancelledBy/cancelledAt', async () => {
+    const opId = createdSortingOpIds[0];
+    const res = await request(app.getHttpServer())
+      .get(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('CANCELADA');
+    expect(res.body.cancelReason).toBe('Erro de pesagem — material incorreto');
+    expect(res.body.cancelledBy).toBeDefined();
+    expect(res.body.cancelledBy.email).toBeDefined();
+    expect(res.body.cancelledAt).toBeDefined();
+    // Outputs and rejects remain intact (logical cancel, not physical delete)
+    expect(Array.isArray(res.body.outputs)).toBe(true);
+    expect(Array.isArray(res.body.rejects)).toBe(true);
+  });
+
+  it('DELETE — triagem já cancelada → 409 SORTING_ALREADY_CANCELLED', async () => {
+    const opId = createdSortingOpIds[0]; // already cancelled in previous test
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${opId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ cancelReason: 'Segunda tentativa' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('SORTING_ALREADY_CANCELLED');
+  });
+
+  it('DELETE — id inexistente → 404 SORTING_OPERATION_NOT_FOUND', async () => {
+    const res = await request(app.getHttpServer())
+      .delete('/api/v1/sorting-operations/00000000-0000-0000-0000-000000000000')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ cancelReason: 'Teste' });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('SORTING_OPERATION_NOT_FOUND');
+  });
+
+  it('DELETE — estorno causaria saldo pronto negativo → 409 CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK', async () => {
+    // Create a fresh sorting operation with 5 kg output to readySubcategoryId
+    const sortRes = await request(app.getHttpServer())
+      .post('/api/v1/sorting-operations')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({
+        subcategoryId: rawSubcategoryId,
+        unitId,
+        processedQuantity: 5,
+        outputs: [{ subcategoryId: readySubcategoryId, unitId, quantity: 5 }],
+      });
+    expect(sortRes.status).toBe(201);
+    const newOpId = sortRes.body.id as string;
+    createdSortingOpIds.push(newOpId);
+
+    // Zero out ALL ready stock for readySubcategoryId so the cancel would cause negative balance
+    const balResult = await prisma.readyStockEvent.aggregate({
+      where: { subcategoryId: readySubcategoryId, unitId },
+      _sum: { quantity: true },
+    });
+    const currentBalance = parseFloat(String(balResult._sum.quantity ?? 0));
+
+    if (currentBalance > 0) {
+      // Insert a direct negative event to bring balance to zero
+      await prisma.readyStockEvent.create({
+        data: {
+          type: 'AJUSTE',
+          subcategoryId: readySubcategoryId,
+          unitId,
+          quantity: -currentBalance,
+          userId: sorterUserId,
+        },
+      });
+    }
+
+    // Now the ready balance is 0. Trying to cancel the 5 kg operation would make it -5.
+    const res = await request(app.getHttpServer())
+      .delete(`/api/v1/sorting-operations/${newOpId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ cancelReason: 'Teste saldo negativo' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('CANCELLATION_WOULD_CAUSE_NEGATIVE_READY_STOCK');
+  });
 });
