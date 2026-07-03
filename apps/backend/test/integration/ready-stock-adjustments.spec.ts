@@ -109,11 +109,47 @@ describe('ReadyStockAdjustments (integration)', () => {
       return;
     }
 
-    // ReadyStockEvent referencia ReadyStockAdjustment (adjustmentId FK) — deletar primeiro
+    const testUserIds = [sorterUserId, driverUserId].filter(Boolean);
+
+    if (testUserIds.length > 0) {
+      // AuditLog → User FK: deletar antes dos usuários
+      await prisma.auditLog.deleteMany({ where: { userId: { in: testUserIds } } });
+
+      // SortingOperation (e filhos) criados pelos usuários de teste durante validação externa
+      const sortingOps = await prisma.sortingOperation.findMany({
+        where: { OR: [{ userId: { in: testUserIds } }, { cancelledById: { in: testUserIds } }] },
+        select: { id: true },
+      });
+      const sortingOpIds = sortingOps.map((op) => op.id);
+      if (sortingOpIds.length > 0) {
+        // ReadyStockEvent referencia SortingOutput (sortingOutputId FK) e SortingOperation
+        await prisma.readyStockEvent.deleteMany({
+          where: { sortingOperationId: { in: sortingOpIds } },
+        });
+        // RawMaterialStockEvent → SortingOperation FK
+        await prisma.rawMaterialStockEvent.deleteMany({
+          where: { sortingOperationId: { in: sortingOpIds } },
+        });
+        await prisma.sortingOutput.deleteMany({ where: { sortingOperationId: { in: sortingOpIds } } });
+        await prisma.sortingReject.deleteMany({ where: { sortingOperationId: { in: sortingOpIds } } });
+        await prisma.sortingOperation.deleteMany({ where: { id: { in: sortingOpIds } } });
+      }
+
+      // Demais registros com userId direto dos usuários de teste
+      await prisma.rawMaterialStockEvent.deleteMany({ where: { userId: { in: testUserIds } } });
+      await prisma.readyStockEvent.deleteMany({ where: { userId: { in: testUserIds } } });
+      await prisma.readyStockAdjustment.deleteMany({ where: { userId: { in: testUserIds } } });
+      await prisma.rawMaterialEntry.deleteMany({ where: { userId: { in: testUserIds } } });
+    }
+
+    // Limpeza específica do subcategoryId criado no beforeAll deste teste
     await prisma.readyStockEvent.deleteMany({ where: { subcategoryId } });
     await prisma.readyStockAdjustment.deleteMany({ where: { subcategoryId } });
     await prisma.materialSubcategory.deleteMany({ where: { id: subcategoryId } });
-    await prisma.user.deleteMany({ where: { email: { in: testUserEmails } } });
+
+    if (testUserIds.length > 0) {
+      await prisma.user.deleteMany({ where: { email: { in: testUserEmails } } });
+    }
 
     await app.close();
   });
