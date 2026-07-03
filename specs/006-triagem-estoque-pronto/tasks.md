@@ -162,7 +162,7 @@
 - [x] T043 [P] Run type checks across both apps: `npx -w apps/backend tsc --noEmit` and `npx -w apps/frontend tsc --noEmit` — zero errors required
 - [x] T044 [P] Audit all 5 frontend pages/components (SortingListPage, SortingFormPage, SortingDetailPage, ReadyStockPage, ReadyStockAdjustmentModal) for: loading skeleton/spinner on async operations, error boundary or error message on API failure, explicit empty state when list is empty (FR-018)
 - [x] T045 Run full integration suite for the feature: `npx -w apps/backend jest --runInBand test/integration/sorting-operations.spec.ts test/integration/ready-stock.spec.ts test/integration/ready-stock-adjustments.spec.ts`
-- [ ] T046 Execute all 7 quickstart.md validation scenarios from specs/006-triagem-estoque-pronto/quickstart.md end-to-end with running backend and frontend
+- [x] T046 Execute all 7 quickstart.md validation scenarios from specs/006-triagem-estoque-pronto/quickstart.md end-to-end with running backend and frontend
 
 ---
 
