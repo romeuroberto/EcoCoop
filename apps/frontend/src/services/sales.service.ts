@@ -48,6 +48,11 @@ export interface SaleListItem {
   itemsCount: number;
   createdAt: string;
   user: SaleUser;
+  deliveredAt?: string | null;
+  deliveredBy?: SaleUser | null;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: SaleUser | null;
 }
 
 export interface SaleDetail {
@@ -78,6 +83,11 @@ export interface CreatedSale {
   user: SaleUser;
   items: SaleItem[];
   accountReceivable: AccountReceivableSummary | null;
+  deliveredAt?: string | null;
+  deliveredBy?: SaleUser | null;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
+  cancelledBy?: SaleUser | null;
 }
 
 export interface CreateSaleBody {

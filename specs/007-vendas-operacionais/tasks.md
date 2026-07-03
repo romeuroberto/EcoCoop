@@ -87,13 +87,13 @@
 
 ### Testes — US2
 
-- [ ] T026 Adicionar casos de entrega ao `apps/backend/test/integration/sales.spec.ts`: sucesso (status → ENTREGUE, deliveredAt salvo, deliveredBy definido); tentar entregar venda já ENTREGUE → 409 `SALE_NOT_DELIVERABLE`; tentar entregar venda CANCELADA → 409
+- [x] T026 Adicionar casos de entrega ao `apps/backend/test/integration/sales.spec.ts`: sucesso (status → ENTREGUE, deliveredAt salvo, deliveredBy definido); tentar entregar venda já ENTREGUE → 409 `SALE_NOT_DELIVERABLE`; tentar entregar venda CANCELADA → 409
 
 ### Implementação — US2
 
-- [ ] T027 Implementar `SalesService.deliver()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar venda por id (404 se não encontrada), checar status = PENDENTE_ENTREGA (409 se não), atualizar `status = ENTREGUE`, `deliveredAt`, `deliveredById`; retornar id, status, deliveredAt, deliveredBy
-- [ ] T028 Implementar `SalesController.deliver()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Patch(':id/deliver')`, `@RequirePermission('SALES', 'DELIVER')`, receber `@Param('id')` e `@Body() DeliverSaleDto` e `@CurrentUser()`
-- [ ] T029 Implementar `apps/frontend/src/pages/sales/SaleDetailPage.tsx`: header da venda (comprador, status badge, datas), tabela de itens (subcategoria, unidade, quantidade, preço, subtotal), rodapé com valor total; botão "Confirmar Entrega" visível apenas quando status=PENDENTE_ENTREGA e usuário tem permissão DELIVER; ao confirmar, chamar `salesService.deliverSale` e invalidar queries
+- [x] T027 Implementar `SalesService.deliver()` em `apps/backend/src/modules/sales/sales.service.ts`: buscar venda por id (404 se não encontrada), checar status = PENDENTE_ENTREGA (409 se não), atualizar `status = ENTREGUE`, `deliveredAt`, `deliveredById`; retornar id, status, deliveredAt, deliveredBy
+- [x] T028 Implementar `SalesController.deliver()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Patch(':id/deliver')`, `@RequirePermission('SALES', 'DELIVER')`, receber `@Param('id')` e `@Body() DeliverSaleDto` e `@CurrentUser()`
+- [x] T029 Implementar ação de entrega no frontend da US2: botão "Confirmar Entrega" visível apenas quando status=PENDENTE_ENTREGA e usuário tem permissão DELIVER; ao confirmar, chamar `salesService.deliverSale`, invalidar queries e atualizar estado local sem refresh manual
 
 **Checkpoint**: Confirmação de entrega funciona via API e via botão na página de detalhe. Testes T026 passam.
 
@@ -107,13 +107,13 @@
 
 ### Testes — US3
 
-- [ ] T030 Adicionar casos de cancelamento ao `apps/backend/test/integration/sales.spec.ts`: sucesso — verificar saldo restaurado (aggregate ReadyStockEvent), eventos ESTORNO_VENDA criados por item, AR com status CANCELADA; cancelReason ausente ou em branco → 422 `CANCEL_REASON_REQUIRED`; venda ENTREGUE → 409 `SALE_NOT_CANCELLABLE`; venda já CANCELADA → 409
+- [x] T030 Adicionar casos de cancelamento ao `apps/backend/test/integration/sales.spec.ts`: sucesso — verificar saldo restaurado (aggregate ReadyStockEvent), eventos ESTORNO_VENDA criados por item, AR com status CANCELADA; cancelReason ausente ou em branco → 422 `CANCEL_REASON_REQUIRED`; venda ENTREGUE → 409 `SALE_NOT_CANCELLABLE`; venda já CANCELADA → 409
 
 ### Implementação — US3
 
-- [ ] T031 Implementar `SalesService.cancel()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — buscar venda com items (404 se não encontrada), checar status = PENDENTE_ENTREGA (409 se não), checar cancelReason não vazio (422 se não), criar `ReadyStockEvent(ESTORNO_VENDA, qty positiva)` por item, atualizar `AccountReceivable.status = CANCELADA`, atualizar `Sale.status = CANCELADA` com cancelReason, cancelledAt, cancelledById; retornar resumo
-- [ ] T032 Implementar `SalesController.cancel()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Delete(':id')`, `@RequirePermission('SALES', 'CANCEL')`, receber `@Param('id')`, `@Body() CancelSaleDto` e `@CurrentUser()`
-- [ ] T033 Adicionar botão "Cancelar Venda" ao `apps/frontend/src/pages/sales/SaleDetailPage.tsx`: visível apenas quando status=PENDENTE_ENTREGA e usuário tem permissão CANCEL; ao clicar, abrir modal de confirmação com campo de motivo obrigatório; ao confirmar, chamar `salesService.cancelSale`; invalidar queries e redirecionar para lista
+- [x] T031 Implementar `SalesService.cancel()` em `apps/backend/src/modules/sales/sales.service.ts`: dentro de `$transaction` — buscar venda com items (404 se não encontrada), checar status = PENDENTE_ENTREGA (409 se não), checar cancelReason não vazio (422 se não), criar `ReadyStockEvent(ESTORNO_VENDA, qty positiva)` por item, atualizar `AccountReceivable.status = CANCELADA`, atualizar `Sale.status = CANCELADA` com cancelReason, cancelledAt, cancelledById; retornar resumo
+- [x] T032 Implementar `SalesController.cancel()` em `apps/backend/src/modules/sales/sales.controller.ts`: `@Delete(':id')`, `@RequirePermission('SALES', 'CANCEL')`, receber `@Param('id')`, `@Body() CancelSaleDto` e `@CurrentUser()`
+- [x] T033 Adicionar ação de cancelamento no frontend da US3: visível apenas quando status=PENDENTE_ENTREGA e usuário tem permissão CANCEL; ao clicar, solicitar confirmação e motivo obrigatório; ao confirmar, chamar `salesService.cancelSale`, invalidar queries e atualizar estado local sem refresh manual
 
 **Checkpoint**: Cancelamento restaura estoque e cancela AR. Testes T030 passam. Botão de cancelamento funciona na UI.
 

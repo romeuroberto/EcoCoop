@@ -10,6 +10,7 @@ describe('Sales (integration)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let managerToken: string;
+  let managerUserId: string;
   let sorterUserId: string;
   let buyerId: string;
   let inactiveBuyerId: string;
@@ -28,6 +29,18 @@ describe('Sales (integration)', () => {
   const createSale = (body: object) =>
     request(app.getHttpServer())
       .post('/api/v1/sales')
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send(body);
+
+  const deliverSale = (id: string, body: object = {}) =>
+    request(app.getHttpServer())
+      .patch(`/api/v1/sales/${id}/deliver`)
+      .set('Authorization', `Bearer ${managerToken}`)
+      .send(body);
+
+  const cancelSale = (id: string, body: object = {}) =>
+    request(app.getHttpServer())
+      .delete(`/api/v1/sales/${id}`)
       .set('Authorization', `Bearer ${managerToken}`)
       .send(body);
 
@@ -63,6 +76,11 @@ describe('Sales (integration)', () => {
     prisma = app.get(PrismaService);
 
     managerToken = await login('gestor@ecocoop.local', 'gestor123');
+    const manager = await prisma.user.findUniqueOrThrow({
+      where: { email: 'gestor@ecocoop.local' },
+      select: { id: true },
+    });
+    managerUserId = manager.id;
 
     const hash = await bcrypt.hash('pwd123', 10);
     const sorterProfile = await prisma.profile.findFirstOrThrow({
@@ -295,5 +313,206 @@ describe('Sales (integration)', () => {
     expect(res.body.code).toBe('INSUFFICIENT_READY_STOCK');
     expect(await getBalance(subcategoryId)).toBeCloseTo(beforeFirstBalance, 3);
     expect(await getBalance(secondSubcategoryId)).toBeCloseTo(beforeSecondBalance, 3);
+  });
+
+  it('PATCH /sales/:id/deliver — confirma entrega sem alterar estoque nem conta a receber', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 7, unitPrice: 2 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    const beforeBalance = await getBalance(subcategoryId);
+    const beforeEventCount = await prisma.readyStockEvent.count({ where: { saleId } });
+    const deliveredAt = '2026-08-20T14:30:00.000Z';
+
+    const res = await deliverSale(saleId, { deliveredAt });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: saleId,
+      status: 'ENTREGUE',
+      deliveredAt,
+      deliveredBy: { id: managerUserId, email: 'gestor@ecocoop.local' },
+    });
+
+    const sale = await prisma.sale.findUniqueOrThrow({
+      where: { id: saleId },
+      include: { accountReceivable: true },
+    });
+    expect(sale.status).toBe('ENTREGUE');
+    expect(sale.deliveredAt?.toISOString()).toBe(deliveredAt);
+    expect(sale.deliveredById).toBe(managerUserId);
+    expect(sale.accountReceivable?.status).toBe('A_RECEBER');
+
+    expect(await getBalance(subcategoryId)).toBeCloseTo(beforeBalance, 3);
+    await expect(prisma.readyStockEvent.count({ where: { saleId } })).resolves.toBe(beforeEventCount);
+  });
+
+  it('PATCH /sales/:id/deliver — venda inexistente retorna 404 SALE_NOT_FOUND', async () => {
+    const res = await deliverSale('00000000-0000-4000-8000-000000000002');
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('SALE_NOT_FOUND');
+  });
+
+  it('PATCH /sales/:id/deliver — venda já ENTREGUE retorna 409 SALE_NOT_DELIVERABLE', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 3, unitPrice: 1 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    const firstRes = await deliverSale(saleId);
+    expect(firstRes.status).toBe(200);
+
+    const secondRes = await deliverSale(saleId);
+    expect(secondRes.status).toBe(409);
+    expect(secondRes.body.code).toBe('SALE_NOT_DELIVERABLE');
+  });
+
+  it('PATCH /sales/:id/deliver — venda CANCELADA retorna 409 SALE_NOT_DELIVERABLE', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 4, unitPrice: 1 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    await prisma.sale.update({
+      where: { id: saleId },
+      data: {
+        status: 'CANCELADA',
+        cancelReason: 'Preparação de cenário de teste',
+        cancelledAt: new Date(),
+        cancelledById: managerUserId,
+      },
+    });
+
+    const res = await deliverSale(saleId);
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('SALE_NOT_DELIVERABLE');
+  });
+
+  it('DELETE /sales/:id — cancela venda, estorna estoque e cancela conta a receber', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [
+        { subcategoryId, unitId, quantity: 8, unitPrice: 2 },
+        { subcategoryId: secondSubcategoryId, unitId, quantity: 5, unitPrice: 3 },
+      ],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    const firstBalanceBeforeCancel = await getBalance(subcategoryId);
+    const secondBalanceBeforeCancel = await getBalance(secondSubcategoryId);
+
+    const res = await cancelSale(saleId, { cancelReason: 'Comprador desistiu da compra' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      id: saleId,
+      status: 'CANCELADA',
+      cancelReason: 'Comprador desistiu da compra',
+      cancelledBy: { id: managerUserId, email: 'gestor@ecocoop.local' },
+    });
+    expect(res.body.cancelledAt).toBeDefined();
+
+    const sale = await prisma.sale.findUniqueOrThrow({
+      where: { id: saleId },
+      include: { accountReceivable: true },
+    });
+    expect(sale.status).toBe('CANCELADA');
+    expect(sale.cancelReason).toBe('Comprador desistiu da compra');
+    expect(sale.cancelledAt).toBeDefined();
+    expect(sale.cancelledById).toBe(managerUserId);
+    expect(sale.accountReceivable?.status).toBe('CANCELADA');
+
+    const reversalEvents = await prisma.readyStockEvent.findMany({
+      where: { saleId, type: 'ESTORNO_VENDA' },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(reversalEvents).toHaveLength(2);
+    expect(reversalEvents.map((event) => Number(event.quantity)).sort((a, b) => a - b)).toEqual([
+      5,
+      8,
+    ]);
+
+    expect(await getBalance(subcategoryId)).toBeCloseTo(firstBalanceBeforeCancel + 8, 3);
+    expect(await getBalance(secondSubcategoryId)).toBeCloseTo(secondBalanceBeforeCancel + 5, 3);
+
+    await expect(prisma.sale.findUnique({ where: { id: saleId } })).resolves.toBeDefined();
+    await expect(prisma.accountReceivable.findUnique({ where: { saleId } })).resolves.toBeDefined();
+  });
+
+  it('DELETE /sales/:id — motivo ausente ou em branco retorna 422 CANCEL_REASON_REQUIRED', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+
+    const missingReason = await cancelSale(saleId, {});
+    expect(missingReason.status).toBe(422);
+    expect(missingReason.body.code).toBe('CANCEL_REASON_REQUIRED');
+
+    const blankReason = await cancelSale(saleId, { cancelReason: '   ' });
+    expect(blankReason.status).toBe(422);
+    expect(blankReason.body.code).toBe('CANCEL_REASON_REQUIRED');
+  });
+
+  it('DELETE /sales/:id — venda inexistente retorna 404 SALE_NOT_FOUND', async () => {
+    const res = await cancelSale('00000000-0000-4000-8000-000000000003', {
+      cancelReason: 'Teste',
+    });
+
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('SALE_NOT_FOUND');
+  });
+
+  it('DELETE /sales/:id — venda ENTREGUE retorna 409 SALE_NOT_CANCELLABLE', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    await deliverSale(saleId);
+
+    const res = await cancelSale(saleId, { cancelReason: 'Tentativa inválida' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('SALE_NOT_CANCELLABLE');
+  });
+
+  it('DELETE /sales/:id — venda já CANCELADA retorna 409 SALE_NOT_CANCELLABLE', async () => {
+    const createRes = await createSale({
+      buyerId,
+      items: [{ subcategoryId, unitId, quantity: 2, unitPrice: 1 }],
+    });
+    expect(createRes.status).toBe(201);
+    createdSaleIds.push(createRes.body.id as string);
+
+    const saleId = createRes.body.id as string;
+    const firstCancel = await cancelSale(saleId, { cancelReason: 'Primeiro cancelamento' });
+    expect(firstCancel.status).toBe(200);
+
+    const secondCancel = await cancelSale(saleId, { cancelReason: 'Segundo cancelamento' });
+
+    expect(secondCancel.status).toBe(409);
+    expect(secondCancel.body.code).toBe('SALE_NOT_CANCELLABLE');
   });
 });

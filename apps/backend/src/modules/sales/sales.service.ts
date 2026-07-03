@@ -1,8 +1,15 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { CurrentUserDto } from '@ecocoop/shared';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { CancelSaleDto } from './dto/cancel-sale.dto';
+import { DeliverSaleDto } from './dto/deliver-sale.dto';
 
 @Injectable()
 export class SalesService {
@@ -150,6 +157,121 @@ export class SalesService {
       });
 
       return this.findCreatedSale(tx, sale.id);
+    });
+  }
+
+  async deliver(id: string, dto: DeliverSaleDto, user: CurrentUserDto) {
+    const sale = await this.prisma.sale.findUnique({
+      where: { id },
+      select: { id: true, status: true },
+    });
+
+    if (!sale) {
+      throw new NotFoundException({
+        code: 'SALE_NOT_FOUND',
+        message: 'Venda não encontrada',
+      });
+    }
+
+    if (sale.status !== 'PENDENTE_ENTREGA') {
+      throw new ConflictException({
+        code: 'SALE_NOT_DELIVERABLE',
+        message: 'A venda não pode ter entrega confirmada neste status',
+      });
+    }
+
+    const deliveredAt = dto.deliveredAt ? new Date(dto.deliveredAt) : new Date();
+
+    const updated = await this.prisma.sale.update({
+      where: { id },
+      data: {
+        status: 'ENTREGUE',
+        deliveredAt,
+        deliveredById: user.id,
+      },
+      include: {
+        deliveredBy: { select: { id: true, email: true } },
+      },
+    });
+
+    return {
+      id: updated.id,
+      status: updated.status,
+      deliveredAt: updated.deliveredAt?.toISOString(),
+      deliveredBy: updated.deliveredBy,
+    };
+  }
+
+  async cancel(id: string, dto: CancelSaleDto, user: CurrentUserDto) {
+    const cancelReason = dto.cancelReason?.trim();
+    if (!cancelReason) {
+      throw new UnprocessableEntityException({
+        code: 'CANCEL_REASON_REQUIRED',
+        message: 'O motivo do cancelamento é obrigatório',
+      });
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const sale = await tx.sale.findUnique({
+        where: { id },
+        include: {
+          items: true,
+        },
+      });
+
+      if (!sale) {
+        throw new NotFoundException({
+          code: 'SALE_NOT_FOUND',
+          message: 'Venda não encontrada',
+        });
+      }
+
+      if (sale.status !== 'PENDENTE_ENTREGA') {
+        throw new ConflictException({
+          code: 'SALE_NOT_CANCELLABLE',
+          message: 'A venda não pode ser cancelada neste status',
+        });
+      }
+
+      for (const item of sale.items) {
+        await tx.readyStockEvent.create({
+          data: {
+            type: 'ESTORNO_VENDA',
+            subcategoryId: item.subcategoryId,
+            unitId: item.unitId,
+            quantity: item.quantity,
+            saleId: sale.id,
+            userId: user.id,
+          },
+        });
+      }
+
+      await tx.accountReceivable.update({
+        where: { saleId: sale.id },
+        data: { status: 'CANCELADA' },
+      });
+
+      const cancelledAt = new Date();
+      const updated = await tx.sale.update({
+        where: { id: sale.id },
+        data: {
+          status: 'CANCELADA',
+          cancelReason,
+          cancelledAt,
+          cancelledById: user.id,
+        },
+        include: {
+          cancelledBy: { select: { id: true, email: true } },
+        },
+      });
+
+      return {
+        id: updated.id,
+        status: updated.status,
+        cancelReason: updated.cancelReason,
+        cancelledAt: updated.cancelledAt?.toISOString(),
+        cancelledBy: updated.cancelledBy,
+      };
     });
   }
 
