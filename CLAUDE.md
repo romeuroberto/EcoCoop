@@ -1,7 +1,7 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/006-triagem-estoque-pronto/plan.md
+at specs/007-vendas-operacionais/plan.md
 <!-- SPECKIT END -->
 
 ## Task Tracking
